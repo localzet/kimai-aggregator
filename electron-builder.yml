@@ -1,0 +1,18 @@
+appId: com.kimai.aggregator
+productName: Kimai Aggregator
+directories:
+  buildResources: build
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+win:
+  target: nsis
+  icon: build/icon.ico
+mac:
+  target: dmg
+  icon: build/icon.icns
+linux:
+  target: AppImage
+  icon: build/icon.png
+

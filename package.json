@@ -1,0 +1,40 @@
+{
+  "name": "kimai-aggregator",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@mantine/core": "^7.11.0",
+    "@mantine/hooks": "^7.11.0",
+    "@mantine/dates": "^7.11.0",
+    "@mantine/form": "^7.11.0",
+    "@mantine/notifications": "^7.11.0",
+    "@mantine/charts": "^7.11.0",
+    "@tabler/icons-react": "^3.0.0",
+    "dayjs": "^1.11.10",
+    "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "vite": "^5.0.8"
+  }
+}
+
