@@ -242,7 +242,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               label="Ставка за минуту (руб)"
               min={0}
               step={0.01}
-              precision={2}
               required
               {...form.getInputProps('ratePerMinute')}
             />

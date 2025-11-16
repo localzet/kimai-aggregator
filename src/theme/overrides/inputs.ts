@@ -1,5 +1,5 @@
 import { InputBase, PasswordInput, Select, TextInput } from '@mantine/core'
-import { DateInput } from '@mantine/dates'
+import { DateTimePicker } from '@mantine/dates'
 
 export default {
     InputBase: InputBase.extend({
@@ -22,10 +22,9 @@ export default {
             radius: 'md'
         }
     }),
-    DateInput: DateInput.extend({
+    DateTimePicker: DateTimePicker.extend({
         defaultProps: {
             radius: 'md'
         }
     })
 }
-

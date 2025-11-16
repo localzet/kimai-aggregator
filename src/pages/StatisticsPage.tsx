@@ -8,7 +8,6 @@ import {
   Stack,
   Paper,
   Title,
-  Table,
   Text,
   Badge,
   Card,
@@ -18,25 +17,19 @@ import {
   Menu,
 } from '@mantine/core'
 import { LineChart, BarChart } from '@mantine/charts'
-import { IconDownload } from '@tabler/icons-react'
+import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react'
+import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import { useSettings } from '../hooks/useSettings'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { useSyncStatus } from '../hooks/useSyncStatus'
 import StatusIndicator from '../components/StatusIndicator'
+import { DataTableShared } from '../shared/ui/table'
 import dayjs from 'dayjs'
 
 function StatisticsPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
 
   // Общая статистика
   const totalStats = useMemo(() => {
@@ -225,6 +218,202 @@ function StatisticsPage() {
   // Определяем актуальный статус с учетом syncing
   const currentStatus = syncing ? 'updating' : syncStatus.status
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 2,
+    }).format(amount)
+  }
+
+  // Таблица проектов
+  interface ProjectStatsRow {
+    id: number | null
+    name: string
+    weeksCount: number
+    totalHours: number
+    avgHoursPerWeek: number
+    totalAmount: number
+    percentageAmount: number
+  }
+
+  const projectTableData = useMemo<ProjectStatsRow[]>(() => {
+    return projectStats.map(p => ({
+      id: p.id,
+      name: p.name,
+      weeksCount: p.weeksCount,
+      totalHours: p.totalHours,
+      avgHoursPerWeek: p.avgHoursPerWeek,
+      totalAmount: p.totalAmount,
+      percentageAmount: totalStats.totalAmount > 0 ? (p.totalAmount / totalStats.totalAmount) * 100 : 0,
+    }))
+  }, [projectStats, totalStats.totalAmount])
+
+  const projectColumns = useMemo<MRT_ColumnDef<ProjectStatsRow>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Проект',
+    },
+    {
+      accessorKey: 'weeksCount',
+      header: 'Недель',
+      Cell: ({ cell }) => <Text>{String(cell.getValue())}</Text>,
+    },
+    {
+      accessorKey: 'totalHours',
+      header: 'Всего часов',
+      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+    },
+    {
+      accessorKey: 'avgHoursPerWeek',
+      header: 'Среднее в неделю',
+      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Общая сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+    },
+    {
+      accessorKey: 'percentageAmount',
+      header: '% от общей суммы',
+      Cell: ({ cell }) => {
+        const percentage = cell.getValue() as number
+        return (
+          <Group gap="xs" wrap="nowrap">
+            <Progress value={percentage} size="sm" style={{ flex: 1, minWidth: 100 }} />
+            <Text size="sm" style={{ minWidth: 50 }}>
+              {percentage.toFixed(1)}%
+            </Text>
+          </Group>
+        )
+      },
+    },
+  ], [])
+
+  const projectTable = useMantineReactTable({
+    columns: projectColumns,
+    data: projectTableData,
+    getRowId: (row) => (row.id ?? Math.random()).toString(),
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enableSortingRemoval: true,
+    enablePagination: true,
+    enableColumnResizing: true,
+    enableFullScreenToggle: true,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 25 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      withBorder: false,
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
+  // Таблица периодов
+  interface PeriodStatsRow {
+    id: string
+    projectName: string
+    periodLabel: string
+    weeksCount: number
+    totalHours: number
+    goalHours: number | null
+    completion: number | null
+    totalAmount: number
+  }
+
+  const periodTableData = useMemo<PeriodStatsRow[]>(() => {
+    return periodStats.map((p, idx) => ({
+      id: `${p.projectId}-${p.year}-period-${p.periodNumber}`,
+      projectName: p.projectName,
+      periodLabel: `Период ${p.periodNumber + 1} (${p.year})`,
+      weeksCount: p.weeksCount,
+      totalHours: p.totalHours,
+      goalHours: p.goalHours,
+      completion: p.goalHours && p.goalHours > 0 ? (p.totalHours / p.goalHours) * 100 : null,
+      totalAmount: p.totalAmount,
+    }))
+  }, [periodStats])
+
+  const periodColumns = useMemo<MRT_ColumnDef<PeriodStatsRow>[]>(() => [
+    {
+      accessorKey: 'projectName',
+      header: 'Проект',
+    },
+    {
+      accessorKey: 'periodLabel',
+      header: 'Период',
+    },
+    {
+      accessorKey: 'weeksCount',
+      header: 'Недель',
+    },
+    {
+      accessorKey: 'totalHours',
+      header: 'Отработано',
+      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+    },
+    {
+      accessorKey: 'goalHours',
+      header: 'Цель',
+      Cell: ({ cell }) => {
+        const goal = cell.getValue() as number | null
+        return goal !== null ? `${goal.toFixed(2)} ч` : <Text c="dimmed">—</Text>
+      },
+    },
+    {
+      accessorKey: 'completion',
+      header: 'Выполнение',
+      Cell: ({ row }) => {
+        const completion = row.original.completion
+        if (completion === null) return <Text c="dimmed">—</Text>
+        return (
+          <Group gap="xs" wrap="nowrap">
+            <Progress value={Math.min(100, completion)} size="sm" style={{ flex: 1, minWidth: 100 }} />
+            <Text size="sm" style={{ minWidth: 50 }}>
+              {completion.toFixed(0)}%
+            </Text>
+            {completion >= 100 && <Badge color="green" size="sm">✓</Badge>}
+          </Group>
+        )
+      },
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+    },
+  ], [])
+
+  const periodTable = useMantineReactTable({
+    columns: periodColumns,
+    data: periodTableData,
+    getRowId: (row) => row.id,
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enableSortingRemoval: true,
+    enablePagination: true,
+    enableColumnResizing: true,
+    enableFullScreenToggle: true,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 25 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      withBorder: false,
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
   if (loading) {
     return (
       <Container>
@@ -391,131 +580,29 @@ function StatisticsPage() {
       </Tabs>
 
       {/* Статистика по проектам */}
-      <Paper p="xl" withBorder>
-        <Title order={3} mb="md">Статистика по проектам</Title>
-        <Table striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Проект</Table.Th>
-              <Table.Th>Недель</Table.Th>
-              <Table.Th>Всего часов</Table.Th>
-              <Table.Th>Среднее в неделю</Table.Th>
-              <Table.Th>Общая сумма</Table.Th>
-              <Table.Th>% от общей суммы</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {projectStats.length === 0 ? (
-              <Table.Tr>
-                <Table.Td colSpan={6} style={{ textAlign: 'center' }}>
-                  Нет данных
-                </Table.Td>
-              </Table.Tr>
-            ) : (
-              projectStats.map((project) => {
-                const percentage = totalStats.totalAmount > 0
-                  ? (project.totalAmount / totalStats.totalAmount) * 100
-                  : 0
-                return (
-                  <Table.Tr key={project.id}>
-                    <Table.Td>
-                      <Text fw={500}>{project.name}</Text>
-                    </Table.Td>
-                    <Table.Td>{project.weeksCount}</Table.Td>
-                    <Table.Td>{project.totalHours.toFixed(2)} ч</Table.Td>
-                    <Table.Td>{project.avgHoursPerWeek.toFixed(2)} ч</Table.Td>
-                    <Table.Td>
-                      <Text fw={500}>{formatCurrency(project.totalAmount)}</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <Progress value={percentage} size="sm" style={{ flex: 1 }} />
-                        <Text size="sm" style={{ minWidth: 50 }}>
-                          {percentage.toFixed(1)}%
-                        </Text>
-                      </Group>
-                    </Table.Td>
-                  </Table.Tr>
-                )
-              })
-            )}
-          </Table.Tbody>
-        </Table>
-      </Paper>
+      <DataTableShared.Container>
+        <DataTableShared.Title
+          icon={<IconChartBar size={24} />}
+          title="Статистика по проектам"
+          description={`Всего проектов: ${projectStats.length}`}
+        />
+        <DataTableShared.Content>
+          <MantineReactTable table={projectTable} />
+        </DataTableShared.Content>
+      </DataTableShared.Container>
 
       {/* Статистика по периодам */}
       {periodStats.length > 0 && (
-        <Paper p="xl" withBorder>
-          <Group justify="space-between" mb="md">
-            <Title order={3}>Статистика по периодам</Title>
-            <Text size="sm" c="dimmed">
-              Всего периодов: {periodStats.length}
-            </Text>
-          </Group>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Проект</Table.Th>
-                <Table.Th>Период</Table.Th>
-                <Table.Th>Недель</Table.Th>
-                <Table.Th>Отработано</Table.Th>
-                <Table.Th>Цель</Table.Th>
-                <Table.Th>Выполнение</Table.Th>
-                <Table.Th>Сумма</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {periodStats
-                .sort((a, b) => {
-                  if (a.year !== b.year) return b.year - a.year
-                  if (a.periodNumber !== b.periodNumber) return b.periodNumber - a.periodNumber
-                  return a.projectName.localeCompare(b.projectName)
-                })
-                .map((period, idx) => {
-                  const completion = period.goalHours && period.goalHours > 0
-                    ? (period.totalHours / period.goalHours) * 100
-                    : null
-                  return (
-                    <Table.Tr key={idx}>
-                      <Table.Td>
-                        <Text fw={500}>{period.projectName}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        Период {period.periodNumber + 1} ({period.year})
-                      </Table.Td>
-                      <Table.Td>{period.weeksCount}</Table.Td>
-                      <Table.Td>{period.totalHours.toFixed(2)} ч</Table.Td>
-                      <Table.Td>
-                        {period.goalHours && period.goalHours > 0 ? (
-                          `${period.goalHours.toFixed(2)} ч`
-                        ) : (
-                          <Text c="dimmed">—</Text>
-                        )}
-                      </Table.Td>
-                      <Table.Td>
-                        {completion !== null ? (
-                          <Group gap="xs">
-                            <Progress value={Math.min(100, completion)} size="sm" style={{ flex: 1 }} />
-                            <Text size="sm" style={{ minWidth: 50 }}>
-                              {completion.toFixed(0)}%
-                            </Text>
-                            {completion >= 100 && (
-                              <Badge color="green" size="sm">✓</Badge>
-                            )}
-                          </Group>
-                        ) : (
-                          <Text c="dimmed">—</Text>
-                        )}
-                      </Table.Td>
-                      <Table.Td>
-                        <Text fw={500}>{formatCurrency(period.totalAmount)}</Text>
-                      </Table.Td>
-                    </Table.Tr>
-                  )
-                })}
-            </Table.Tbody>
-          </Table>
-        </Paper>
+        <DataTableShared.Container>
+          <DataTableShared.Title
+            icon={<IconListNumbers size={24} />}
+            title="Статистика по периодам"
+            description={`Всего периодов: ${periodStats.length}`}
+          />
+          <DataTableShared.Content>
+            <MantineReactTable table={periodTable} />
+          </DataTableShared.Content>
+        </DataTableShared.Container>
       )}
     </Stack>
   )

@@ -14,7 +14,7 @@ interface TimesheetTableProps {
   weeks: WeekData[]
 }
 
-interface TimesheetRow extends Timesheet {
+interface TimesheetRow extends Omit<Timesheet, 'id'> {
   id: string | number
 }
 

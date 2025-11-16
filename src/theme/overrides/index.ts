@@ -29,4 +29,3 @@ export default {
     ...tooltip,
     ...layouts
 }
-

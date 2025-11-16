@@ -33,6 +33,9 @@
     "motion": "^12.23.24",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.9.6",
     "recharts": "^2.15.3"
   },
   "devDependencies": {

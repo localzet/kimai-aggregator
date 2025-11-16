@@ -6,20 +6,20 @@ import {
   Button,
   Group,
   Stack,
-  Paper,
   Title,
-  Table,
   Text,
   Badge,
   Tabs,
   Select,
   Menu,
 } from '@mantine/core'
-import { IconDownload } from '@tabler/icons-react'
+import { IconDownload, IconHistory, IconListNumbers } from '@tabler/icons-react'
+import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import StatusIndicator from '../components/StatusIndicator'
 import { useSettings } from '../hooks/useSettings'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { useSyncStatus } from '../hooks/useSyncStatus'
+import { DataTableShared } from '../shared/ui/table'
 import { WeekData } from '../services/kimaiApi'
 import dayjs from 'dayjs'
 
@@ -31,6 +31,7 @@ function PaymentHistoryPage() {
   
   const currentStatus = syncing ? 'updating' : syncStatus.status
 
+  // Форматирование валюты
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
@@ -105,7 +106,7 @@ function PaymentHistoryPage() {
               periods[periodKey].goalHours = 0
             }
             if (info.goalHours !== null) {
-              periods[periodKey].goalHours += info.goalHours
+              periods[periodKey].goalHours! += info.goalHours
             }
           }
         })
@@ -150,24 +151,6 @@ function PaymentHistoryPage() {
       ? Object.values(projectPeriods).filter(p => p.projectId?.toString() === selectedProject)
       : Object.values(projectPeriods)
   }, [projectPeriods, selectedProject])
-
-  if (loading) {
-    return (
-      <Container>
-        <Loader size="lg" />
-      </Container>
-    )
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <Alert color="red" title="Ошибка">
-          {error}
-        </Alert>
-      </Container>
-    )
-  }
 
   const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) return
@@ -221,6 +204,214 @@ function PaymentHistoryPage() {
     exportToCSV(data, `history-periods-${dayjs().format('YYYY-MM-DD')}.csv`)
   }
 
+  // Таблица по неделям - интерфейсы и конфиги
+  interface WeeklyPaymentRow {
+    id: string
+    weekNumber: number
+    year: number
+    period: string
+    totalHours: number
+    totalAmount: number
+    projects: Array<{ id?: number | null; name: string; hours: number; amount: number }>
+  }
+
+  const weeklyTableData = useMemo<WeeklyPaymentRow[]>(() => {
+    return filteredWeeklyPayments.map((p, idx) => ({
+      id: p.week.weekKey,
+      weekNumber: p.weekNumber,
+      year: p.year,
+      period: `${dayjs(p.startDate).format('DD.MM.YYYY')} - ${dayjs(p.endDate).format('DD.MM.YYYY')}`,
+      totalHours: p.totalHours,
+      totalAmount: p.totalAmount,
+      projects: p.projects,
+    }))
+  }, [filteredWeeklyPayments])
+
+  const weeklyColumns = useMemo<MRT_ColumnDef<WeeklyPaymentRow>[]>(() => [
+    {
+      accessorKey: 'weekNumber',
+      header: 'Неделя',
+      Cell: ({ row }) => {
+        const data = row.original
+        return (
+          <div>
+            <Text fw={500}>Неделя {data.weekNumber}, {data.year}</Text>
+            <Text size="sm" c="dimmed">{data.period}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'totalHours',
+      header: 'Часы',
+      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+    },
+    {
+      accessorKey: 'projects',
+      id: 'projectsColumn',
+      header: 'Проекты',
+      Cell: ({ cell }) => {
+        const projects = cell.getValue() as WeeklyPaymentRow['projects']
+        return (
+          <Stack gap="xs">
+            {projects.map((project, idx) => (
+              <Group key={idx} gap="xs">
+                <Text size="sm">{project.name}:</Text>
+                <Text size="sm" fw={500}>{formatCurrency(project.amount)}</Text>
+                <Text size="sm" c="dimmed">({project.hours.toFixed(2)} ч)</Text>
+              </Group>
+            ))}
+          </Stack>
+        )
+      },
+      enableSorting: false,
+    },
+  ], [])
+
+  const weeklyTable = useMantineReactTable({
+    columns: weeklyColumns,
+    data: weeklyTableData,
+    getRowId: (row) => row.id,
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enableSortingRemoval: true,
+    enablePagination: true,
+    enableColumnResizing: true,
+    enableFullScreenToggle: true,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 25 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      withBorder: false,
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
+  // Таблица по периодам - интерфейсы и конфиги
+  interface PeriodPaymentRow {
+    id: string
+    projectName: string
+    periodLabel: string
+    weeksList: string
+    totalHours: number
+    goalHours: number | null
+    completion: number | null
+    totalAmount: number
+  }
+
+  const periodTableData = useMemo<PeriodPaymentRow[]>(() => {
+    return filteredPeriods.map((p) => ({
+      id: `${p.projectId}-${p.year}-period-${p.periodNumber}`,
+      projectName: p.projectName,
+      periodLabel: `Период ${p.periodNumber + 1} (${p.year})`,
+      weeksList: p.weeks.map(w => `Неделя ${w.week}`).join(', '),
+      totalHours: p.totalHours,
+      goalHours: p.goalHours,
+      completion: p.goalHours && p.goalHours > 0 ? (p.totalHours / p.goalHours) * 100 : null,
+      totalAmount: p.totalAmount,
+    }))
+  }, [filteredPeriods])
+
+  const periodColumns = useMemo<MRT_ColumnDef<PeriodPaymentRow>[]>(() => [
+    {
+      accessorKey: 'projectName',
+      header: 'Проект',
+    },
+    {
+      accessorKey: 'periodLabel',
+      header: 'Период',
+    },
+    {
+      accessorKey: 'weeksList',
+      header: 'Недели',
+      size: 200,
+    },
+    {
+      accessorKey: 'totalHours',
+      header: 'Отработано',
+      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+    },
+    {
+      accessorKey: 'goalHours',
+      header: 'Цель',
+      Cell: ({ cell }) => {
+        const goal = cell.getValue() as number | null
+        return goal !== null ? `${goal.toFixed(2)} ч` : <Text c="dimmed">—</Text>
+      },
+    },
+    {
+      accessorKey: 'completion',
+      header: 'Статус',
+      Cell: ({ row }) => {
+        const data = row.original
+        if (data.goalHours === null) {
+          return <Badge color="blue">Без цели</Badge>
+        }
+        if (data.totalHours >= data.goalHours) {
+          return <Badge color="green">Выполнено</Badge>
+        }
+        return <Badge color="yellow">{data.completion?.toFixed(0)}%</Badge>
+      },
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+    },
+  ], [])
+
+  const periodTable = useMantineReactTable({
+    columns: periodColumns,
+    data: periodTableData,
+    getRowId: (row) => row.id,
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enableSortingRemoval: true,
+    enablePagination: true,
+    enableColumnResizing: true,
+    enableFullScreenToggle: true,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 25 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      withBorder: false,
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
+  if (loading) {
+    return (
+      <Container>
+        <Loader size="lg" />
+      </Container>
+    )
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Alert color="red" title="Ошибка">
+          {error}
+        </Alert>
+      </Container>
+    )
+  }
+
   return (
     <Stack gap="md">
       <Group justify="space-between">
@@ -259,149 +450,39 @@ function PaymentHistoryPage() {
         </Tabs.List>
 
         <Tabs.Panel value="weekly" pt="md">
-          <Paper p="xl" withBorder>
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Неделя</Table.Th>
-                  <Table.Th>Период</Table.Th>
-                  <Table.Th>Часы</Table.Th>
-                  <Table.Th>Сумма</Table.Th>
-                  <Table.Th>Проекты</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {filteredWeeklyPayments.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={5} style={{ textAlign: 'center' }}>
-                      Нет данных
-                    </Table.Td>
-                  </Table.Tr>
-                ) : (
-                  filteredWeeklyPayments.map((payment) => (
-                    <Table.Tr key={payment.week.weekKey}>
-                      <Table.Td>
-                        <Text fw={500}>
-                          Неделя {payment.weekNumber}, {payment.year}
-                        </Text>
-                        <Text size="sm" c="dimmed">
-                          {dayjs(payment.startDate).format('DD.MM')} - {dayjs(payment.endDate).format('DD.MM')}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        {payment.week.projectPeriodInfo?.map(info => {
-                          const projectSettings = settings.projectSettings?.[info.projectId]
-                          if (projectSettings?.hasPaymentPeriods) {
-                            return (
-                              <Badge key={info.projectId} variant="light" size="sm" mr="xs">
-                                {info.projectName}: Период {info.periodNumber + 1}, неделя {info.weekInPeriod}
-                              </Badge>
-                            )
-                          }
-                          return null
-                        })}
-                      </Table.Td>
-                      <Table.Td>{payment.totalHours.toFixed(2)} ч</Table.Td>
-                      <Table.Td>
-                        <Text fw={500}>{formatCurrency(payment.totalAmount)}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Stack gap="xs">
-                          {payment.projects.map((project, idx) => (
-                            <Group key={idx} gap="xs">
-                              <Text size="sm">{project.name}:</Text>
-                              <Text size="sm" fw={500}>
-                                {formatCurrency(project.amount)}
-                              </Text>
-                              <Text size="sm" c="dimmed">
-                                ({project.hours.toFixed(2)} ч)
-                              </Text>
-                            </Group>
-                          ))}
-                        </Stack>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))
-                )}
-              </Table.Tbody>
-            </Table>
-          </Paper>
+          <DataTableShared.Container>
+            <DataTableShared.Title
+              icon={<IconHistory size={24} />}
+              title="История платежей по неделям"
+            />
+            <DataTableShared.Content>
+              {weeklyTableData.length > 0 ? (
+                <MantineReactTable table={weeklyTable} />
+              ) : (
+                <Text c="dimmed" ta="center" py="xl">
+                  Нет данных для отображения
+                </Text>
+              )}
+            </DataTableShared.Content>
+          </DataTableShared.Container>
         </Tabs.Panel>
 
         <Tabs.Panel value="periods" pt="md">
-          <Paper p="xl" withBorder>
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Проект</Table.Th>
-                  <Table.Th>Период</Table.Th>
-                  <Table.Th>Недели</Table.Th>
-                  <Table.Th>Отработано</Table.Th>
-                  <Table.Th>Цель</Table.Th>
-                  <Table.Th>Сумма</Table.Th>
-                  <Table.Th>Статус</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {filteredPeriods.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={7} style={{ textAlign: 'center' }}>
-                      Нет данных о периодах
-                    </Table.Td>
-                  </Table.Tr>
-                ) : (
-                  filteredPeriods
-                    .sort((a, b) => {
-                      if (a.year !== b.year) return b.year - a.year
-                      if (a.periodNumber !== b.periodNumber) return b.periodNumber - a.periodNumber
-                      return a.projectName.localeCompare(b.projectName)
-                    })
-                    .map((period) => (
-                      <Table.Tr key={`${period.year}-${period.projectId}-${period.periodNumber}`}>
-                        <Table.Td>
-                          <Text fw={500}>{period.projectName}</Text>
-                        </Table.Td>
-                        <Table.Td>
-                          Период {period.periodNumber + 1} ({period.year})
-                        </Table.Td>
-                        <Table.Td>
-                          {period.weeks.map(w => `Неделя ${w.week}`).join(', ')}
-                        </Table.Td>
-                        <Table.Td>{period.totalHours.toFixed(2)} ч</Table.Td>
-                        <Table.Td>
-                          {period.goalHours !== null ? (
-                            <>
-                              {period.goalHours.toFixed(2)} ч
-                              {period.totalHours >= period.goalHours && (
-                                <Badge color="green" ml="xs" size="sm">✓</Badge>
-                              )}
-                            </>
-                          ) : (
-                            <Text c="dimmed">—</Text>
-                          )}
-                        </Table.Td>
-                        <Table.Td>
-                          <Text fw={500}>{formatCurrency(period.totalAmount)}</Text>
-                        </Table.Td>
-                        <Table.Td>
-                          {period.goalHours !== null ? (
-                            period.totalHours >= period.goalHours ? (
-                              <Badge color="green">Выполнено</Badge>
-                            ) : (
-                              <Badge color="yellow">
-                                {((period.totalHours / period.goalHours) * 100).toFixed(0)}%
-                              </Badge>
-                            )
-                          ) : (
-                            <Badge color="blue">Без цели</Badge>
-                          )}
-                        </Table.Td>
-                      </Table.Tr>
-                    ))
-                )}
-              </Table.Tbody>
-            </Table>
-          </Paper>
+          <DataTableShared.Container>
+            <DataTableShared.Title
+              icon={<IconListNumbers size={24} />}
+              title="История платежей по периодам"
+            />
+            <DataTableShared.Content>
+              {periodTableData.length > 0 ? (
+                <MantineReactTable table={periodTable} />
+              ) : (
+                <Text c="dimmed" ta="center" py="xl">
+                  Нет данных о периодах
+                </Text>
+              )}
+            </DataTableShared.Content>
+          </DataTableShared.Container>
         </Tabs.Panel>
       </Tabs>
     </Stack>
