@@ -2,6 +2,7 @@ import { Stack } from '@mantine/core'
 import { motion } from 'motion/react'
 import FinancialTable from '../components/FinancialTable'
 import { FinancialMetrics } from '../components/FinancialMetrics'
+import ReportGenerator from '../components/ReportGenerator'
 import StatusIndicator from '../components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Button, Group } from '@mantine/core'
@@ -41,6 +42,7 @@ function FinancialPage() {
       transition={{ duration: 0.3 }}
     >
       <Group justify="flex-end">
+        <ReportGenerator weeks={weeks} settings={settings} />
         <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
         <Button onClick={reload} loading={loading || syncing}>
           Обновить данные

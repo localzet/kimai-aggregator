@@ -41,6 +41,7 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       ratePerMinute: settings.ratePerMinute || 0,
       useProxy: settings.useProxy || false,
       syncUrl: settings.syncUrl || '',
+      excludedTags: (settings.excludedTags || []).join(', '),
     },
   })
 
@@ -114,6 +115,11 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
   }
 
   const handleSubmit = (values: typeof form.values) => {
+    const excludedTagsArray = values.excludedTags
+      .split(',')
+      .map(tag => tag.trim().toLowerCase())
+      .filter(tag => tag.length > 0)
+    
     const newSettings: Settings = {
       ...settings,
       apiUrl: values.apiUrl,
@@ -121,6 +127,7 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       ratePerMinute: values.ratePerMinute,
       useProxy: values.useProxy || false,
       syncUrl: values.syncUrl || '',
+      excludedTags: excludedTagsArray,
     }
     onUpdate(newSettings)
     notifications.show({
@@ -244,6 +251,13 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               step={0.01}
               required
               {...form.getInputProps('ratePerMinute')}
+            />
+
+            <TextInput
+              label="Исключённые теги"
+              placeholder="no-payment, internal, test"
+              description="Разделите теги запятыми. Записи с этими тегами не будут учитываться в расчётах"
+              {...form.getInputProps('excludedTags')}
             />
 
             {import.meta.env.DEV && (

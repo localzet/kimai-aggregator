@@ -36,10 +36,6 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
     return week.year === now.year() && week.week === now.isoWeek()
   }
 
-  if (!isCurrentWeek()) {
-    return null
-  }
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -61,13 +57,18 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
 
   return (
     <MotionPaper
-      style={{ padding: 'var(--mantine-spacing-xl)' }}
+      style={{ 
+        padding: 'var(--mantine-spacing-xl)',
+        opacity: isCurrentWeek() ? 1 : 0.7
+      }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       <Paper p="xl" withBorder>
-      <Title order={3} mb="md">Прогресс текущей недели</Title>
+      <Title order={3} mb="md">
+        Прогресс {isCurrentWeek() ? 'текущей' : 'последней'} недели
+      </Title>
       
       <Stack gap="md">
         <Group justify="space-between">

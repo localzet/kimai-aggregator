@@ -16,6 +16,8 @@ export interface Timesheet {
   description?: string
   duration?: number
   date?: Dayjs
+  tags?: string[]
+  metaFields?: Record<string, unknown>
 }
 
 export interface Project {

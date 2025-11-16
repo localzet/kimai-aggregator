@@ -59,7 +59,7 @@ function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
           leftSection={config.icon}
           size="lg"
         >
-          {config.label}
+          {/* {config.label} */}
         </Badge>
       </Tooltip>
     </motion.div>

@@ -8,6 +8,7 @@ export interface Settings {
   useProxy: boolean
   syncUrl: string
   projectSettings: ProjectSettings
+  excludedTags: string[]
 }
 
 const defaultSettings: Settings = {
@@ -17,6 +18,7 @@ const defaultSettings: Settings = {
   useProxy: false,
   syncUrl: '',
   projectSettings: {},
+  excludedTags: [],
 }
 
 export function useSettings() {
