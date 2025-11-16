@@ -19,11 +19,9 @@ import {
 import { LineChart, BarChart } from '@mantine/charts'
 import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
-import { useSettings } from '../hooks/useSettings'
-import { useDashboardData } from '../hooks/useDashboardData'
-import { useSyncStatus } from '../hooks/useSyncStatus'
+import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import StatusIndicator from '../components/StatusIndicator'
-import { DataTableShared } from '../shared/ui/table'
+import { DataTableShared } from '@/shared/ui/table'
 import dayjs from 'dayjs'
 
 function StatisticsPage() {

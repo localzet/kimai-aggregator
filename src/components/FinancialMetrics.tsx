@@ -1,8 +1,8 @@
 import { SimpleGrid, Group, Stack, Box, Loader } from '@mantine/core'
 import { IconCurrencyDollar, IconClock, IconTrendingUp, IconCalendar } from '@tabler/icons-react'
 import { motion } from 'motion/react'
-import { MetricCard } from '../shared/ui/metrics'
-import { WeekData } from '../services/kimaiApi'
+import { MetricCard } from '@/shared/ui/metrics'
+import { WeekData } from '@/shared/api/kimaiApi'
 
 interface FinancialMetricsProps {
   weeks: WeekData[]

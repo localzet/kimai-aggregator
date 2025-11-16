@@ -16,11 +16,9 @@ import {
 import { IconDownload, IconHistory, IconListNumbers } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import StatusIndicator from '../components/StatusIndicator'
-import { useSettings } from '../hooks/useSettings'
-import { useDashboardData } from '../hooks/useDashboardData'
-import { useSyncStatus } from '../hooks/useSyncStatus'
-import { DataTableShared } from '../shared/ui/table'
-import { WeekData } from '../services/kimaiApi'
+import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
+import { DataTableShared } from '@/shared/ui/table'
+import { WeekData } from '@/shared/api/kimaiApi'
 import dayjs from 'dayjs'
 
 function PaymentHistoryPage() {

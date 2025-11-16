@@ -2,7 +2,8 @@ import { AppShell, Box, Burger, Container, Divider, Group, Stack, Title, Text, S
 import { useClickOutside, useDisclosure, useHeadroom, useMediaQuery } from "@mantine/hooks"
 import { ElementType, useEffect, useState } from "react"
 
-import { NavLink as RouterLink, Outlet, useLocation } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
+import RouterLink from '@/shared/ui/RouterLink'
 import { PiArrowRight, PiCpu, PiListChecks, PiStarDuotone } from "react-icons/pi"
 import {
     TbDeviceAnalytics,

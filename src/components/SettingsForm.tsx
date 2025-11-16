@@ -17,8 +17,8 @@ import {
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { useForm } from '@mantine/form'
-import { KimaiApi, Project } from '../services/kimaiApi'
-import { Settings } from '../hooks/useSettings'
+import { KimaiApi, Project } from '@/shared/api/kimaiApi'
+import { Settings } from '@/shared/hooks/useSettings'
 import ProjectSettingsForm from './ProjectSettingsForm'
 
 interface SettingsFormProps {

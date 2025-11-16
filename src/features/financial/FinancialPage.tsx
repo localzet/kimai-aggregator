@@ -1,8 +1,8 @@
 import { Stack } from '@mantine/core'
 import { motion } from 'motion/react'
-import FinancialTable from '../components/FinancialTable'
-import { FinancialMetrics } from '../components/FinancialMetrics'
-import StatusIndicator from '../components/StatusIndicator'
+import FinancialTable from '../financial/components/FinancialTable'
+import { FinancialMetrics } from '../financial/components/FinancialMetrics'
+import StatusIndicator from '../dashboard/components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Button, Group } from '@mantine/core'
 

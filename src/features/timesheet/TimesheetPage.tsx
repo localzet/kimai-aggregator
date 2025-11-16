@@ -1,14 +1,12 @@
-import { Stack } from '@mantine/core'
-import { motion } from 'motion/react'
-import FinancialTable from '../components/FinancialTable'
-import { FinancialMetrics } from '../components/FinancialMetrics'
-import StatusIndicator from '../components/StatusIndicator'
+import TimesheetTable from '../timesheet/components/TimesheetTable'
+import StatusIndicator from '../dashboard/components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
-import { Container, Loader, Alert, Button, Group } from '@mantine/core'
+import { Container, Loader, Alert, Button, Group, Stack } from '@mantine/core'
+import { motion } from 'motion/react'
 
 const MotionStack = motion(Stack)
 
-function FinancialPage() {
+function TimesheetPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
@@ -35,7 +33,7 @@ function FinancialPage() {
 
   return (
     <MotionStack
-      gap="xl"
+      gap="md"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -46,12 +44,9 @@ function FinancialPage() {
           Обновить данные
         </Button>
       </Group>
-
-      <FinancialMetrics weeks={weeks} isLoading={loading || syncing} />
-      
-      <FinancialTable weeks={weeks} settings={settings} />
+      <TimesheetTable weeks={weeks} />
     </MotionStack>
   )
 }
 
-export default FinancialPage
+export default TimesheetPage

@@ -4,12 +4,12 @@ import { Outlet } from 'react-router-dom'
 import { FC } from 'react'
 import { Button, Container, Group, Title, Text } from "@mantine/core"
 
-import SettingsPage from "./pages/SettingsPage"
-import DashboardPage from "./pages/DashboardPage"
-import TimesheetPage from "./pages/TimesheetPage"
-import FinancialPage from "./pages/FinancialPage"
-import PaymentHistoryPage from "./pages/PaymentHistoryPage"
-import StatisticsPage from "./pages/StatisticsPage"
+import SettingsPage from "./features/settings"
+import DashboardPage from "./features/dashboard/DashboardPage"
+import TimesheetPage from "./features/timesheet/TimesheetPage"
+import FinancialPage from "./features/financial/FinancialPage"
+import PaymentHistoryPage from "./features/payment-history"
+import StatisticsPage from "./features/statistics"
 import { MainLayout } from "./layout"
 
 import classesError from './error.module.css'

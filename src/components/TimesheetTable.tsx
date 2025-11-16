@@ -7,8 +7,8 @@ import {
 import { IconTable } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import dayjs from 'dayjs'
-import { DataTableShared } from '../shared/ui/table'
-import { WeekData, Timesheet } from '../services/kimaiApi'
+import { DataTableShared } from '@/shared/ui/table'
+import { WeekData, Timesheet } from '@/shared/api/kimaiApi'
 
 interface TimesheetTableProps {
   weeks: WeekData[]

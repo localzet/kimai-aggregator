@@ -1,8 +1,6 @@
 import TimesheetTable from '../components/TimesheetTable'
 import StatusIndicator from '../components/StatusIndicator'
-import { useSettings } from '../hooks/useSettings'
-import { useDashboardData } from '../hooks/useDashboardData'
-import { useSyncStatus } from '../hooks/useSyncStatus'
+import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Button, Group, Stack } from '@mantine/core'
 import { motion } from 'motion/react'
 
