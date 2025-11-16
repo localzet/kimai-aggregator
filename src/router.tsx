@@ -1,4 +1,4 @@
-import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, useNavigate } from "react-router-dom"
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider, useNavigate } from "react-router-dom"
 import { ErrorBoundary, ErrorBoundaryProps } from 'react-error-boundary'
 import { Outlet } from 'react-router-dom'
 import { FC } from 'react'
@@ -50,6 +50,7 @@ const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc fallback={<ErrorPageComponent />} />}>
             <Route element={<MainLayout />} path='/'>
+                <Route element={<Navigate replace to='/dashboard' />} index />
                 <Route
                     element={<SettingsPage />}
                     path='/settings'
