@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
-  Table,
-  Paper,
-  Title,
   Select,
   Stack,
   Text,
   Badge,
   Group,
   Card,
+  Title,
 } from '@mantine/core'
+import { IconCurrencyDollar } from '@tabler/icons-react'
+import { MantineReactTable, useMantineReactTable } from 'mantine-react-table'
 import dayjs from 'dayjs'
+import { DataTableShared } from '../shared/ui/table'
 
 function FinancialTable({ weeks, settings }) {
   const [selectedWeek, setSelectedWeek] = useState(null)
@@ -41,13 +42,13 @@ function FinancialTable({ weeks, settings }) {
 
   // Агрегация периодов для всех проектов с настройками
   const projectPeriods = {}
-  
+
   weeks.forEach(week => {
     if (week.projectPeriodInfo) {
       week.projectPeriodInfo.forEach(projectInfo => {
         const { projectId, projectName, periodNumber } = projectInfo
         const periodKey = `${projectId}-${week.year}-period-${periodNumber}`
-        
+
         if (!projectPeriods[periodKey]) {
           projectPeriods[periodKey] = {
             projectId,
@@ -60,7 +61,7 @@ function FinancialTable({ weeks, settings }) {
             goalHours: null,
           }
         }
-        
+
         projectPeriods[periodKey].weeks.push(week)
         projectPeriods[periodKey].totalHours += projectInfo.hours
         projectPeriods[periodKey].totalAmount += projectInfo.weeklyAmount
@@ -71,63 +72,180 @@ function FinancialTable({ weeks, settings }) {
     }
   })
 
-  return (
-    <Stack gap="xl">
-      <Paper p="xl" withBorder>
-        <Stack gap="md">
-          <Group justify="space-between">
-            <Title order={3}>Финансы по неделям</Title>
-            <Select
-              placeholder="Выберите неделю"
-              data={weekOptions}
-              value={selectedWeek || weeks[0]?.weekKey}
-              onChange={setSelectedWeek}
-              style={{ width: 300 }}
-            />
-          </Group>
+  // Колонки для таблицы финансов по неделям
+  const weeklyColumns = useMemo(() => [
+    {
+      accessorKey: 'name',
+      header: 'Проект',
+    },
+    {
+      accessorKey: 'hours',
+      header: 'Часы',
+      Cell: ({ cell }) => Number(cell.getValue()).toFixed(2),
+      sortingFn: 'basic',
+    },
+    {
+      accessorKey: 'minutes',
+      id: 'duration',
+      header: 'Время',
+      Cell: ({ cell }) => formatDuration(cell.getValue()),
+    },
+    {
+      accessorKey: 'amount',
+      header: 'Сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      sortingFn: 'basic',
+    },
+  ], [])
 
-          {selectedWeekData && (
-            <>
-              <Group>
+  // Колонки для таблицы агрегации по периодам
+  const periodsColumns = useMemo(() => [
+    {
+      accessorKey: 'projectName',
+      header: 'Проект',
+    },
+    {
+      accessorKey: 'periodNumber',
+      id: 'period',
+      header: 'Период',
+      Cell: ({ row }) => {
+        const period = row.original
+        return `Период ${period.periodNumber + 1} (${period.year})`
+      },
+    },
+    {
+      accessorKey: 'weeks',
+      id: 'weeksList',
+      header: 'Недели',
+      Cell: ({ row }) => {
+        const weeks = row.original.weeks
+        return weeks.map(w => `Неделя ${w.week}`).join(', ')
+      },
+    },
+    {
+      accessorKey: 'totalHours',
+      header: 'Отработано',
+      Cell: ({ cell }) => `${Number(cell.getValue()).toFixed(2)} ч`,
+      sortingFn: 'basic',
+    },
+    {
+      accessorKey: 'goalHours',
+      header: 'Цель',
+      Cell: ({ row }) => {
+        const goalHours = row.original.goalHours
+        const totalHours = row.original.totalHours
+        if (goalHours !== null) {
+          return (
+            <Group gap="xs">
+              <Text>{goalHours} ч</Text>
+              {totalHours >= goalHours && (
+                <Badge color="green" size="sm">✓</Badge>
+              )}
+            </Group>
+          )
+        }
+        return <Text c="dimmed">—</Text>
+      },
+    },
+    {
+      accessorKey: 'totalAmount',
+      header: 'Сумма',
+      Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      sortingFn: 'basic',
+    },
+  ], [])
+
+  const weeklyTableData = useMemo(() => {
+    if (!selectedWeekData) return []
+    return selectedWeekData.projectStats.map((project, idx) => ({
+      ...project,
+      id: project.id || idx,
+    }))
+  }, [selectedWeekData])
+
+  const periodsTableData = useMemo(() => {
+    return Object.values(projectPeriods).map((period, idx) => ({
+      ...period,
+      id: `${period.projectId}-${period.year}-${period.periodNumber}`,
+    }))
+  }, [projectPeriods])
+
+  const weeklyTable = useMantineReactTable({
+    columns: weeklyColumns,
+    data: weeklyTableData,
+    getRowId: (row) => row.id?.toString() || Math.random().toString(),
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 50 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      withBorder: false,
+      style: { boxShadow: 'none' },
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
+  const periodsTable = useMantineReactTable({
+    columns: periodsColumns,
+    data: periodsTableData,
+    getRowId: (row) => row.id?.toString() || Math.random().toString(),
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 50 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      withBorder: false,
+      style: { boxShadow: 'none' },
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
+  return (
+    <>
+      <DataTableShared.Container>
+        <DataTableShared.Title
+          icon={<IconCurrencyDollar size={24} />}
+          title="Финансы по неделям"
+          actions={
+            <Group gap="md">
+              {selectedWeekData && (
                 <Text size="sm" c="dimmed">
                   Всего за неделю: <strong>{formatCurrency(selectedWeekData.totalAmount)}</strong>
                 </Text>
-              </Group>
-
-              <Table striped highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Проект</Table.Th>
-                    <Table.Th>Часы</Table.Th>
-                    <Table.Th>Время</Table.Th>
-                    <Table.Th>Сумма</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {selectedWeekData.projectStats.length === 0 ? (
-                    <Table.Tr>
-                      <Table.Td colSpan={4} style={{ textAlign: 'center' }}>
-                        Нет данных
-                      </Table.Td>
-                    </Table.Tr>
-                  ) : (
-                    selectedWeekData.projectStats.map((project, idx) => (
-                      <Table.Tr key={project.id || idx}>
-                        <Table.Td>{project.name}</Table.Td>
-                        <Table.Td>{project.hours.toFixed(2)}</Table.Td>
-                        <Table.Td>{formatDuration(project.minutes)}</Table.Td>
-                        <Table.Td>{formatCurrency(project.amount)}</Table.Td>
-                      </Table.Tr>
-                    ))
-                  )}
-                </Table.Tbody>
-              </Table>
-
+              )}
+              <Select
+                placeholder="Выберите неделю"
+                data={weekOptions}
+                value={selectedWeek || weeks[0]?.weekKey}
+                onChange={setSelectedWeek}
+                style={{ width: 300 }}
+              />
+            </Group>
+          }
+        />
+        
+        <DataTableShared.Content>
+          {selectedWeekData ? (
+            <>
+              <MantineReactTable table={weeklyTable} />
               {selectedWeekData.projectPeriodInfo && selectedWeekData.projectPeriodInfo.length > 0 && (
-                <Stack gap="md" mt="md">
+                <Stack gap="md" mt="xl">
+                  <Title order={4}>Детали по периодам</Title>
                   {selectedWeekData.projectPeriodInfo.map((projectInfo) => (
                     <Card key={projectInfo.projectId} withBorder>
-                      <Title order={4} mb="sm">
+                      <Title order={5} mb="sm">
                         {projectInfo.projectName} - Неделя {projectInfo.weekInPeriod} периода {projectInfo.periodNumber + 1}
                       </Title>
                       <Stack gap="xs">
@@ -167,59 +285,27 @@ function FinancialTable({ weeks, settings }) {
                 </Stack>
               )}
             </>
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">
+              Выберите неделю для отображения данных
+            </Text>
           )}
-        </Stack>
-      </Paper>
+        </DataTableShared.Content>
 
-      {Object.keys(projectPeriods).length > 0 && (
-        <Paper p="xl" withBorder>
-          <Title order={3} mb="md">Агрегация по периодам</Title>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Проект</Table.Th>
-                <Table.Th>Период</Table.Th>
-                <Table.Th>Недели</Table.Th>
-                <Table.Th>Отработано</Table.Th>
-                <Table.Th>Цель</Table.Th>
-                <Table.Th>Сумма</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {Object.values(projectPeriods)
-                .sort((a, b) => {
-                  if (a.projectName !== b.projectName) return a.projectName.localeCompare(b.projectName)
-                  if (a.year !== b.year) return b.year - a.year
-                  return b.periodNumber - a.periodNumber
-                })
-                .map((period) => (
-                  <Table.Tr key={`${period.projectId}-${period.year}-${period.periodNumber}`}>
-                    <Table.Td>{period.projectName}</Table.Td>
-                    <Table.Td>Период {period.periodNumber + 1} ({period.year})</Table.Td>
-                    <Table.Td>
-                      {period.weeks.map(w => `Неделя ${w.week}`).join(', ')}
-                    </Table.Td>
-                    <Table.Td>{period.totalHours.toFixed(2)} ч</Table.Td>
-                    <Table.Td>
-                      {period.goalHours !== null ? (
-                        <>
-                          {period.goalHours} ч
-                          {period.totalHours >= period.goalHours && (
-                            <Badge color="green" ml="xs" size="sm">✓</Badge>
-                          )}
-                        </>
-                      ) : (
-                        <Text c="dimmed">—</Text>
-                      )}
-                    </Table.Td>
-                    <Table.Td>{formatCurrency(period.totalAmount)}</Table.Td>
-                  </Table.Tr>
-                ))}
-            </Table.Tbody>
-          </Table>
-        </Paper>
+      </DataTableShared.Container>
+
+      {periodsTableData.length > 0 && (
+        <DataTableShared.Container>
+          <DataTableShared.Title
+            icon={<IconCurrencyDollar size={24} />}
+            title="Агрегация по периодам"
+          />
+          <DataTableShared.Content>
+            <MantineReactTable table={periodsTable} />
+          </DataTableShared.Content>
+        </DataTableShared.Container>
       )}
-    </Stack>
+    </>
   )
 }
 

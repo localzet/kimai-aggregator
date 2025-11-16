@@ -7,7 +7,8 @@ export default {
         classNames: classes,
         defaultProps: {
             radius: 'md',
-            withBorder: true
+            withBorder: true,
+            p: 'md'
         }
     })
 }

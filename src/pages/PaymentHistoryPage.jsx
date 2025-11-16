@@ -215,7 +215,7 @@ function PaymentHistoryPage() {
   }
 
   return (
-    <Stack gap="xl">
+    <Stack gap="md">
           <Group justify="space-between">
             <Title order={2}>История оплат</Title>
             <Group>

@@ -1,0 +1,39 @@
+/* Стили для графиков */
+:global(.recharts-cartesian-grid-horizontal) line,
+:global(.recharts-cartesian-grid-vertical) line {
+    stroke: var(--mantine-color-dark-4) !important;
+    stroke-dasharray: 3 3 !important;
+}
+
+:global(.recharts-text) {
+    fill: var(--mantine-color-dark-2) !important;
+    font-size: 12px !important;
+}
+
+:global(.recharts-line) {
+    filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3)) !important;
+}
+
+:global(.recharts-bar) {
+    filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.2)) !important;
+}
+
+:global(.recharts-legend-item-text) {
+    color: var(--mantine-color-dark-2) !important;
+}
+
+:global(.recharts-tooltip-wrapper) {
+    background: var(--mantine-color-dark-7) !important;
+    border: 1px solid var(--mantine-color-dark-4) !important;
+    border-radius: var(--mantine-radius-md) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+:global(.recharts-tooltip-label) {
+    color: var(--mantine-color-cyan-3) !important;
+}
+
+:global(.recharts-active-dot) {
+    filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.5)) !important;
+}
+

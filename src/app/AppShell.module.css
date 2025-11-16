@@ -1,0 +1,74 @@
+.sidebarWrapper {
+    z-index: 200;
+    margin-left: 0.75rem;
+    margin-bottom: 0.75rem;
+    margin-top: 0.75rem;
+    height: calc(
+        100dvh - 1.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+
+    background: linear-gradient(
+        135deg,
+        var(--mantine-color-dark-8) 0%,
+        var(--mantine-color-dark-7) 100%
+    );
+
+    box-shadow:
+        0 1px 1px hsl(0deg 0% 0% / 0.075),
+        0 2px 2px hsl(0deg 0% 0% / 0.075),
+        0 4px 4px hsl(0deg 0% 0% / 0.075),
+        0 8px 8px hsl(0deg 0% 0% / 0.075),
+        0 16px 16px hsl(0deg 0% 0% / 0.075);
+
+    border-radius: var(--mantine-radius-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @supports (padding: env(safe-area-inset-top)) {
+        top: env(safe-area-inset-top);
+    }
+}
+
+.sidebarWrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--mantine-radius-lg);
+    background: radial-gradient(circle at 20% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.header {
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    background-color: transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main {
+    margin-left: calc(250px + 1.5rem);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 40em) {
+    .main {
+        margin-left: 0;
+    }
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.appShellFadeIn {
+    animation: fadein 0.2s ease-out;
+}
+

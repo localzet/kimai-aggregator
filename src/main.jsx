@@ -6,6 +6,7 @@ import '@mantine/core/styles.css'
 import '@mantine/dates/styles.css'
 import '@mantine/notifications/styles.css'
 import '@mantine/charts/styles.css'
+import './theme/charts.css'
 import { theme } from './theme'
 import App from './App.jsx'
 

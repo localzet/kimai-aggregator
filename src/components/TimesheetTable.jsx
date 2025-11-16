@@ -1,22 +1,16 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import {
-  Table,
-  Paper,
-  Title,
   Select,
-  Stack,
   Text,
-  Badge,
   Group,
-  Pagination,
 } from '@mantine/core'
+import { IconTable } from '@tabler/icons-react'
+import { MantineReactTable, useMantineReactTable } from 'mantine-react-table'
 import dayjs from 'dayjs'
-
-const ITEMS_PER_PAGE = 50
+import { DataTableShared } from '../shared/ui/table'
 
 function TimesheetTable({ weeks }) {
   const [selectedWeek, setSelectedWeek] = useState(null)
-  const [page, setPage] = useState(1)
 
   const weekOptions = weeks.map(week => ({
     value: week.weekKey,
@@ -27,23 +21,6 @@ function TimesheetTable({ weeks }) {
     ? weeks.find(w => w.weekKey === selectedWeek)
     : weeks[0]
 
-  // Сбрасываем страницу при смене недели
-  useEffect(() => {
-    setPage(1)
-  }, [selectedWeek])
-
-  const paginatedEntries = useMemo(() => {
-    if (!selectedWeekData) return []
-    const start = (page - 1) * ITEMS_PER_PAGE
-    const end = start + ITEMS_PER_PAGE
-    return selectedWeekData.entries.slice(start, end)
-  }, [selectedWeekData, page])
-
-  const totalPages = useMemo(() => {
-    if (!selectedWeekData) return 0
-    return Math.ceil(selectedWeekData.entries.length / ITEMS_PER_PAGE)
-  }, [selectedWeekData])
-
   const formatDuration = (minutes) => {
     const roundedMinutes = Math.round(minutes)
     const hours = Math.floor(roundedMinutes / 60)
@@ -51,89 +28,125 @@ function TimesheetTable({ weeks }) {
     return `${hours}ч ${mins}м`
   }
 
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'begin',
+      header: 'Дата',
+      Cell: ({ cell }) => dayjs(cell.getValue()).format('DD.MM.YYYY'),
+      sortingFn: 'datetime',
+    },
+    {
+      accessorFn: (row) => row.project?.name || '',
+      id: 'project',
+      header: 'Проект',
+      Cell: ({ row }) => {
+        const projectName = row.original.project?.name
+        return projectName ? <Text>{projectName}</Text> : <Text c="dimmed">Без проекта</Text>
+      },
+    },
+    {
+      accessorFn: (row) => row.activity?.name || '',
+      id: 'activity',
+      header: 'Задача',
+      Cell: ({ row }) => {
+        const activityName = row.original.activity?.name
+        return activityName ? <Text>{activityName}</Text> : <Text c="dimmed">Без задачи</Text>
+      },
+    },
+    {
+      accessorKey: 'begin',
+      id: 'startTime',
+      header: 'Время начала',
+      Cell: ({ cell }) => dayjs(cell.getValue()).format('HH:mm'),
+    },
+    {
+      accessorKey: 'end',
+      id: 'endTime',
+      header: 'Время окончания',
+      Cell: ({ cell }) => dayjs(cell.getValue()).format('HH:mm'),
+    },
+    {
+      accessorKey: 'duration',
+      header: 'Длительность',
+      Cell: ({ cell }) => formatDuration(cell.getValue()),
+      sortingFn: 'basic',
+    },
+    {
+      accessorKey: 'description',
+      header: 'Описание',
+      Cell: ({ cell }) => {
+        const desc = cell.getValue()
+        return desc ? <Text>{desc}</Text> : <Text c="dimmed">—</Text>
+      },
+    },
+  ], [])
+
+  const tableData = useMemo(() => {
+    if (!selectedWeekData) return []
+    return selectedWeekData.entries.map((entry, idx) => ({
+      ...entry,
+      id: idx,
+    }))
+  }, [selectedWeekData])
+
+  const table = useMantineReactTable({
+    columns,
+    data: tableData,
+    getRowId: (row) => row.id?.toString() || Math.random().toString(),
+    enableGlobalFilter: true,
+    enableSorting: true,
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 50 },
+      density: 'xs',
+    },
+    mantinePaperProps: {
+      withBorder: false,
+      style: { boxShadow: 'none' },
+    },
+    mantineTableProps: {
+      striped: true,
+      highlightOnHover: true,
+    },
+  })
+
   return (
-    <Paper p="xl" withBorder>
-      <Stack gap="md">
-        <Group justify="space-between">
-          <Title order={3}>Таблица времени</Title>
-          <Select
-            placeholder="Выберите неделю"
-            data={weekOptions}
-            value={selectedWeek || weeks[0]?.weekKey}
-            onChange={setSelectedWeek}
-            style={{ width: 300 }}
-          />
-        </Group>
-
-        {selectedWeekData && (
-          <>
-            <Group>
-              <Text size="sm" c="dimmed">
-                Всего времени: <strong>{formatDuration(selectedWeekData.totalMinutes)}</strong>
-              </Text>
-              <Text size="sm" c="dimmed">
-                Всего часов: <strong>{selectedWeekData.totalHours.toFixed(2)}</strong>
-              </Text>
-            </Group>
-
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Дата</Table.Th>
-                  <Table.Th>Проект</Table.Th>
-                  <Table.Th>Задача</Table.Th>
-                  <Table.Th>Время начала</Table.Th>
-                  <Table.Th>Время окончания</Table.Th>
-                  <Table.Th>Длительность</Table.Th>
-                  <Table.Th>Описание</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {paginatedEntries.length === 0 ? (
-                  <Table.Tr>
-                    <Table.Td colSpan={7} style={{ textAlign: 'center' }}>
-                      Нет записей за эту неделю
-                    </Table.Td>
-                  </Table.Tr>
-                ) : (
-                  paginatedEntries.map((entry, idx) => (
-                    <Table.Tr key={idx}>
-                      <Table.Td>{dayjs(entry.begin).format('DD.MM.YYYY')}</Table.Td>
-                      <Table.Td>
-                        {entry.project?.name || <Text c="dimmed">Без проекта</Text>}
-                      </Table.Td>
-                      <Table.Td>
-                        {entry.activity?.name || <Text c="dimmed">Без задачи</Text>}
-                      </Table.Td>
-                      <Table.Td>{dayjs(entry.begin).format('HH:mm')}</Table.Td>
-                      <Table.Td>{dayjs(entry.end).format('HH:mm')}</Table.Td>
-                      <Table.Td>{formatDuration(entry.duration)}</Table.Td>
-                      <Table.Td>
-                        {entry.description || <Text c="dimmed">—</Text>}
-                      </Table.Td>
-                    </Table.Tr>
-                  ))
-                )}
-              </Table.Tbody>
-            </Table>
-
-            {totalPages > 1 && (
-              <Group justify="center" mt="md">
-                <Pagination
-                  value={page}
-                  onChange={setPage}
-                  total={totalPages}
-                  size="sm"
-                />
+    <DataTableShared.Container>
+      <DataTableShared.Title
+        icon={<IconTable size={24} />}
+        title="Таблица времени"
+        actions={
+          <Group gap="md">
+            {selectedWeekData && (
+              <>
                 <Text size="sm" c="dimmed">
-                  Показано {paginatedEntries.length} из {selectedWeekData.entries.length} записей
+                  Всего времени: <strong>{formatDuration(selectedWeekData.totalMinutes)}</strong>
                 </Text>
-              </Group>
+                <Text size="sm" c="dimmed">
+                  Всего часов: <strong>{selectedWeekData.totalHours.toFixed(2)}</strong>
+                </Text>
+              </>
             )}
-          </>
+            <Select
+              placeholder="Выберите неделю"
+              data={weekOptions}
+              value={selectedWeek || weeks[0]?.weekKey}
+              onChange={setSelectedWeek}
+              style={{ width: 300 }}
+            />
+          </Group>
+        }
+      />
+      <DataTableShared.Content>
+        {selectedWeekData ? (
+          <MantineReactTable table={table} />
+        ) : (
+          <Text c="dimmed" ta="center" py="xl">
+            Выберите неделю для отображения данных
+          </Text>
         )}
-      </Stack>
-    </Paper>
+      </DataTableShared.Content>
+    </DataTableShared.Container>
   )
 }
 

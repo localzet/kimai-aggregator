@@ -31,13 +31,14 @@ function FinancialPage() {
   }
 
   return (
-    <Stack gap="md">
+    <Stack>
       <Group justify="flex-end">
         <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
         <Button onClick={reload} loading={loading || syncing}>
           Обновить данные
         </Button>
       </Group>
+      
       <FinancialTable weeks={weeks} settings={settings} />
     </Stack>
   )

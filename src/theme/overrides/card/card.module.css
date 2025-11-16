@@ -14,5 +14,32 @@
         var(--mantine-color-dark-7) 100%
     );
     animation: fadeIn 200ms linear both;
+    border: 1px solid var(--mantine-color-dark-4);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.24s ease-in-out;
+}
+
+.root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--mantine-color-cyan-4), var(--mantine-color-cyan-8));
+    opacity: 0;
+    transition: 0.24s ease-in-out;
+}
+
+.root:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--mantine-color-cyan-5);
+}
+
+.root:hover::before {
+    opacity: 1;
 }
 

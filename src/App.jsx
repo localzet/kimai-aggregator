@@ -11,6 +11,7 @@ import StatisticsPage from './pages/StatisticsPage'
 import StatusIndicator from './components/StatusIndicator'
 import { useSettings } from './hooks/useSettings'
 import { useSyncStatus } from './hooks/useSyncStatus'
+import classes from './app/AppShell.module.css'
 
 function App() {
   const { settings, updateSettings } = useSettings()
@@ -22,21 +23,22 @@ function App() {
 
   return (
     <AppShell
+      className={classes.appShellFadeIn}
       navbar={{
         width: 250,
         breakpoint: 'sm',
         collapsed: { mobile: !opened },
       }}
-      padding="md"
+      padding={0}
     >
-      <AppShell.Header hiddenFrom="sm">
+      <AppShell.Header className={classes.header} hiddenFrom="sm">
         <Group h="100%" px="md">
           <Burger opened={opened} onClick={toggle} size="sm" />
           <Title order={3}>Kimai Aggregator</Title>
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">
+      <AppShell.Navbar className={classes.sidebarWrapper} p="md">
         <NavLink
           label="Дашборд"
           leftSection={<IconDashboard size="1rem" />}
@@ -80,7 +82,7 @@ function App() {
         />
       </AppShell.Navbar>
 
-      <AppShell.Main>
+      <AppShell.Main className={classes.main} p="md">
         {activePage === 'settings' && <SettingsPage settings={settings} onUpdate={updateSettings} />}
         {activePage === 'dashboard' && canAccessData && <DashboardPage />}
         {activePage === 'timesheet' && canAccessData && <TimesheetPage />}

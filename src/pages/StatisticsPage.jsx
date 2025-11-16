@@ -232,7 +232,7 @@ function StatisticsPage() {
   }
 
   return (
-    <Stack gap="xl">
+    <Stack gap="md">
       <Group justify="space-between">
         <Title order={2}>Статистика</Title>
         <Group>
@@ -285,7 +285,7 @@ function StatisticsPage() {
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
             <Text size="sm" c="dimmed" mb="xs">Ставка за час</Text>
-            <Text size="xl" fw={700}>{formatCurrency(totalStats.avgAmountPerHour)}</Text>
+            <Text size="xl" fw={700}>{formatCurrency(settings.ratePerMinute * 60)}</Text>
           </Card>
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
@@ -313,7 +313,7 @@ function StatisticsPage() {
                   data={chartData}
                   dataKey="weekKey"
                   series={[
-                    { name: 'hours', label: 'Часы', color: 'blue.6' },
+                    { name: 'hours', label: 'Часы', color: 'cyan.6' },
                   ]}
                   curveType="natural"
                   tickLine="xy"
@@ -329,7 +329,7 @@ function StatisticsPage() {
                   data={chartData}
                   dataKey="weekKey"
                   series={[
-                    { name: 'amount', label: 'Сумма (₽)', color: 'green.6' },
+                    { name: 'amount', label: 'Сумма (₽)', color: 'cyan.5' },
                   ]}
                   curveType="natural"
                   tickLine="xy"
@@ -351,7 +351,7 @@ function StatisticsPage() {
                   data={projectChartData}
                   dataKey="name"
                   series={[
-                    { name: 'hours', label: 'Часы', color: 'blue.6' },
+                    { name: 'hours', label: 'Часы', color: 'cyan.6' },
                   ]}
                   tickLine="y"
                   gridAxis="y"
@@ -366,7 +366,7 @@ function StatisticsPage() {
                   data={projectChartData}
                   dataKey="name"
                   series={[
-                    { name: 'amount', label: 'Сумма (₽)', color: 'green.6' },
+                    { name: 'amount', label: 'Сумма (₽)', color: 'cyan.5' },
                   ]}
                   tickLine="y"
                   gridAxis="y"
