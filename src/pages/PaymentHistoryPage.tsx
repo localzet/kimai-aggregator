@@ -20,29 +20,23 @@ import StatusIndicator from '../components/StatusIndicator'
 import { useSettings } from '../hooks/useSettings'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { useSyncStatus } from '../hooks/useSyncStatus'
+import { WeekData } from '../services/kimaiApi'
 import dayjs from 'dayjs'
 
 function PaymentHistoryPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
-  const [selectedProject, setSelectedProject] = useState(null)
+  const [selectedProject, setSelectedProject] = useState<string | null>(null)
   
   const currentStatus = syncing ? 'updating' : syncStatus.status
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency: 'RUB',
       minimumFractionDigits: 2,
     }).format(amount)
-  }
-
-  const formatDuration = (minutes) => {
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
   }
 
   // Агрегация по неделям для всех проектов
@@ -53,15 +47,29 @@ function PaymentHistoryPage() {
       weekNumber: week.week,
       startDate: week.startDate,
       endDate: week.endDate,
-      totalAmount: week.totalAmount,
-      totalHours: week.totalHours,
+      totalAmount: week.totalAmount || 0,
+      totalHours: week.totalHours || 0,
       projects: week.projectStats || [],
     }))
   }, [weeks])
 
   // Агрегация по периодам для проектов с периодической оплатой
   const projectPeriods = useMemo(() => {
-    const periods = {}
+    const periods: Record<string, {
+      projectId: number
+      projectName: string
+      periodNumber: number
+      year: number
+      weeks: Array<{
+        week: number
+        weekKey: string
+        hours: number
+        amount: number
+      }>
+      totalHours: number
+      totalAmount: number
+      goalHours: number | null
+    }> = {}
     
     weeks.forEach(week => {
       if (week.projectPeriodInfo && week.projectPeriodInfo.length > 0) {
@@ -109,7 +117,7 @@ function PaymentHistoryPage() {
 
   // Получаем уникальные проекты для фильтра
   const allProjects = useMemo(() => {
-    const projectsMap = new Map()
+    const projectsMap = new Map<number, { id: number; name: string }>()
     weeks.forEach(w => {
       if (w.projectStats) {
         w.projectStats.forEach(p => {
@@ -161,8 +169,7 @@ function PaymentHistoryPage() {
     )
   }
 
-
-  const exportToCSV = (data, filename) => {
+  const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) return
 
     const headers = Object.keys(data[0])
@@ -216,34 +223,34 @@ function PaymentHistoryPage() {
 
   return (
     <Stack gap="md">
-          <Group justify="space-between">
-            <Title order={2}>История оплат</Title>
-            <Group>
-              <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
-              <Select
-                placeholder="Все проекты"
-                clearable
-                data={allProjects.map(p => ({ value: p.id?.toString(), label: p.name }))}
-                value={selectedProject}
-                onChange={setSelectedProject}
-                style={{ width: 250 }}
-              />
-              <Menu>
-                <Menu.Target>
-                  <Button leftSection={<IconDownload size="1rem" />} variant="light">
-                    Экспорт
-                  </Button>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  <Menu.Item onClick={handleExportWeekly}>Экспорт по неделям (CSV)</Menu.Item>
-                  <Menu.Item onClick={handleExportPeriods}>Экспорт по периодам (CSV)</Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-              <Button onClick={reload} loading={loading || syncing}>
-                Обновить
+      <Group justify="space-between">
+        <Title order={2}>История оплат</Title>
+        <Group>
+          <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
+          <Select
+            placeholder="Все проекты"
+            clearable
+            data={allProjects.map(p => ({ value: p.id?.toString(), label: p.name }))}
+            value={selectedProject}
+            onChange={setSelectedProject}
+            style={{ width: 250 }}
+          />
+          <Menu>
+            <Menu.Target>
+              <Button leftSection={<IconDownload size="1rem" />} variant="light">
+                Экспорт
               </Button>
-            </Group>
-          </Group>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item onClick={handleExportWeekly}>Экспорт по неделям (CSV)</Menu.Item>
+              <Menu.Item onClick={handleExportPeriods}>Экспорт по периодам (CSV)</Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+          <Button onClick={reload} loading={loading || syncing}>
+            Обновить
+          </Button>
+        </Group>
+      </Group>
 
       <Tabs defaultValue="weekly">
         <Tabs.List>

@@ -2,76 +2,114 @@ import {
     ActionIcon,
     Box,
     CardSection,
+    CardSectionProps,
     Group,
     Stack,
     Text,
-    Title,
-    CardSectionProps
+    Title
 } from '@mantine/core'
-import { ReactNode } from 'react'
+import { forwardRef, ReactNode } from 'react'
+import { motion } from 'motion/react'
 import classes from './table.module.css'
 
-interface TableTitleProps extends CardSectionProps {
-    title: string
-    description?: string
+export interface TableTitleProps extends Omit<CardSectionProps, 'c' | 'fw' | 'size' | 'tt'> {
     actions?: ReactNode
-    icon?: ReactNode
-    withBorder?: boolean
+    description?: string
+    icon: ReactNode
+    title: ReactNode
 }
 
-export function TableTitle({ 
-    title, 
-    description, 
-    style, 
-    actions, 
-    icon, 
-    withBorder = true, 
-    ...props 
-}: TableTitleProps) {
-    return (
+export const TableTitle = forwardRef<HTMLDivElement, TableTitleProps>(
+    ({ title, description, style, actions, withBorder = true, icon, ...props }, ref) => (
         <CardSection
             className={classes.card}
             inheritPadding
             py="md"
+            ref={ref}
             style={{
                 ...style
             }}
             withBorder={withBorder}
             {...props}
         >
-            <Box className={classes.headerWrapper}>
-                <Box className={classes.contentSection}>
-                    <Group align="center" gap="md" wrap="nowrap">
-                        {icon && (
-                            <ActionIcon
-                                className={classes.actionIcon}
-                                color="cyan"
-                                size="input-md"
-                                variant="light"
+            <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: -10 }}
+                style={{ position: 'relative', zIndex: 1 }}
+                transition={{ duration: 0.5, ease: [0, 0.71, 0.2, 1.01] }}
+            >
+                <Box className={classes.headerWrapper}>
+                    <Box className={classes.contentSection}>
+                        <Group align="center" gap="md" wrap="nowrap">
+                            <motion.div
+                                animate={{ opacity: 1, y: 0 }}
+                                initial={{ opacity: 0, y: -10 }}
+                                transition={{
+                                    duration: 0.5,
+                                    ease: [0, 0.71, 0.2, 1.01]
+                                }}
                             >
-                                {icon}
-                            </ActionIcon>
-                        )}
+                                <ActionIcon
+                                    className={classes.actionIcon}
+                                    color="cyan"
+                                    size="input-md"
+                                    variant="light"
+                                >
+                                    {icon}
+                                </ActionIcon>
+                            </motion.div>
 
-                        <Stack gap={0}>
-                            <Title order={4} pt={0}>
-                                {title}
-                            </Title>
-                            {description && (
-                                <Text c="dimmed" fz="sm">
-                                    {description}
-                                </Text>
-                            )}
-                        </Stack>
-                    </Group>
+                            <Stack gap={0}>
+                                <motion.div
+                                    animate={{ opacity: 1, y: 0 }}
+                                    initial={{ opacity: 0, y: -10 }}
+                                    transition={{
+                                        duration: 0.5,
+                                        ease: [0, 0.71, 0.2, 1.01]
+                                    }}
+                                >
+                                    <Title order={4} pt={0}>
+                                        {title}
+                                    </Title>
+                                </motion.div>
+                                {description && (
+                                    <motion.div
+                                        animate={{ opacity: 1, y: 0 }}
+                                        initial={{ opacity: 0, y: -10 }}
+                                        transition={{
+                                            duration: 0.5,
+                                            ease: [0, 0.71, 0.2, 1.01]
+                                        }}
+                                    >
+                                        <Text c="dimmed" fz="sm">
+                                            {description}
+                                        </Text>
+                                    </motion.div>
+                                )}
+                            </Stack>
+                        </Group>
+                    </Box>
+
+                    {actions && (
+                        <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className={classes.actionsSection}
+                            initial={{ opacity: 0, y: -10 }}
+                            transition={{
+                                duration: 0.5,
+                                ease: [0, 0.71, 0.2, 1.01]
+                            }}
+                        >
+                            <Group align="flex-end" gap="sm" wrap="nowrap">
+                                {actions}
+                            </Group>
+                        </motion.div>
+                    )}
                 </Box>
-                {actions && (
-                    <Group align="flex-end" gap="sm" wrap="nowrap">
-                        {actions}
-                    </Group>
-                )}
-            </Box>
+            </motion.div>
         </CardSection>
     )
-}
+)
+
+TableTitle.displayName = 'TableTitle'
 

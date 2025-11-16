@@ -7,7 +7,7 @@ interface TableContainerProps extends CardProps {
 
 export function TableContainer({ children, ...props }: TableContainerProps) {
     return (
-        <Card {...props} bg="var(--mantine-color-body)" p={0}>
+        <Card {...props} bg="var(--mantine-color-body)">
             {children}
         </Card>
     )

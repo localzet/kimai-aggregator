@@ -14,17 +14,22 @@ import {
   Alert,
   Accordion,
   FileButton,
-  Badge,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { useForm } from '@mantine/form'
-import { KimaiApi } from '../services/kimaiApi'
+import { KimaiApi, Project } from '../services/kimaiApi'
+import { Settings } from '../hooks/useSettings'
 import ProjectSettingsForm from './ProjectSettingsForm'
 
-function SettingsForm({ settings, onUpdate }) {
-  const [projects, setProjects] = useState([])
+interface SettingsFormProps {
+  settings: Settings
+  onUpdate: (settings: Settings) => void
+}
+
+export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) {
+  const [projects, setProjects] = useState<Project[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   const [importingFromUrl, setImportingFromUrl] = useState(false)
   const [syncUrl, setSyncUrl] = useState(settings.syncUrl || '')
@@ -53,7 +58,7 @@ function SettingsForm({ settings, onUpdate }) {
       const projectsData = await api.getProjects()
       setProjects(projectsData)
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки проектов')
       console.error('Error loading projects:', err)
       setProjects([])
     } finally {
@@ -79,7 +84,7 @@ function SettingsForm({ settings, onUpdate }) {
   }, [form.values.apiUrl, form.values.apiKey, form.values.useProxy])
 
 
-  const getProjectSettings = (projectId) => {
+  const getProjectSettings = (projectId: number) => {
     return settings.projectSettings?.[projectId] || {
       enabled: false,
       hasWeeklyGoal: false,
@@ -93,7 +98,7 @@ function SettingsForm({ settings, onUpdate }) {
     }
   }
 
-  const updateProjectSetting = (projectId, field, value) => {
+  const updateProjectSetting = (projectId: number, field: string, value: unknown) => {
     const currentSettings = { ...settings }
     if (!currentSettings.projectSettings) {
       currentSettings.projectSettings = {}
@@ -101,12 +106,15 @@ function SettingsForm({ settings, onUpdate }) {
     if (!currentSettings.projectSettings[projectId]) {
       currentSettings.projectSettings[projectId] = getProjectSettings(projectId)
     }
-    currentSettings.projectSettings[projectId][field] = value
+    currentSettings.projectSettings[projectId] = {
+      ...currentSettings.projectSettings[projectId],
+      [field]: value,
+    }
     onUpdate(currentSettings)
   }
 
-  const handleSubmit = (values) => {
-    const newSettings = {
+  const handleSubmit = (values: typeof form.values) => {
+    const newSettings: Settings = {
       ...settings,
       apiUrl: values.apiUrl,
       apiKey: values.apiKey,
@@ -135,7 +143,7 @@ function SettingsForm({ settings, onUpdate }) {
       if (!response.ok) {
         throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`)
       }
-      const imported = await response.json()
+      const imported = await response.json() as Settings
       onUpdate(imported)
       if (imported.apiUrl && imported.apiKey) {
         form.setFieldValue('apiUrl', imported.apiUrl)
@@ -147,10 +155,11 @@ function SettingsForm({ settings, onUpdate }) {
         color: 'green',
       })
     } catch (err) {
-      setError('Ошибка при импорте из URL: ' + err.message)
+      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
+      setError('Ошибка при импорте из URL: ' + errorMessage)
       notifications.show({
         title: 'Ошибка импорта',
-        message: err.message,
+        message: errorMessage,
         color: 'red',
       })
     } finally {
@@ -176,11 +185,13 @@ function SettingsForm({ settings, onUpdate }) {
     })
   }
 
-  const handleImport = (file) => {
+  const handleImport = (file: File | null) => {
+    if (!file) return
+    
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const imported = JSON.parse(e.target.result)
+        const imported = JSON.parse(e.target?.result as string) as Settings
         onUpdate(imported)
         // Обновляем форму и перезагружаем проекты после импорта
         if (imported.apiUrl && imported.apiKey) {
@@ -194,10 +205,11 @@ function SettingsForm({ settings, onUpdate }) {
           color: 'green',
         })
       } catch (err) {
-        setError('Ошибка при импорте файла: ' + err.message)
+        const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
+        setError('Ошибка при импорте файла: ' + errorMessage)
         notifications.show({
           title: 'Ошибка импорта',
-          message: err.message,
+          message: errorMessage,
           color: 'red',
         })
       }
@@ -262,7 +274,7 @@ function SettingsForm({ settings, onUpdate }) {
             <TextInput
               placeholder="https://example.com/settings.json"
               value={syncUrl}
-              onChange={(e) => setSyncUrl(e.target.value)}
+              onChange={(e) => setSyncUrl(e.currentTarget.value)}
               style={{ flex: 1 }}
             />
             <Button
@@ -339,4 +351,3 @@ function SettingsForm({ settings, onUpdate }) {
   )
 }
 
-export default SettingsForm

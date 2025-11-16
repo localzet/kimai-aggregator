@@ -15,21 +15,25 @@ function processData(
   ratePerMinute: number,
   projectSettings: Settings['projectSettings']
 ): WeekData[] {
-  const projectsMap: Record<number, Project> = {}
+  const projectsMap: Record<string, Project> = {}
   projectsData.forEach(p => {
-    projectsMap[p.id] = p
+    projectsMap[p.id.toString()] = p
   })
 
-  const activitiesMap: Record<number, Activity> = {}
+  const activitiesMap: Record<string, Activity> = {}
   activitiesData.forEach(a => {
-    activitiesMap[a.id] = a
+    activitiesMap[a.id.toString()] = a
   })
 
-  const enrichedTimesheets = timesheetsData.map(entry => ({
-    ...entry,
-    project: entry.project ? projectsMap[entry.project] : undefined,
-    activity: entry.activity ? activitiesMap[entry.activity] : undefined,
-  }))
+  const enrichedTimesheets = timesheetsData.map(entry => {
+    const projectId = typeof entry.project === 'number' ? entry.project.toString() : (entry.project as Project)?.id?.toString()
+    const activityId = typeof entry.activity === 'number' ? entry.activity.toString() : (entry.activity as Activity)?.id?.toString()
+    return {
+      ...entry,
+      project: projectId ? projectsMap[projectId] : (typeof entry.project === 'object' ? entry.project : undefined),
+      activity: activityId ? activitiesMap[activityId] : (typeof entry.activity === 'object' ? entry.activity : undefined),
+    }
+  })
 
   const groupedWeeks = groupByWeek(enrichedTimesheets)
   const weeksWithFinancials = calculateFinancials(

@@ -79,8 +79,8 @@ class Database {
         const filtered = allTimesheets.filter(entry => {
           if (!entry.begin) return false
           const beginDate = new Date(entry.begin)
-          const start = startDate instanceof dayjs ? startDate.toDate() : new Date(startDate)
-          const end = endDate instanceof dayjs ? endDate.toDate() : new Date(endDate)
+          const start = dayjs.isDayjs(startDate) ? startDate.toDate() : new Date(startDate as string)
+          const end = dayjs.isDayjs(endDate) ? endDate.toDate() : new Date(endDate as string)
           return beginDate >= start && beginDate <= end
         })
         resolve(filtered)

@@ -7,10 +7,6 @@ export default {
             striped: true
         },
         styles: {
-            root: {
-                borderRadius: 'var(--mantine-radius-md)',
-                overflow: 'hidden'
-            },
             thead: {
                 background: 'linear-gradient(135deg, var(--mantine-color-dark-7) 0%, var(--mantine-color-dark-6) 100%)',
                 borderBottom: '1px solid var(--mantine-color-dark-4)'

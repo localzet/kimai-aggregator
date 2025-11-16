@@ -12,8 +12,8 @@ interface WeekProgressProps {
   settings: Settings
 }
 
-const MotionCard = motion(Card)
-const MotionPaper = motion(Paper)
+const MotionCard = motion.div
+const MotionPaper = motion.div
 
 function WeekProgress({ week, settings }: WeekProgressProps) {
   const formatDuration = (minutes: number) => {
@@ -61,12 +61,12 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
 
   return (
     <MotionPaper
-      p="xl"
-      withBorder
+      style={{ padding: 'var(--mantine-spacing-xl)' }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
+      <Paper p="xl" withBorder>
       <Title order={3} mb="md">Прогресс текущей недели</Title>
       
       <Stack gap="md">
@@ -79,8 +79,9 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
           </Text>
         </Group>
 
-        <MotionCard withBorder p="md" variants={cardVariants}>
-          <Stack gap="sm">
+        <MotionCard variants={cardVariants}>
+          <Card withBorder p="md">
+            <Stack gap="sm">
             <Group justify="space-between">
               <Text fw={500}>Всего отработано:</Text>
               <Text fw={700} size="lg">{formatDuration(week.totalMinutes)}</Text>
@@ -92,9 +93,10 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
             <Group justify="space-between">
               <Text fw={500}>Сумма за неделю:</Text>
               <Text fw={700} size="lg" c="green">{formatCurrency(week.totalAmount || 0)}</Text>
-            </Group>
-          </Stack>
-        </MotionCard>
+                    </Group>
+                  </Stack>
+                  </Card>
+                </MotionCard>
 
         {week.projectPeriodInfo && week.projectPeriodInfo.length > 0 && (
           <Stack gap="md">
@@ -105,12 +107,11 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
               return (
                 <MotionCard
                   key={projectInfo.projectId}
-                  withBorder
-                  p="md"
                   variants={cardVariants}
                   custom={index}
                 >
-                  <Title order={4} mb="md">{projectInfo.projectName}</Title>
+                  <Card withBorder p="md">
+                    <Title order={4} mb="md">{projectInfo.projectName}</Title>
                   <Stack gap="sm">
                     <Group justify="space-between">
                       <Text>Отработано:</Text>
@@ -130,14 +131,14 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
                           mt="sm"
                         />
                         
-                        {projectInfo.remainingHours !== null && projectInfo.remainingHours > 0 ? (
+                        {projectInfo.remainingHours !== null && projectInfo.remainingHours !== undefined && projectInfo.remainingHours > 0 ? (
                           <Group justify="space-between" mt="sm">
                             <Text c="red" fw={500}>Осталось отработать:</Text>
                             <Badge color="red" size="lg">
                               {formatDuration(Math.round(projectInfo.remainingHours * 60))}
                             </Badge>
                           </Group>
-                        ) : projectInfo.overGoal !== null && projectInfo.overGoal > 0 ? (
+                        ) : projectInfo.overGoal !== null && projectInfo.overGoal !== undefined && projectInfo.overGoal > 0 ? (
                           <Group justify="space-between" mt="sm">
                             <Text c="green" fw={500}>Перевыполнение:</Text>
                             <Badge color="green" size="lg">
@@ -153,12 +154,14 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
                       <Text fw={500} size="lg">{formatCurrency(projectInfo.weeklyAmount)}</Text>
                     </Group>
                   </Stack>
-                </MotionCard>
+                </Card>
+              </MotionCard>
               )
             })}
           </Stack>
         )}
       </Stack>
+      </Paper>
     </MotionPaper>
   )
 }

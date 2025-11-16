@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Select,
   Text,
@@ -133,14 +133,17 @@ function FinancialTable({ weeks, settings }: FinancialTableProps) {
     getRowId: (row) => row.id?.toString() || Math.random().toString(),
     enableGlobalFilter: true,
     enableSorting: true,
+    enableSortingRemoval: true,
     enablePagination: true,
+    enableColumnResizing: true,
+    enableFullScreenToggle: true,
     initialState: {
-      pagination: { pageSize: 25 },
+      pagination: { pageIndex: 0, pageSize: 25 },
       density: 'xs',
     },
     mantinePaperProps: {
       style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
-      withBorder: false
+      withBorder: false,
     },
     mantineTableProps: {
       striped: true,

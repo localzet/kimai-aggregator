@@ -30,8 +30,7 @@ function StatisticsPage() {
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
 
-  // Все хуки должны быть вызваны до условных return
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
       currency: 'RUB',
@@ -39,17 +38,10 @@ function StatisticsPage() {
     }).format(amount)
   }
 
-  const formatDuration = (minutes) => {
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
-
   // Общая статистика
   const totalStats = useMemo(() => {
     const totalMinutes = weeks.reduce((sum, week) => sum + week.totalMinutes, 0)
-    const totalAmount = weeks.reduce((sum, week) => sum + week.totalAmount, 0)
+    const totalAmount = weeks.reduce((sum, week) => sum + (week.totalAmount || 0), 0)
     const weeksCount = weeks.length
     const avgHoursPerWeek = weeksCount > 0 ? (totalMinutes / 60) / weeksCount : 0
     const avgAmountPerWeek = weeksCount > 0 ? totalAmount / weeksCount : 0
@@ -68,10 +60,18 @@ function StatisticsPage() {
 
   // Статистика по проектам
   const projectStats = useMemo(() => {
-    const stats = {}
+    const stats: Record<number, {
+      id: number | null
+      name: string
+      totalMinutes: number
+      totalHours: number
+      totalAmount: number
+      weeksCount: number
+    }> = {}
+    
     weeks.forEach(week => {
-      week.projectStats.forEach(project => {
-        if (!stats[project.id]) {
+      week.projectStats?.forEach(project => {
+        if (project.id && !stats[project.id]) {
           stats[project.id] = {
             id: project.id,
             name: project.name,
@@ -81,10 +81,12 @@ function StatisticsPage() {
             weeksCount: 0,
           }
         }
-        stats[project.id].totalMinutes += project.minutes
-        stats[project.id].totalHours += project.hours
-        stats[project.id].totalAmount += project.amount
-        stats[project.id].weeksCount += 1
+        if (project.id) {
+          stats[project.id].totalMinutes += project.minutes
+          stats[project.id].totalHours += project.hours
+          stats[project.id].totalAmount += project.amount
+          stats[project.id].weeksCount += 1
+        }
       })
     })
 
@@ -96,7 +98,17 @@ function StatisticsPage() {
 
   // Статистика по периодам
   const periodStats = useMemo(() => {
-    const stats = {}
+    const stats: Record<string, {
+      projectId: number
+      projectName: string
+      periodNumber: number
+      year: number
+      totalHours: number
+      totalAmount: number
+      goalHours: number | null
+      weeksCount: number
+    }> = {}
+    
     weeks.forEach(week => {
       if (week.projectPeriodInfo) {
         week.projectPeriodInfo.forEach(info => {
@@ -140,8 +152,8 @@ function StatisticsPage() {
         week: `Неделя ${week.week}`,
         weekKey: `${week.year}-W${week.week}`,
         weekLabel: `Неделя ${week.week}, ${week.year}`,
-        hours: week.totalHours,
-        amount: week.totalAmount,
+        hours: week.totalHours || 0,
+        amount: week.totalAmount || 0,
         date: week.startDate ? dayjs(week.startDate).format('DD.MM') : '',
       }))
   }, [weeks])
@@ -155,7 +167,7 @@ function StatisticsPage() {
     }))
   }, [projectStats])
 
-  const exportToCSV = (data, filename) => {
+  const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) return
 
     const headers = Object.keys(data[0])
@@ -201,8 +213,8 @@ function StatisticsPage() {
       'Период': `Период ${p.periodNumber + 1} (${p.year})`,
       'Недель': p.weeksCount,
       'Отработано (ч)': p.totalHours.toFixed(2),
-      'Цель (ч)': p.goalHours > 0 ? p.goalHours.toFixed(2) : '',
-      'Выполнение (%)': p.goalHours > 0
+      'Цель (ч)': p.goalHours && p.goalHours > 0 ? p.goalHours.toFixed(2) : '',
+      'Выполнение (%)': p.goalHours && p.goalHours > 0
         ? ((p.totalHours / p.goalHours) * 100).toFixed(2)
         : '',
       'Сумма': p.totalAmount.toFixed(2),
@@ -261,7 +273,7 @@ function StatisticsPage() {
             <Text size="sm" c="dimmed" mb="xs">Всего часов</Text>
             <Text size="xl" fw={700}>{totalStats.totalHours.toFixed(2)}</Text>
             <Text size="sm" c="dimmed" mt="xs">
-              {formatDuration(totalStats.totalMinutes)}
+              {Math.floor(totalStats.totalMinutes / 60)}ч {Math.round(totalStats.totalMinutes % 60)}м
             </Text>
           </Card>
         </Grid.Col>
@@ -460,7 +472,7 @@ function StatisticsPage() {
                   return a.projectName.localeCompare(b.projectName)
                 })
                 .map((period, idx) => {
-                  const completion = period.goalHours > 0
+                  const completion = period.goalHours && period.goalHours > 0
                     ? (period.totalHours / period.goalHours) * 100
                     : null
                   return (
@@ -474,7 +486,7 @@ function StatisticsPage() {
                       <Table.Td>{period.weeksCount}</Table.Td>
                       <Table.Td>{period.totalHours.toFixed(2)} ч</Table.Td>
                       <Table.Td>
-                        {period.goalHours > 0 ? (
+                        {period.goalHours && period.goalHours > 0 ? (
                           `${period.goalHours.toFixed(2)} ч`
                         ) : (
                           <Text c="dimmed">—</Text>

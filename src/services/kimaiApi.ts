@@ -114,7 +114,7 @@ export class KimaiApi {
       ...options.headers,
     }
     
-    if (this.useProxy && import.meta.env.DEV) {
+    if (this.useProxy && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
       // Используем прокси только в dev режиме
       // Прокси настроен на конкретный URL в vite.config.ts
       // endpoint уже содержит /api, поэтому просто добавляем /api/proxy
@@ -274,8 +274,9 @@ export function calculateFinancials(
     const projectPeriodInfo: Record<number, ProjectPeriodInfo> = {}
     
     week.entries.forEach(entry => {
-      const projectId = entry.project?.id
-      const projectName = entry.project?.name || 'Без проекта'
+      const project = typeof entry.project === 'object' ? entry.project : null
+      const projectId = project?.id
+      const projectName = project?.name || 'Без проекта'
       const projectKey = projectId ? `project-${projectId}` : 'no-project'
       
       if (!projectStats[projectKey]) {

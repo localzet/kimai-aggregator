@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Stack,
   Title,
@@ -8,17 +7,24 @@ import {
   TextInput,
   Button,
   Group,
-  Text,
   ActionIcon,
 } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { IconTrash, IconPlus } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import { Project } from '../services/kimaiApi'
+import { Settings } from '../hooks/useSettings'
 
 dayjs.extend(isoWeek)
 
-function ProjectSettingsForm({ project, settings, onUpdate }) {
+interface ProjectSettingsFormProps {
+  project: Project
+  settings: Settings
+  onUpdate: (settings: Settings) => void
+}
+
+export default function ProjectSettingsForm({ project, settings, onUpdate }: ProjectSettingsFormProps) {
   const projectSettings = settings.projectSettings?.[project.id] || {
     enabled: false,
     hasWeeklyGoal: false,
@@ -31,7 +37,7 @@ function ProjectSettingsForm({ project, settings, onUpdate }) {
     stages: [],
   }
 
-  const updateSetting = (field, value) => {
+  const updateSetting = (field: string, value: unknown) => {
     const currentSettings = { ...settings }
     if (!currentSettings.projectSettings) {
       currentSettings.projectSettings = {}
@@ -39,7 +45,10 @@ function ProjectSettingsForm({ project, settings, onUpdate }) {
     if (!currentSettings.projectSettings[project.id]) {
       currentSettings.projectSettings[project.id] = { ...projectSettings }
     }
-    currentSettings.projectSettings[project.id][field] = value
+    currentSettings.projectSettings[project.id] = {
+      ...currentSettings.projectSettings[project.id],
+      [field]: value,
+    }
     onUpdate(currentSettings)
   }
 
@@ -53,13 +62,13 @@ function ProjectSettingsForm({ project, settings, onUpdate }) {
     updateSetting('stages', newStages)
   }
 
-  const removeStage = (index) => {
-    const newStages = projectSettings.stages.filter((_, i) => i !== index)
+  const removeStage = (index: number) => {
+    const newStages = (projectSettings.stages || []).filter((_, i) => i !== index)
     updateSetting('stages', newStages)
   }
 
-  const updateStage = (index, field, value) => {
-    const newStages = [...projectSettings.stages]
+  const updateStage = (index: number, field: string, value: unknown) => {
+    const newStages = [...(projectSettings.stages || [])]
     newStages[index] = { ...newStages[index], [field]: value }
     updateSetting('stages', newStages)
   }
@@ -204,6 +213,4 @@ function ProjectSettingsForm({ project, settings, onUpdate }) {
     </Stack>
   )
 }
-
-export default ProjectSettingsForm
 
