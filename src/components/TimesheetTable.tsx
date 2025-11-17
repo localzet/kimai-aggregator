@@ -51,6 +51,13 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       },
       id: 'project',
       header: 'Проект',
+      size: 200,
+      mantineTableBodyCellProps: {
+        style: {
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+        },
+      },
       Cell: ({ row }) => {
         const project = typeof row.original.project === 'object' ? row.original.project : null
         const projectName = project?.name
@@ -64,11 +71,20 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       },
       id: 'activity',
       header: 'Задача',
+      size: 300,
+      mantineTableBodyCellProps: {
+        style: {
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+        },
+      },
       Cell: ({ row }) => {
         const activity = typeof row.original.activity === 'object' ? row.original.activity : null
         const activityName = activity?.name
         return activityName ? <Text>{activityName}</Text> : <Text c="dimmed">Без задачи</Text>
       },
+      columnDefType: 'data',
+      enableHiding: true,
     },
     {
       accessorKey: 'begin',
@@ -91,11 +107,32 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
     {
       accessorKey: 'description',
       header: 'Описание',
+      size: 300,
+      grow: true,
+      mantineTableBodyCellProps: {
+        style: {
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
+        },
+      },
       Cell: ({ cell }) => {
         const desc = cell.getValue() as string | undefined
         return desc ? <Text>{desc}</Text> : <Text c="dimmed">—</Text>
       },
     },
+    {
+      accessorFn: (row) => row.tags?.join(', ') || '',
+      id: 'tags',
+      size: 250,
+      header: 'Теги',
+      Cell: ({ row }) => {
+        const tags = row.original.tags
+        return tags && tags.length > 0
+          ? <Text>{tags.join(', ')}</Text>
+          : <Text c="dimmed">—</Text>
+      },
+    },
+
   ], [])
 
   const tableData = useMemo<TimesheetRow[]>(() => {
@@ -119,6 +156,9 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
     initialState: {
       pagination: { pageIndex: 0, pageSize: 50 },
       density: 'xs',
+      columnVisibility: {
+        activity: false,
+      },
     },
     mantinePaperProps: {
       style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
@@ -127,6 +167,12 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
     mantineTableProps: {
       striped: true,
       highlightOnHover: true,
+    },
+    mantineTableBodyCellProps: {
+      style: {
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+      },
     },
   })
 

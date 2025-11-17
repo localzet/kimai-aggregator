@@ -14,6 +14,7 @@ import {
   Alert,
   Accordion,
   FileButton,
+  MultiSelect,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { useForm } from '@mantine/form'
@@ -30,9 +31,9 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
   const [projects, setProjects] = useState<Project[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [tags, setTags] = useState<string[]>([]);
 
   const [importingFromUrl, setImportingFromUrl] = useState(false)
-  const [syncUrl, setSyncUrl] = useState(settings.syncUrl || '')
 
   const form = useForm({
     initialValues: {
@@ -67,17 +68,29 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
     }
   }
 
+  const loadTags = async () => {
+    if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
+    try {
+      const api = new KimaiApi(form.values.apiUrl.trim(), form.values.apiKey.trim(), form.values.useProxy)
+      const data = await api.getTags()
+      setTags(data)
+    } catch (e) {
+      console.error('Error loading tags:', e)
+    }
+  }
+
   useEffect(() => {
     // Загружаем проекты только если есть и URL и ключ
     const hasUrl = form.values.apiUrl && form.values.apiUrl.trim()
     const hasKey = form.values.apiKey && form.values.apiKey.trim()
-    
+
     if (hasUrl && hasKey) {
       // Небольшая задержка, чтобы пользователь успел ввести данные
       const timeoutId = setTimeout(() => {
         loadProjects()
+        loadTags()
       }, 500)
-      
+
       return () => clearTimeout(timeoutId)
     } else {
       setProjects([])
@@ -119,7 +132,7 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       .split(',')
       .map(tag => tag.trim().toLowerCase())
       .filter(tag => tag.length > 0)
-    
+
     const newSettings: Settings = {
       ...settings,
       apiUrl: values.apiUrl,
@@ -194,7 +207,7 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
 
   const handleImport = (file: File | null) => {
     if (!file) return
-    
+
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
@@ -230,21 +243,21 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
             <Title order={3}>API Настройки</Title>
-            
+
             <TextInput
               label="URL Kimai"
               placeholder="https://kimai.example.com"
               required
               {...form.getInputProps('apiUrl')}
             />
-            
+
             <TextInput
               label="API Key"
               type="password"
               required
               {...form.getInputProps('apiKey')}
             />
-            
+
             <NumberInput
               label="Ставка за минуту (руб)"
               min={0}
@@ -253,13 +266,21 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               {...form.getInputProps('ratePerMinute')}
             />
 
-            <TextInput
+            <MultiSelect
               label="Исключённые теги"
-              placeholder="no-payment, internal, test"
-              description="Разделите теги запятыми. Записи с этими тегами не будут учитываться в расчётах"
-              {...form.getInputProps('excludedTags')}
+              data={tags}
+              searchable
+              clearable
+              description="Отметьте теги, которые нужно исключить"
+              value={form.values.excludedTags
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0)}
+              onChange={(vals) => {
+                const cleaned = vals.map(v => v.trim()).filter(v => v.length > 0);
+                form.setFieldValue('excludedTags', cleaned.join(', '));
+              }}
             />
-
             {import.meta.env.DEV && (
               <Switch
                 label="Использовать прокси для обхода CORS (только в dev режиме)"
@@ -268,12 +289,12 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               />
             )}
 
-            <TextInput
+            {/* <TextInput
               label="URL для синхронизации настроек"
               placeholder="https://example.com/settings.json"
               description="URL для импорта настроек с другого устройства"
               {...form.getInputProps('syncUrl')}
-            />
+            /> */}
 
             <Button type="submit" mt="md">Сохранить настройки</Button>
           </Stack>
@@ -286,14 +307,14 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
           <Group>
             <TextInput
               placeholder="https://example.com/settings.json"
-              value={syncUrl}
-              onChange={(e) => setSyncUrl(e.currentTarget.value)}
+              value={form.values.syncUrl}
+              onChange={(e) => form.setFieldValue('syncUrl', e.currentTarget.value)}
               style={{ flex: 1 }}
             />
             <Button
               onClick={handleImportFromUrl}
               loading={importingFromUrl}
-              disabled={!syncUrl}
+              disabled={!form.values.syncUrl}
             >
               Импорт из URL
             </Button>

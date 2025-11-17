@@ -27,18 +27,18 @@ function processData(
   })
 
   // Фильтруем тайм-шиты, исключая те, которые содержат исключённые теги
-  const filteredTimesheets = timesheetsData.filter(entry => {
-    if (!excludedTags || excludedTags.length === 0) {
-      return true
-    }
-    if (!entry.tags || entry.tags.length === 0) {
-      return true
-    }
-    // Проверяем, есть ли пересечение с исключёнными тегами
-    return !entry.tags.some(tag => excludedTags.includes(tag.toLowerCase()))
-  })
+  // const filteredTimesheets = timesheetsData.filter(entry => {
+  //   if (!excludedTags || excludedTags.length === 0) {
+  //     return true
+  //   }
+  //   if (!entry.tags || entry.tags.length === 0) {
+  //     return true
+  //   }
+  //   // Проверяем, есть ли пересечение с исключёнными тегами
+  //   return !entry.tags.some(tag => excludedTags.includes(tag.toLowerCase()))
+  // })
 
-  const enrichedTimesheets = filteredTimesheets.map(entry => {
+  const enrichedTimesheets = timesheetsData.map(entry => {
     const projectId = typeof entry.project === 'number' ? entry.project.toString() : (entry.project as Project)?.id?.toString()
     const activityId = typeof entry.activity === 'number' ? entry.activity.toString() : (entry.activity as Activity)?.id?.toString()
     return {
@@ -52,7 +52,8 @@ function processData(
   const weeksWithFinancials = calculateFinancials(
     groupedWeeks,
     ratePerMinute,
-    projectSettings || {}
+    projectSettings || {},
+    excludedTags
   )
 
   return weeksWithFinancials
