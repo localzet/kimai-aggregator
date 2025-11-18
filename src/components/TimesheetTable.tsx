@@ -3,8 +3,9 @@ import {
   Select,
   Text,
   Group,
+  Switch,
 } from '@mantine/core'
-import { IconTable } from '@tabler/icons-react'
+import { IconTable, IconAlertCircle } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import dayjs from 'dayjs'
 import { DataTableShared } from '@/shared/ui/table'
@@ -20,6 +21,7 @@ interface TimesheetRow extends Omit<Timesheet, 'id'> {
 
 export default function TimesheetTable({ weeks }: TimesheetTableProps) {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
+  const [showExcluded, setShowExcluded] = useState<boolean>(true)
 
   const weekOptions = weeks.map(week => ({
     value: week.weekKey,
@@ -130,17 +132,36 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
         return tags && tags.length > 0
           ? <Text>{tags.join(', ')}</Text>
           : <Text c="dimmed">—</Text>
-      },
     },
+      },
+      {
+        id: 'status',
+        header: 'Статус',
+        size: 100,
+        enableSorting: false,
+        Cell: ({ row }) => {
+          if (row.original.isExcluded) {
+            return (
+              <Group gap={4} wrap="nowrap">
+                <IconAlertCircle size={16} color="var(--mantine-color-yellow-6)" />
+                <Text size="sm" c="yellow">Не оплачено</Text>
+              </Group>
+            )
+          }
+          return <Text size="sm" c="green">Оплачено</Text>
+        },
+      },
 
   ], [])
 
   const tableData = useMemo<TimesheetRow[]>(() => {
     if (!selectedWeekData) return []
-    return selectedWeekData.entries.map((entry, idx) => ({
+    const mapped = selectedWeekData.entries.map((entry, idx) => ({
       ...entry,
       id: entry.id || idx,
-    }))
+    })) as TimesheetRow[]
+    if (showExcluded) return mapped
+    return mapped.filter(r => !r.isExcluded)
   }, [selectedWeekData])
 
   const table = useMantineReactTable({
@@ -159,6 +180,9 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       columnVisibility: {
         activity: false,
       },
+      sorting: [
+        { id: 'begin', desc: true },
+      ],
     },
     mantinePaperProps: {
       style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
@@ -168,6 +192,13 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       striped: true,
       highlightOnHover: true,
     },
+    mantineTableBodyRowProps: ({ row }) => ({
+      style: {
+        backgroundColor: row.original.isExcluded
+          ? 'rgba(250, 197, 28, 0.05)'
+          : undefined,
+      },
+    }),
     mantineTableBodyCellProps: {
       style: {
         whiteSpace: 'normal',
@@ -199,6 +230,11 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
               value={selectedWeek || weeks[0]?.weekKey || null}
               onChange={setSelectedWeek}
               style={{ width: 300 }}
+            />
+            <Switch
+              label="Показывать исключённые"
+              checked={showExcluded}
+              onChange={(e) => setShowExcluded(e.currentTarget.checked)}
             />
           </Group>
         }

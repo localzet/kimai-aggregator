@@ -4,7 +4,7 @@ import { IconTrendingUp, IconClock, IconMoneybag, IconTarget } from '@tabler/ico
 import { LineChart, BarChart } from '@mantine/charts'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { WeekData } from '../services/kimaiApi'
+import { WeekData } from '@/shared/api/kimaiApi'
 
 dayjs.extend(isoWeek)
 

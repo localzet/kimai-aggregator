@@ -48,7 +48,7 @@ function processData(
     }
   })
 
-  const groupedWeeks = groupByWeek(enrichedTimesheets)
+  const groupedWeeks = groupByWeek(enrichedTimesheets, excludedTags)
   const weeksWithFinancials = calculateFinancials(
     groupedWeeks,
     ratePerMinute,

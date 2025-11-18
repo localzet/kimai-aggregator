@@ -2,8 +2,8 @@ import { Paper, Title, Stack, Text, Progress, Group, Badge, Card } from '@mantin
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { motion } from 'motion/react'
-import { WeekData } from '../services/kimaiApi'
-import { Settings } from '../hooks/useSettings'
+import { WeekData } from '@/shared/api/kimaiApi'
+import { Settings } from '@/shared/hooks/useSettings'
 
 dayjs.extend(isoWeek)
 
@@ -84,17 +84,29 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
           <Card withBorder p="md">
             <Stack gap="sm">
             <Group justify="space-between">
-              <Text fw={500}>Всего отработано:</Text>
-              <Text fw={700} size="lg">{formatDuration(week.totalMinutes)}</Text>
+              <Text fw={500}>Всего отработано (включая исключённые):</Text>
+              <Text fw={700} size="lg">{formatDuration(week.rawTotalMinutes ?? week.totalMinutes)}</Text>
             </Group>
             <Group justify="space-between">
-              <Text fw={500}>Всего часов:</Text>
+              <Text fw={500}>Оплачиваемые часы:</Text>
               <Text fw={700} size="lg">{week.totalHours?.toFixed(2)} ч</Text>
             </Group>
             <Group justify="space-between">
               <Text fw={500}>Сумма за неделю:</Text>
               <Text fw={700} size="lg" c="green">{formatCurrency(week.totalAmount || 0)}</Text>
-                    </Group>
+            </Group>
+            {(() => {
+              const excludedCount = week.entries ? week.entries.filter(e => e.isExcluded).length : 0
+              if (excludedCount > 0) {
+                return (
+                  <Group justify="space-between">
+                    <Text c="dimmed">Исключено из расчёта: {excludedCount} записей</Text>
+                    <Text c="dimmed">(они видны в таблице, но не учитываются для финсов и прогресса)</Text>
+                  </Group>
+                )
+              }
+              return null
+            })()}
                   </Stack>
                   </Card>
                 </MotionCard>

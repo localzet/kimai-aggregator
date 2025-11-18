@@ -13,8 +13,8 @@ import { DateInput } from '@mantine/dates'
 import { IconTrash, IconPlus } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { Project } from '../services/kimaiApi'
-import { Settings } from '../hooks/useSettings'
+import { Project } from '@/shared/api/kimaiApi'
+import { Settings } from '@/shared/hooks/useSettings'
 
 dayjs.extend(isoWeek)
 

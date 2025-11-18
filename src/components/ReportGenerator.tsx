@@ -3,8 +3,8 @@ import { IconFileTypePdf } from '@tabler/icons-react'
 import { useState, useRef } from 'react'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { WeekData } from '../services/kimaiApi'
-import { Settings } from '../hooks/useSettings'
+import { WeekData } from '@/shared/api/kimaiApi'
+import { Settings } from '@/shared/hooks/useSettings'
 
 dayjs.extend(isoWeek)
 

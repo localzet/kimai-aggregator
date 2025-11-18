@@ -11,7 +11,7 @@ import {
 } from 'react-icons/tb'
 import { HiCurrencyDollar } from 'react-icons/hi'
 
-import { useSettings } from "./hooks/useSettings"
+import { useSettings } from "@/shared/hooks/useSettings"
 import clsx from 'clsx'
 
 import classes from './app/AppShell.module.css'

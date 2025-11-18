@@ -1,7 +1,7 @@
 import { Badge, Tooltip } from '@mantine/core'
 import { IconWifi, IconWifiOff, IconRefresh } from '@tabler/icons-react'
 import { motion } from 'motion/react'
-import { SyncStatus } from '../hooks/useSyncStatus'
+import { SyncStatus } from '@/shared/hooks/useSyncStatus'
 
 interface StatusIndicatorProps {
   status: SyncStatus

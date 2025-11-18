@@ -223,6 +223,16 @@ export class KimaiApi {
     return allActivities
   }
 
+  async getTags(): Promise<string[]> {
+    try {
+      const data = await this.request('/api/tags') as { name: string }[]
+      return Array.isArray(data) ? data.map(tag => tag.name || tag as unknown as string).filter(Boolean) : []
+    } catch (e) {
+      console.error('Error fetching tags:', e)
+      return []
+    }
+  }
+
   async getCurrentUser(): Promise<unknown> {
     return this.request('/api/users/me')
   }

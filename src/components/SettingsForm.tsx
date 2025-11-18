@@ -72,7 +72,7 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
     if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
     try {
       const api = new KimaiApi(form.values.apiUrl.trim(), form.values.apiKey.trim(), form.values.useProxy)
-      const data = await api.getTags()
+      const data = (await api.getTags()) as string[]
       setTags(data)
     } catch (e) {
       console.error('Error loading tags:', e)
@@ -281,6 +281,14 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
                 form.setFieldValue('excludedTags', cleaned.join(', '));
               }}
             />
+
+            <TextInput
+              label="URL для синхронизации настроек"
+              placeholder="https://example.com/settings.json"
+              description="URL для импорта настроек с другого устройства"
+              {...form.getInputProps('syncUrl')}
+            />
+
             {import.meta.env.DEV && (
               <Switch
                 label="Использовать прокси для обхода CORS (только в dev режиме)"
@@ -289,37 +297,9 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               />
             )}
 
-            {/* <TextInput
-              label="URL для синхронизации настроек"
-              placeholder="https://example.com/settings.json"
-              description="URL для импорта настроек с другого устройства"
-              {...form.getInputProps('syncUrl')}
-            /> */}
-
             <Button type="submit" mt="md">Сохранить настройки</Button>
           </Stack>
         </form>
-      </Paper>
-
-      <Paper p="xl" withBorder>
-        <Stack gap="md">
-          <Title order={3}>Синхронизация настроек</Title>
-          <Group>
-            <TextInput
-              placeholder="https://example.com/settings.json"
-              value={form.values.syncUrl}
-              onChange={(e) => form.setFieldValue('syncUrl', e.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              onClick={handleImportFromUrl}
-              loading={importingFromUrl}
-              disabled={!form.values.syncUrl}
-            >
-              Импорт из URL
-            </Button>
-          </Group>
-        </Stack>
       </Paper>
 
       <Paper p="xl" withBorder>
@@ -332,6 +312,23 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               </FileButton>
               <Button onClick={handleExport} variant="light">Экспорт настроек</Button>
             </Group>
+          </Group>
+
+          <Group>
+            <TextInput
+              placeholder="https://example.com/settings.json"
+              value={form.values.syncUrl}
+              onChange={(e) => form.setFieldValue('syncUrl', e.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <Button
+              onClick={handleImportFromUrl}
+              loading={importingFromUrl}
+              disabled={!form.values.syncUrl}
+              variant="light"
+            >
+              Импорт из URL
+            </Button>
           </Group>
 
           {error && (

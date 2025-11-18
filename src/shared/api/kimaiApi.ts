@@ -18,6 +18,7 @@ export interface Timesheet {
   date?: Dayjs
   tags?: string[]
   metaFields?: Record<string, unknown>
+  isExcluded?: boolean
 }
 
 export interface Project {
@@ -40,6 +41,7 @@ export interface WeekData {
   endDate: Dayjs
   entries: Timesheet[]
   totalMinutes: number
+  rawTotalMinutes?: number
   totalHours?: number
   totalAmount?: number
   projectStats?: ProjectStats[]
@@ -232,7 +234,9 @@ export class KimaiApi {
   }
 }
 
-export function groupByWeek(timesheets: Timesheet[]): WeekData[] {
+export function groupByWeek(timesheets: Timesheet[], excludedTags: string[] = []): WeekData[] {
+  const excludedTagsLower = excludedTags.map(tag => tag.toLowerCase())
+
   const grouped: Record<string, WeekData> = {}
 
   timesheets.forEach(entry => {
@@ -259,6 +263,7 @@ export function groupByWeek(timesheets: Timesheet[]): WeekData[] {
       ...entry,
       duration,
       date: begin,
+      isExcluded: entry.tags?.some(tag => excludedTagsLower.includes(tag.toLowerCase())) ?? false,
     })
 
     grouped[weekKey].totalMinutes += duration
@@ -279,9 +284,14 @@ export function calculateFinancials(
   return weeks.map(week => {
     const projectStats: Record<string, ProjectStats> = {}
     const projectPeriodInfo: Record<number, ProjectPeriodInfo> = {}
+    const excludedTagsLower = excludedTags.map(t => t.toLowerCase())
+
+    let payableMinutes = 0
 
     week.entries.forEach(entry => {
-      if (!entry.tags?.some(tag => excludedTags.includes(tag.toLowerCase()))) {
+      const isExcluded = entry.tags?.some(tag => excludedTagsLower.includes(tag.toLowerCase())) ?? false
+      if (!isExcluded) {
+        payableMinutes += entry.duration || 0
         const project = typeof entry.project === 'object' ? entry.project : null
         const projectId = project?.id
         const projectName = project?.name || 'Без проекта'
@@ -374,8 +384,10 @@ export function calculateFinancials(
 
     return {
       ...week,
-      totalHours: week.totalMinutes / 60,
-      totalAmount: week.totalMinutes * ratePerMinute,
+      rawTotalMinutes: week.totalMinutes,
+      totalMinutes: payableMinutes,
+      totalHours: payableMinutes / 60,
+      totalAmount: payableMinutes * ratePerMinute,
       projectStats: Object.values(projectStats),
       projectPeriodInfo: Object.values(projectPeriodInfo),
     }
