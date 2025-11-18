@@ -5,11 +5,17 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [react(), tsconfigPaths()],
   css: {
     modules: {
       localsConvention: 'camelCase'
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
   },
   resolve: {
     alias: {

@@ -81,6 +81,8 @@ const router = createBrowserRouter(
                 />
 
             </Route>
+            {/* Catch-all route for unknown URLs (file:// protocol paths, etc) */}
+            <Route path="*" element={<Navigate replace to="/" />} />
         </Route>
     )
 )
