@@ -60,6 +60,14 @@ function DashboardPage() {
           </Button>
         </Group>
 
+        {/* Quick settings summary to help debug rate issues */}
+        <Group style={{ marginTop: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: '#666' }}>Ставка: <strong>{settings.ratePerMinute ?? 0}</strong> руб/мин</div>
+          {(!settings.ratePerMinute || Number(settings.ratePerMinute) === 0) && (
+            <div style={{ fontSize: 12, color: '#a00' }}>Ставка равна 0 — откройте настройки и задайте ставку</div>
+          )}
+        </Group>
+
         {currentWeek ? (
           <WeekProgress week={currentWeek} settings={settings} />
         ) : weeks.length > 0 ? (
