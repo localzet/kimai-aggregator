@@ -32,6 +32,8 @@ export function useSettings() {
   }, [settings])
 
   const updateSettings = (newSettings: Settings) => {
+    // Сначала обновляем localStorage, затем состояние
+    localStorage.setItem('kimai-settings', JSON.stringify(newSettings))
     setSettings(newSettings)
   }
 

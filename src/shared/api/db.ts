@@ -3,13 +3,14 @@ import dayjs, { Dayjs } from 'dayjs'
 import { Timesheet, Project, Activity } from './kimaiApi'
 
 const DB_NAME = 'kimai-aggregator'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 const STORES = {
   TIMESHEETS: 'timesheets',
   PROJECTS: 'projects',
   ACTIVITIES: 'activities',
   METADATA: 'metadata',
+  PROCESSED_WEEKS: 'processedWeeks',
 } as const
 
 class Database {
@@ -27,6 +28,7 @@ class Database {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
+        const oldVersion = event.oldVersion || 0
 
         // Timesheets store
         if (!db.objectStoreNames.contains(STORES.TIMESHEETS)) {
@@ -50,6 +52,13 @@ class Database {
         // Metadata store
         if (!db.objectStoreNames.contains(STORES.METADATA)) {
           db.createObjectStore(STORES.METADATA, { keyPath: 'key' })
+        }
+
+        // Processed weeks store (for caching processed week data) - добавляется в версии 2
+        if (oldVersion < 2 && !db.objectStoreNames.contains(STORES.PROCESSED_WEEKS)) {
+          const weeksStore = db.createObjectStore(STORES.PROCESSED_WEEKS, { keyPath: 'weekKey' })
+          weeksStore.createIndex('year', 'year', { unique: false })
+          weeksStore.createIndex('week', 'week', { unique: false })
         }
       }
     })
@@ -101,6 +110,7 @@ class Database {
       const transaction = this.db.transaction([STORES.TIMESHEETS], 'readwrite')
       const store = transaction.objectStore(STORES.TIMESHEETS)
 
+      // IndexedDB автоматически обрабатывает batch операции
       timesheets.forEach(timesheet => {
         store.put(timesheet)
       })
@@ -140,6 +150,7 @@ class Database {
       const transaction = this.db.transaction([STORES.PROJECTS], 'readwrite')
       const store = transaction.objectStore(STORES.PROJECTS)
 
+      // IndexedDB автоматически обрабатывает batch операции
       projects.forEach(project => {
         store.put(project)
       })
@@ -179,6 +190,7 @@ class Database {
       const transaction = this.db.transaction([STORES.ACTIVITIES], 'readwrite')
       const store = transaction.objectStore(STORES.ACTIVITIES)
 
+      // IndexedDB автоматически обрабатывает batch операции
       activities.forEach(activity => {
         store.put(activity)
       })
@@ -224,6 +236,87 @@ class Database {
     })
   }
 
+  async saveProcessedWeeks(weeks: unknown[]): Promise<void> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not initialized'))
+        return
+      }
+
+      const transaction = this.db.transaction([STORES.PROCESSED_WEEKS], 'readwrite')
+      const store = transaction.objectStore(STORES.PROCESSED_WEEKS)
+
+      // Очищаем старые данные перед сохранением новых
+      const clearRequest = store.clear()
+      clearRequest.onsuccess = () => {
+        // IndexedDB автоматически обрабатывает batch операции
+        // Сериализуем Dayjs объекты в строки для сохранения
+        weeks.forEach((week: { weekKey?: string; startDate?: Dayjs | string; endDate?: Dayjs | string; entries?: unknown[] }) => {
+          if (week.weekKey) {
+            const serializedWeek = {
+              ...week,
+              // Сериализуем Dayjs в ISO строки
+              startDate: week.startDate ? (dayjs.isDayjs(week.startDate) ? week.startDate.toISOString() : week.startDate) : undefined,
+              endDate: week.endDate ? (dayjs.isDayjs(week.endDate) ? week.endDate.toISOString() : week.endDate) : undefined,
+              // Сериализуем Dayjs в entries
+              entries: week.entries?.map((entry: { date?: Dayjs | string }) => ({
+                ...entry,
+                date: entry.date ? (dayjs.isDayjs(entry.date) ? entry.date.toISOString() : entry.date) : undefined,
+              })) || [],
+              updatedAt: new Date().toISOString(),
+            }
+            store.put(serializedWeek)
+          }
+        })
+
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+      }
+      clearRequest.onerror = () => reject(clearRequest.error)
+    })
+  }
+
+  async getProcessedWeeks(): Promise<unknown[]> {
+    if (!this.db) await this.init()
+
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not initialized'))
+        return
+      }
+
+      const transaction = this.db.transaction([STORES.PROCESSED_WEEKS], 'readonly')
+      const store = transaction.objectStore(STORES.PROCESSED_WEEKS)
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const weeks = request.result || []
+        // Восстанавливаем объекты Dayjs из строк и удаляем служебные поля
+        const restoredWeeks = weeks.map((w: { updatedAt?: string; startDate?: string | Dayjs; endDate?: string | Dayjs; entries?: unknown[] }) => {
+          const { updatedAt, startDate, endDate, entries, ...week } = w
+          return {
+            ...week,
+            // Преобразуем строки обратно в объекты Dayjs
+            startDate: startDate ? (typeof startDate === 'string' ? dayjs(startDate) : startDate) : undefined,
+            endDate: endDate ? (typeof endDate === 'string' ? dayjs(endDate) : endDate) : undefined,
+            // Также нужно восстановить Dayjs в entries и все остальные поля
+            entries: entries?.map((entry: { date?: string | Dayjs; begin?: string; end?: string; project?: unknown; activity?: unknown }) => ({
+              ...entry,
+              date: entry.date ? (typeof entry.date === 'string' ? dayjs(entry.date) : entry.date) : undefined,
+              // Убеждаемся, что project и activity правильно восстановлены
+              project: entry.project,
+              activity: entry.activity,
+            })) || [],
+          }
+        })
+        resolve(restoredWeeks)
+      }
+      request.onerror = () => reject(request.error)
+    })
+  }
+
   async clearAll(): Promise<void> {
     if (!this.db) await this.init()
 
@@ -234,7 +327,7 @@ class Database {
       }
 
       const transaction = this.db.transaction(
-        [STORES.TIMESHEETS, STORES.PROJECTS, STORES.ACTIVITIES, STORES.METADATA],
+        [STORES.TIMESHEETS, STORES.PROJECTS, STORES.ACTIVITIES, STORES.METADATA, STORES.PROCESSED_WEEKS],
         'readwrite'
       )
 
@@ -242,6 +335,7 @@ class Database {
       transaction.objectStore(STORES.PROJECTS).clear()
       transaction.objectStore(STORES.ACTIVITIES).clear()
       transaction.objectStore(STORES.METADATA).clear()
+      transaction.objectStore(STORES.PROCESSED_WEEKS).clear()
 
       transaction.oncomplete = () => resolve()
       transaction.onerror = () => reject(transaction.error)

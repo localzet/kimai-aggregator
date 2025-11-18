@@ -76,7 +76,7 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
             Неделя {week.week}, {week.year}
           </Text>
           <Text size="sm" c="dimmed">
-            {week.startDate.format('DD.MM')} - {week.endDate.format('DD.MM')}
+            {(dayjs.isDayjs(week.startDate) ? week.startDate : dayjs(week.startDate)).format('DD.MM')} - {(dayjs.isDayjs(week.endDate) ? week.endDate : dayjs(week.endDate)).format('DD.MM')}
           </Text>
         </Group>
 

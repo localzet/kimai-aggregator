@@ -81,9 +81,30 @@ export function useDashboardData(
   }, [settings])
 
   // Загрузка данных из БД
-  const loadFromCache = useCallback(async () => {
+  const loadFromCache = useCallback(async (useProcessedCache = true) => {
     try {
       await db.init()
+      
+      // Сначала пытаемся загрузить кэшированные обработанные недели
+      if (useProcessedCache) {
+        try {
+          const cachedWeeks = await db.getProcessedWeeks() as WeekData[]
+          if (cachedWeeks && cachedWeeks.length > 0) {
+            // Сортируем данные так же, как из API (от новых к старым)
+            const sortedWeeks = [...cachedWeeks].sort((a, b) => {
+              if (a.year !== b.year) return b.year - a.year
+              return b.week - a.week
+            })
+            setWeeks(sortedWeeks)
+            return true
+          }
+        } catch (err) {
+          console.warn('Error loading processed weeks cache:', err)
+          // Продолжаем загрузку из сырых данных
+        }
+      }
+
+      // Если кэша обработанных недель нет, загружаем сырые данные и обрабатываем
       const [cachedTimesheets, cachedProjects, cachedActivities] = await Promise.all([
         db.getTimesheets(),
         db.getProjects(),
@@ -100,7 +121,18 @@ export function useDashboardData(
           currentSettings.projectSettings || {},
           currentSettings.excludedTags || []
         )
-        setWeeks(weeksData)
+        // Убеждаемся, что данные отсортированы (processData уже сортирует, но на всякий случай)
+        const sortedWeeks = [...weeksData].sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year
+          return b.week - a.week
+        })
+        setWeeks(sortedWeeks)
+        // Сохраняем обработанные недели в кэш
+        try {
+          await db.saveProcessedWeeks(sortedWeeks)
+        } catch (err) {
+          console.warn('Error saving processed weeks cache:', err)
+        }
         return true
       }
       return false
@@ -117,8 +149,9 @@ export function useDashboardData(
       return
     }
 
-    const isOnline = navigator.onLine && !forceOnline
-    if (!isOnline) {
+    // Если forceOnline = true, игнорируем navigator.onLine и пытаемся обновить
+    const isOnline = forceOnline || navigator.onLine
+    if (!isOnline && !forceOnline) {
       syncStatusRef.current?.setOffline?.()
       return
     }
@@ -156,7 +189,20 @@ export function useDashboardData(
         currentSettings.projectSettings || {},
         currentSettings.excludedTags || []
       )
-      setWeeks(weeksData)
+      // Убеждаемся, что данные отсортированы (processData уже сортирует, но на всякий случай)
+      const sortedWeeks = [...weeksData].sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year
+        return b.week - a.week
+      })
+      setWeeks(sortedWeeks)
+      
+      // Сохраняем обработанные недели в кэш для быстрой загрузки
+      try {
+        await db.saveProcessedWeeks(sortedWeeks)
+      } catch (err) {
+        console.warn('Error saving processed weeks cache:', err)
+      }
+      
       syncStatusRef.current?.setOnline?.()
     } catch (apiError) {
       console.warn('API request failed:', apiError)
@@ -220,11 +266,11 @@ export function useDashboardData(
   useEffect(() => {
     if (weeks.length > 0) {
       // Пересчитываем только финансовые данные из уже загруженных данных
-      // Загружаем из кэша и пересчитываем
-      loadFromCache()
+      // Загружаем из кэша и пересчитываем (не используем кэш обработанных недель, так как настройки изменились)
+      loadFromCache(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.ratePerMinute, settings.projectSettings])
+  }, [settings.ratePerMinute, settings.projectSettings, settings.excludedTags])
 
   return { 
     weeks, 

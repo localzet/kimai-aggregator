@@ -435,7 +435,12 @@ function StatisticsPage() {
       <Group justify="space-between">
         <Title order={2}>Статистика</Title>
         <Group>
-          <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
+          <StatusIndicator 
+            status={currentStatus} 
+            lastUpdate={syncStatus.lastUpdate}
+            onRefresh={reload}
+            loading={syncing}
+          />
           <Menu>
             <Menu.Target>
               <Button leftSection={<IconDownload size="1rem" />} variant="light">
@@ -447,9 +452,6 @@ function StatisticsPage() {
               <Menu.Item onClick={handleExportPeriods}>Экспорт по периодам (CSV)</Menu.Item>
             </Menu.Dropdown>
           </Menu>
-          <Button onClick={reload} loading={loading || syncing}>
-            Обновить
-          </Button>
         </Group>
       </Group>
 

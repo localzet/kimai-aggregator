@@ -43,10 +43,12 @@ function FinancialPage() {
     >
       <Group justify="flex-end">
         <ReportGenerator weeks={weeks} settings={settings} />
-        <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
-        <Button onClick={reload} loading={loading || syncing}>
-          Обновить данные
-        </Button>
+        <StatusIndicator 
+          status={currentStatus} 
+          lastUpdate={syncStatus.lastUpdate}
+          onRefresh={reload}
+          loading={syncing}
+        />
       </Group>
 
       <FinancialMetrics weeks={weeks} isLoading={loading || syncing} />

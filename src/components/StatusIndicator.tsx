@@ -6,9 +6,11 @@ import { SyncStatus } from '@/shared/hooks/useSyncStatus'
 interface StatusIndicatorProps {
   status: SyncStatus
   lastUpdate: string | null
+  onRefresh?: () => void
+  loading?: boolean
 }
 
-function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
+function StatusIndicator({ status, lastUpdate, onRefresh, loading = false }: StatusIndicatorProps) {
   const getStatusConfig = () => {
     switch (status) {
       case 'online':
@@ -16,12 +18,12 @@ function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
           color: 'green' as const,
           icon: <IconWifi size="1rem" />,
           label: 'Онлайн',
-          description: 'Данные актуальны',
+          description: 'Данные актуальны. Нажмите для обновления',
         }
       case 'updating':
         return {
           color: 'yellow' as const,
-          icon: <IconRefresh size="1rem" />,
+          icon: <IconRefresh size="1rem" style={loading ? { animation: 'spin 1s linear infinite' } : undefined} />,
           label: 'Обновление',
           description: 'Идет синхронизация данных',
         }
@@ -31,8 +33,8 @@ function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
           icon: <IconWifiOff size="1rem" />,
           label: 'Оффлайн',
           description: lastUpdate 
-            ? `Последнее обновление: ${new Date(lastUpdate).toLocaleString('ru-RU')}`
-            : 'Нет подключения к интернету',
+            ? `Последнее обновление: ${new Date(lastUpdate).toLocaleString('ru-RU')}. Нажмите для попытки обновления`
+            : 'Нет подключения к интернету. Нажмите для попытки обновления',
         }
       default:
         return {
@@ -45,6 +47,7 @@ function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
   }
 
   const config = getStatusConfig()
+  const isClickable = onRefresh && status !== 'updating'
 
   return (
     <motion.div
@@ -58,6 +61,26 @@ function StatusIndicator({ status, lastUpdate }: StatusIndicatorProps) {
           variant="light"
           leftSection={config.icon}
           size="lg"
+          style={{
+            cursor: isClickable ? 'pointer' : 'default',
+            userSelect: 'none',
+          }}
+          onClick={isClickable ? onRefresh : undefined}
+          onMouseDown={(e) => {
+            if (isClickable) {
+              e.currentTarget.style.transform = 'scale(0.95)'
+            }
+          }}
+          onMouseUp={(e) => {
+            if (isClickable) {
+              e.currentTarget.style.transform = 'scale(1)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (isClickable) {
+              e.currentTarget.style.transform = 'scale(1)'
+            }
+          }}
         >
           {/* {config.label} */}
         </Badge>

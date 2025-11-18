@@ -39,10 +39,12 @@ function TimesheetPage() {
       transition={{ duration: 0.3 }}
     >
       <Group justify="flex-end">
-        <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
-        <Button onClick={reload} loading={loading || syncing}>
-          Обновить данные
-        </Button>
+        <StatusIndicator 
+          status={currentStatus} 
+          lastUpdate={syncStatus.lastUpdate}
+          onRefresh={reload}
+          loading={syncing}
+        />
       </Group>
       <TimesheetTable weeks={weeks} />
     </MotionStack>

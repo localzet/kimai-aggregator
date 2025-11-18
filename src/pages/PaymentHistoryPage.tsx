@@ -415,7 +415,12 @@ function PaymentHistoryPage() {
       <Group justify="space-between">
         <Title order={2}>История оплат</Title>
         <Group>
-          <StatusIndicator status={currentStatus} lastUpdate={syncStatus.lastUpdate} />
+          <StatusIndicator 
+            status={currentStatus} 
+            lastUpdate={syncStatus.lastUpdate}
+            onRefresh={reload}
+            loading={syncing}
+          />
           <Select
             placeholder="Все проекты"
             clearable
@@ -435,9 +440,6 @@ function PaymentHistoryPage() {
               <Menu.Item onClick={handleExportPeriods}>Экспорт по периодам (CSV)</Menu.Item>
             </Menu.Dropdown>
           </Menu>
-          <Button onClick={reload} loading={loading || syncing}>
-            Обновить
-          </Button>
         </Group>
       </Group>
 

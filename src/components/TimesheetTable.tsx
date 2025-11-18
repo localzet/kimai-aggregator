@@ -23,10 +23,14 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
   const [showExcluded, setShowExcluded] = useState<boolean>(true)
 
-  const weekOptions = weeks.map(week => ({
-    value: week.weekKey,
-    label: `Неделя ${week.week}, ${week.year} (${week.startDate.format('DD.MM')} - ${week.endDate.format('DD.MM')})`,
-  }))
+  const weekOptions = weeks.map(week => {
+    const startDate = dayjs.isDayjs(week.startDate) ? week.startDate : dayjs(week.startDate)
+    const endDate = dayjs.isDayjs(week.endDate) ? week.endDate : dayjs(week.endDate)
+    return {
+      value: week.weekKey,
+      label: `Неделя ${week.week}, ${week.year} (${startDate.format('DD.MM')} - ${endDate.format('DD.MM')})`,
+    }
+  })
 
   const selectedWeekData = selectedWeek
     ? weeks.find(w => w.weekKey === selectedWeek)

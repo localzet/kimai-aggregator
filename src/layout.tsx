@@ -72,11 +72,9 @@ export function MainLayout() {
 
     const { settings } = useSettings()
     const { pathname } = useLocation()
-    const [showFullMenu, setShowFullMenu] = useState(false)
-
-    useEffect(() => {
-        setShowFullMenu(!!(settings.apiUrl && settings.apiKey))
-    }, [settings])
+    
+    // Вычисляем showFullMenu напрямую из settings, чтобы меню обновлялось автоматически
+    const showFullMenu = !!(settings.apiUrl && settings.apiKey)
 
     const menu: MenuItem[] = []
     if (showFullMenu) {

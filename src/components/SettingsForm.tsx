@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Paper,
   TextInput,
@@ -28,12 +29,16 @@ interface SettingsFormProps {
 }
 
 export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) {
+  const navigate = useNavigate()
   const [projects, setProjects] = useState<Project[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tags, setTags] = useState<string[]>([]);
 
   const [importingFromUrl, setImportingFromUrl] = useState(false)
+  
+  // Запоминаем, были ли настройки пустыми до сохранения
+  const wasEmpty = !settings.apiUrl || !settings.apiKey
 
   const form = useForm({
     initialValues: {
@@ -142,12 +147,30 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       syncUrl: values.syncUrl || '',
       excludedTags: excludedTagsArray,
     }
+    
+    const isNowConfigured = !!(newSettings.apiUrl && newSettings.apiKey)
+    const wasConfigured = !!(settings.apiUrl && settings.apiKey)
+    
     onUpdate(newSettings)
-    notifications.show({
-      title: 'Настройки сохранены',
-      message: 'Все изменения успешно сохранены',
-      color: 'green',
-    })
+    
+    // Небольшая задержка, чтобы состояние успело обновиться
+    setTimeout(() => {
+      notifications.show({
+        title: 'Настройки сохранены',
+        message: isNowConfigured && !wasConfigured 
+          ? 'Настройки сохранены. Меню обновлено. Перенаправление на главную страницу...'
+          : 'Все изменения успешно сохранены',
+        color: 'green',
+      })
+      
+      // Если настройки были пустыми, а теперь заполнены - перенаправляем на dashboard
+      // Используем window.location для полной перезагрузки, чтобы меню обновилось
+      if (isNowConfigured && !wasConfigured) {
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1000)
+      }
+    }, 100)
   }
 
   const handleImportFromUrl = async () => {
@@ -164,16 +187,30 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
         throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`)
       }
       const imported = await response.json() as Settings
+      const wasConfigured = !!(settings.apiUrl && settings.apiKey)
+      const isNowConfigured = !!(imported.apiUrl && imported.apiKey)
+      
       onUpdate(imported)
       if (imported.apiUrl && imported.apiKey) {
         form.setFieldValue('apiUrl', imported.apiUrl)
         form.setFieldValue('apiKey', imported.apiKey)
       }
-      notifications.show({
-        title: 'Настройки импортированы',
-        message: 'Настройки успешно загружены из URL',
-        color: 'green',
-      })
+      
+      setTimeout(() => {
+        notifications.show({
+          title: 'Настройки импортированы',
+          message: isNowConfigured && !wasConfigured
+            ? 'Настройки импортированы. Меню обновлено. Перенаправление на главную страницу...'
+            : 'Настройки успешно загружены из URL',
+          color: 'green',
+        })
+        
+        if (isNowConfigured && !wasConfigured) {
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 1000)
+        }
+      }, 100)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
       setError('Ошибка при импорте из URL: ' + errorMessage)
@@ -212,6 +249,9 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
     reader.onload = (e) => {
       try {
         const imported = JSON.parse(e.target?.result as string) as Settings
+        const wasConfigured = !!(settings.apiUrl && settings.apiKey)
+        const isNowConfigured = !!(imported.apiUrl && imported.apiKey)
+        
         onUpdate(imported)
         // Обновляем форму и перезагружаем проекты после импорта
         if (imported.apiUrl && imported.apiKey) {
@@ -219,11 +259,22 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
           form.setFieldValue('apiKey', imported.apiKey)
           // Проекты загрузятся автоматически через useEffect
         }
-        notifications.show({
-          title: 'Настройки импортированы',
-          message: 'Настройки успешно загружены из файла',
-          color: 'green',
-        })
+        
+        setTimeout(() => {
+          notifications.show({
+            title: 'Настройки импортированы',
+            message: isNowConfigured && !wasConfigured
+              ? 'Настройки импортированы. Меню обновлено. Перенаправление на главную страницу...'
+              : 'Настройки успешно загружены из файла',
+            color: 'green',
+          })
+          
+          if (isNowConfigured && !wasConfigured) {
+            setTimeout(() => {
+              navigate('/dashboard')
+            }, 1000)
+          }
+        }, 100)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
         setError('Ошибка при импорте файла: ' + errorMessage)

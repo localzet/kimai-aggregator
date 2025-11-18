@@ -5,12 +5,15 @@ import { FC } from 'react'
 import { Button, Container, Group, Title, Text } from "@mantine/core"
 
 import SettingsPage from "./pages/SettingsPage"
+import SetupPage from "./pages/SetupPage"
 import DashboardPage from "./pages/DashboardPage"
 import TimesheetPage from "./pages/TimesheetPage"
 import FinancialPage from "./pages/FinancialPage"
 import PaymentHistoryPage from "./pages/PaymentHistoryPage"
 import StatisticsPage from "./pages/StatisticsPage"
 import { MainLayout } from "./layout"
+import { SetupGuard } from "./components/SetupGuard"
+import { InitialRedirect } from "./components/InitialRedirect"
 
 import classesError from './error.module.css'
 
@@ -49,40 +52,64 @@ export function ErrorPageComponent() {
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc fallback={<ErrorPageComponent />} />}>
+            <Route
+                element={<SetupPage />}
+                path='/setup'
+            />
             <Route element={<MainLayout />} path='/'>
-                <Route element={<Navigate replace to='/dashboard' />} index />
+                <Route element={<InitialRedirect />} index path='/' />
                 <Route
                     element={<SettingsPage />}
                     path='/settings'
                 />
                 <Route
-                    element={<DashboardPage />}
+                    element={
+                        <SetupGuard>
+                            <DashboardPage />
+                        </SetupGuard>
+                    }
                     path='/dashboard'
                 />
 
                 <Route
-                    element={<TimesheetPage />}
+                    element={
+                        <SetupGuard>
+                            <TimesheetPage />
+                        </SetupGuard>
+                    }
                     path='/timesheet'
                 />
 
                 <Route
-                    element={<FinancialPage />}
+                    element={
+                        <SetupGuard>
+                            <FinancialPage />
+                        </SetupGuard>
+                    }
                     path='/financial'
                 />
 
                 <Route
-                    element={<PaymentHistoryPage />}
+                    element={
+                        <SetupGuard>
+                            <PaymentHistoryPage />
+                        </SetupGuard>
+                    }
                     path='/payment-history'
                 />
 
                 <Route
-                    element={<StatisticsPage />}
+                    element={
+                        <SetupGuard>
+                            <StatisticsPage />
+                        </SetupGuard>
+                    }
                     path='/statistics'
                 />
 
             </Route>
             {/* Catch-all route for unknown URLs (file:// protocol paths, etc) */}
-            <Route path="*" element={<Navigate replace to="/" />} />
+            <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Route>
     )
 )

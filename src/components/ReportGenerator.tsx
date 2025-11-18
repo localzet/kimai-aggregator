@@ -223,7 +223,7 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
         <div class="title">${reportConfig.reportTitle}</div>
 
         <div class="metadata">
-            <span>Период: ${selectedWeeks[selectedWeeks.length - 1].startDate.format('DD.MM.YYYY')} - ${selectedWeeks[0].endDate.format('DD.MM.YYYY')}</span>
+            <span>Период: ${(dayjs.isDayjs(selectedWeeks[selectedWeeks.length - 1].startDate) ? selectedWeeks[selectedWeeks.length - 1].startDate : dayjs(selectedWeeks[selectedWeeks.length - 1].startDate)).format('DD.MM.YYYY')} - ${(dayjs.isDayjs(selectedWeeks[0].endDate) ? selectedWeeks[0].endDate : dayjs(selectedWeeks[0].endDate)).format('DD.MM.YYYY')}</span>
             <span>Дата подготовки: ${dayjs().format('DD.MM.YYYY HH:mm')}</span>
         </div>
 
@@ -238,15 +238,19 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
                 </tr>
             </thead>
             <tbody>
-                ${selectedWeeks.map(week => `
+                ${selectedWeeks.map(week => {
+                  const startDate = dayjs.isDayjs(week.startDate) ? week.startDate : dayjs(week.startDate)
+                  const endDate = dayjs.isDayjs(week.endDate) ? week.endDate : dayjs(week.endDate)
+                  return `
                 <tr>
                     <td>W${week.week}</td>
-                    <td>${week.startDate.format('DD.MM')}</td>
-                    <td>${week.endDate.format('DD.MM')}</td>
+                    <td>${startDate.format('DD.MM')}</td>
+                    <td>${endDate.format('DD.MM')}</td>
                     <td style="text-align: right;">${(week.totalHours || 0).toFixed(2)}</td>
                     <td style="text-align: right;">${formatCurrency(week.totalAmount || 0)}</td>
                 </tr>
-                `).join('')}
+                `
+                }).join('')}
                 <tr class="total-row">
                     <td colspan="3">ИТОГО</td>
                     <td style="text-align: right;">${(totalMinutes / 60).toFixed(2)}</td>
@@ -324,10 +328,14 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
     }
   }
 
-  const weekOptions = weeks.map(w => ({
-    value: w.weekKey,
-    label: `W${w.week} ${w.year} (${w.startDate.format('DD.MM')}-${w.endDate.format('DD.MM')})`,
-  }))
+  const weekOptions = weeks.map(w => {
+    const startDate = dayjs.isDayjs(w.startDate) ? w.startDate : dayjs(w.startDate)
+    const endDate = dayjs.isDayjs(w.endDate) ? w.endDate : dayjs(w.endDate)
+    return {
+      value: w.weekKey,
+      label: `W${w.week} ${w.year} (${startDate.format('DD.MM')}-${endDate.format('DD.MM')})`,
+    }
+  })
 
   return (
     <>
