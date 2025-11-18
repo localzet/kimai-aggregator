@@ -22,12 +22,32 @@ function createWindow() {
   })
 
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
-  
+
+  // Allow opening devtools in packaged app by passing --devtools or setting env KIMAI_DEVTOOLS=1
+  const openDevTools = process.env.KIMAI_DEVTOOLS === '1' || process.argv.includes('--devtools')
+
   if (isDev) {
     win.loadURL('http://localhost:5173')
-    // DevTools не открываем автоматически
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'))
+  }
+
+  // Forward renderer console messages and load failures to main process logs
+  win.webContents.on('console-message', (e, level, message, line, sourceId) => {
+    console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`)
+  })
+
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('did-fail-load', { errorCode, errorDescription, validatedURL })
+  })
+
+  win.webContents.on('crashed', () => {
+    console.error('Renderer process crashed')
+  })
+
+  if (openDevTools) {
+    // Detached window so devtools stay open separately
+    win.webContents.openDevTools({ mode: 'detach' })
   }
 }
 
