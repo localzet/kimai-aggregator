@@ -284,12 +284,16 @@ export function calculateFinancials(
   return weeks.map(week => {
     const projectStats: Record<string, ProjectStats> = {}
     const projectPeriodInfo: Record<number, ProjectPeriodInfo> = {}
-    const excludedTagsLower = excludedTags.map(t => t.toLowerCase())
+    const excludedTagsLower = excludedTags.map(t => String(t).toLowerCase())
+
+    // ensure rate is a number (handles string inputs from forms)
+    const rate = Number(ratePerMinute)
 
     let payableMinutes = 0
+    console.debug('calculateFinancials: ratePerMinute=', ratePerMinute, 'coercedRate=', rate, 'excludedTags=', excludedTags, 'week.entries=', week.entries.length)
 
     week.entries.forEach(entry => {
-      const isExcluded = entry.tags?.some(tag => excludedTagsLower.includes(tag.toLowerCase())) ?? false
+      const isExcluded = entry.isExcluded ?? (entry.tags?.some(tag => excludedTagsLower.includes(String(tag).toLowerCase())) ?? false)
       if (!isExcluded) {
         payableMinutes += entry.duration || 0
         const project = typeof entry.project === 'object' ? entry.project : null
@@ -309,7 +313,7 @@ export function calculateFinancials(
 
         projectStats[projectKey].minutes += entry.duration || 0
         projectStats[projectKey].hours = projectStats[projectKey].minutes / 60
-        projectStats[projectKey].amount = projectStats[projectKey].minutes * ratePerMinute
+        projectStats[projectKey].amount = projectStats[projectKey].minutes * (isFinite(rate) ? rate : 0)
 
         // Расчет периодов для проектов с настройками
         if (projectId && projectSettings[projectId]) {
@@ -362,7 +366,7 @@ export function calculateFinancials(
 
               projectPeriodInfo[projectId].minutes += entry.duration || 0
               projectPeriodInfo[projectId].hours = projectPeriodInfo[projectId].minutes / 60
-              projectPeriodInfo[projectId].weeklyAmount = projectPeriodInfo[projectId].minutes * ratePerMinute
+              projectPeriodInfo[projectId].weeklyAmount = projectPeriodInfo[projectId].minutes * (isFinite(rate) ? rate : 0)
             }
           }
         }
@@ -382,12 +386,14 @@ export function calculateFinancials(
       }
     })
 
+    console.debug('calculateFinancials week result:', { weekKey: week.weekKey, payableMinutes, totalAmount: payableMinutes * (isFinite(rate) ? rate : 0) })
+
     return {
       ...week,
       rawTotalMinutes: week.totalMinutes,
       totalMinutes: payableMinutes,
       totalHours: payableMinutes / 60,
-      totalAmount: payableMinutes * ratePerMinute,
+      totalAmount: payableMinutes * (isFinite(rate) ? rate : 0),
       projectStats: Object.values(projectStats),
       projectPeriodInfo: Object.values(projectPeriodInfo),
     }
