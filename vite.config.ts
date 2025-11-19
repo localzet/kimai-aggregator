@@ -16,6 +16,24 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'mantine-core': [
+            '@mantine/core',
+            '@mantine/hooks',
+            '@mantine/modals',
+            '@mantine/notifications',
+            '@mantine/nprogress',
+            '@mantine/dates',
+          ],
+          charts: ['@mantine/charts', 'recharts'],
+          tables: ['mantine-react-table', '@tanstack/react-table', 'mantine-datatable'],
+          icons: ['@tabler/icons-react', 'react-icons'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {

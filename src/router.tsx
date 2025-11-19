@@ -1,19 +1,19 @@
 import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterProvider, useNavigate } from "react-router-dom"
 import { ErrorBoundary, ErrorBoundaryProps } from 'react-error-boundary'
 import { Outlet } from 'react-router-dom'
-import { FC } from 'react'
+import { FC, lazy } from 'react'
 import { Button, Container, Group, Title, Text } from "@mantine/core"
-
-import SettingsPage from "./pages/SettingsPage"
-import SetupPage from "./pages/SetupPage"
-import DashboardPage from "./pages/DashboardPage"
-import TimesheetPage from "./pages/TimesheetPage"
-import FinancialPage from "./pages/FinancialPage"
-import PaymentHistoryPage from "./pages/PaymentHistoryPage"
-import StatisticsPage from "./pages/StatisticsPage"
-import { MainLayout } from "./layout"
 import { SetupGuard } from "./components/SetupGuard"
 import { InitialRedirect } from "./components/InitialRedirect"
+
+const SettingsPage = lazy(() => import("./pages/SettingsPage"))
+const SetupPage = lazy(() => import("./pages/SetupPage"))
+const DashboardPage = lazy(() => import("./pages/DashboardPage"))
+const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
+const FinancialPage = lazy(() => import("./pages/FinancialPage"))
+const PaymentHistoryPage = lazy(() => import("./pages/PaymentHistoryPage"))
+const StatisticsPage = lazy(() => import("./pages/StatisticsPage"))
+const MainLayout = lazy(() => import("./layout").then(module => ({ default: module.MainLayout })))
 
 import classesError from './error.module.css'
 
