@@ -13,6 +13,23 @@ const STORES = {
   PROCESSED_WEEKS: 'processedWeeks',
 } as const
 
+type StoredWeek = {
+  weekKey?: string
+  startDate?: string | Dayjs
+  endDate?: string | Dayjs
+  entries?: StoredEntry[]
+  [key: string]: unknown
+}
+
+type StoredEntry = {
+  date?: string | Dayjs
+  begin?: string
+  end?: string
+  project?: unknown
+  activity?: unknown
+  [key: string]: unknown
+}
+
 class Database {
   private db: IDBDatabase | null = null
 
@@ -253,7 +270,8 @@ class Database {
       clearRequest.onsuccess = () => {
         // IndexedDB автоматически обрабатывает batch операции
         // Сериализуем Dayjs объекты в строки для сохранения
-        weeks.forEach((week: { weekKey?: string; startDate?: Dayjs | string; endDate?: Dayjs | string; entries?: unknown[] }) => {
+        const normalizedWeeks = weeks as StoredWeek[]
+        normalizedWeeks.forEach((week) => {
           if (week.weekKey) {
             const serializedWeek = {
               ...week,
@@ -261,7 +279,7 @@ class Database {
               startDate: week.startDate ? (dayjs.isDayjs(week.startDate) ? week.startDate.toISOString() : week.startDate) : undefined,
               endDate: week.endDate ? (dayjs.isDayjs(week.endDate) ? week.endDate.toISOString() : week.endDate) : undefined,
               // Сериализуем Dayjs в entries
-              entries: week.entries?.map((entry: { date?: Dayjs | string }) => ({
+              entries: (week.entries as StoredEntry[] | undefined)?.map((entry) => ({
                 ...entry,
                 date: entry.date ? (dayjs.isDayjs(entry.date) ? entry.date.toISOString() : entry.date) : undefined,
               })) || [],
@@ -292,9 +310,9 @@ class Database {
       const request = store.getAll()
 
       request.onsuccess = () => {
-        const weeks = request.result || []
+        const weeks = (request.result || []) as StoredWeek[]
         // Восстанавливаем объекты Dayjs из строк и удаляем служебные поля
-        const restoredWeeks = weeks.map((w: { updatedAt?: string; startDate?: string | Dayjs; endDate?: string | Dayjs; entries?: unknown[] }) => {
+        const restoredWeeks = weeks.map((w) => {
           const { updatedAt, startDate, endDate, entries, ...week } = w
           return {
             ...week,
@@ -302,7 +320,7 @@ class Database {
             startDate: startDate ? (typeof startDate === 'string' ? dayjs(startDate) : startDate) : undefined,
             endDate: endDate ? (typeof endDate === 'string' ? dayjs(endDate) : endDate) : undefined,
             // Также нужно восстановить Dayjs в entries и все остальные поля
-            entries: entries?.map((entry: { date?: string | Dayjs; begin?: string; end?: string; project?: unknown; activity?: unknown }) => ({
+            entries: (entries as StoredEntry[] | undefined)?.map((entry) => ({
               ...entry,
               date: entry.date ? (typeof entry.date === 'string' ? dayjs(entry.date) : entry.date) : undefined,
               // Убеждаемся, что project и activity правильно восстановлены

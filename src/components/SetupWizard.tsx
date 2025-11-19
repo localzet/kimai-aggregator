@@ -174,7 +174,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
           <Text c="dimmed">Давайте настроим приложение для работы с вашим Kimai</Text>
         </div>
 
-        <Stepper active={active} onStepClick={setActive} breakpoint="sm">
+        <Stepper active={active} onStepClick={setActive}>
           <Stepper.Step 
             label="Способ настройки" 
             description="Выберите способ настройки"
