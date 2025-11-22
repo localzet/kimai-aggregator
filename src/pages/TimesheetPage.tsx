@@ -1,5 +1,4 @@
 import TimesheetTable from '../components/TimesheetTable'
-import StatusIndicator from '../components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Button, Group, Stack } from '@mantine/core'
 import { motion } from 'motion/react'
@@ -38,14 +37,6 @@ function TimesheetPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Group justify="flex-end">
-        <StatusIndicator 
-          status={currentStatus} 
-          lastUpdate={syncStatus.lastUpdate}
-          onRefresh={reload}
-          loading={syncing}
-        />
-      </Group>
       <TimesheetTable weeks={weeks} />
     </MotionStack>
   )

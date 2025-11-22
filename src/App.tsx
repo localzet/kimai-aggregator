@@ -22,6 +22,7 @@ import { Notifications } from '@mantine/notifications'
 import { ModalsProvider } from '@mantine/modals'
 import { NavigationProgress } from '@mantine/nprogress'
 import { Router } from './router'
+import { useMixIdSync } from './shared/hooks/useMixIdSync'
 
 export interface MenuItem {
   header?: string
@@ -43,6 +44,9 @@ export interface MenuItem {
 
 function App() {
   const mq = useMediaQuery('(min-width: 40em)')
+  
+  // Initialize MIX ID sync
+  useMixIdSync()
 
   useEffect(() => {
     const root = document.getElementById('root')

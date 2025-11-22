@@ -12,6 +12,9 @@ import {
 import { HiCurrencyDollar } from 'react-icons/hi'
 
 import { useSettings } from "@/shared/hooks/useSettings"
+import { NotificationsButton } from "@/components/NotificationsButton"
+import { HeaderStatusIndicator } from "@/components/HeaderStatusIndicator"
+import { useMixIdStatus } from "@/shared/hooks/useMixIdStatus"
 import clsx from 'clsx'
 
 import classes from './app/AppShell.module.css'
@@ -72,6 +75,7 @@ export function MainLayout() {
 
     const { settings } = useSettings()
     const { pathname } = useLocation()
+    const mixIdStatus = useMixIdStatus()
     
     // Вычисляем showFullMenu напрямую из settings, чтобы меню обновлялось автоматически
     const showFullMenu = !!(settings.apiUrl && settings.apiKey)
@@ -158,6 +162,8 @@ export function MainLayout() {
                             />
                         </Group>
                         <Group style={{ flexShrink: 0 }}>
+                            <HeaderStatusIndicator />
+                            {mixIdStatus.isConnected && <NotificationsButton />}
                             {/* <HeaderControls
                                 githubLink="https://github.com/remnawave/panel"
                                 isGithubLoading={isLoadingUpdates}

@@ -16,9 +16,10 @@ import {
   Badge,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconCheck, IconX, IconUpload, IconKey, IconServer } from '@tabler/icons-react'
+import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug } from '@tabler/icons-react'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings, useSettings } from '@/shared/hooks/useSettings'
+import { mixIdApi } from '@/shared/api/mixIdApi'
 
 interface SetupWizardProps {
   onComplete: () => void
@@ -28,7 +29,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const navigate = useNavigate()
   const { updateSettings } = useSettings()
   const [active, setActive] = useState(0)
-  const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | null>(null)
+  const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | 'sync' | null>(null)
   
   // Для ручного ввода
   const [apiUrl, setApiUrl] = useState('')
@@ -42,6 +43,11 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   // Для импорта
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  
+  // Для синхронизации
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncSuccess, setSyncSuccess] = useState(false)
 
   const testConnection = async () => {
     if (!apiUrl.trim() || !apiKey.trim()) {
@@ -146,6 +152,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
         excludedTags: [],
       }
       updateSettings(newSettings)
+    } else if (setupMethod === 'sync' && syncSuccess) {
+      // Settings already loaded from sync
     }
 
     notifications.show({
@@ -164,6 +172,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const canProceedFromStep0 = setupMethod !== null
   const canProceedFromStep1 = setupMethod === 'import' 
     ? true 
+    : setupMethod === 'sync'
+    ? syncSuccess
     : connectionStatus === 'success'
 
   return (
@@ -216,6 +226,22 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                     </Text>
                   </Stack>
                 </Card>
+
+                <Card
+                  p="md"
+                  withBorder
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSetupMethod('sync')}
+                  bg={setupMethod === 'sync' ? 'var(--mantine-color-blue-9)' : undefined}
+                >
+                  <Stack align="center" gap="xs">
+                    <IconCloud size={48} />
+                    <Text fw={500}>Синхронизация MIX ID</Text>
+                    <Text size="sm" c="dimmed" ta="center">
+                      Загрузите настройки из облака
+                    </Text>
+                  </Stack>
+                </Card>
               </Group>
 
               {setupMethod === 'import' && (
@@ -245,12 +271,120 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
           <Stepper.Step
             label="Подключение"
-            description={setupMethod === 'import' ? 'Проверка импортированных данных' : 'Введите данные API'}
-            icon={<IconServer size={18} />}
+            description={
+              setupMethod === 'import' 
+                ? 'Проверка импортированных данных' 
+                : setupMethod === 'sync'
+                ? 'Подключение к MIX ID'
+                : 'Введите данные API'
+            }
+            icon={setupMethod === 'sync' ? <IconCloud size={18} /> : <IconServer size={18} />}
             allowStepSelect={active > 1}
           >
             <Stack gap="md" mt="xl">
-              {setupMethod === 'manual' ? (
+              {setupMethod === 'sync' ? (
+                <>
+                  <Alert>
+                    <Text size="sm">
+                      Подключите MIX ID для синхронизации настроек из облака. Если у вас уже есть аккаунт MIX ID,
+                      ваши настройки будут автоматически загружены.
+                    </Text>
+                  </Alert>
+                  
+                  <Button
+                    onClick={async () => {
+                      try {
+                        setSyncing(true)
+                        setSyncError(null)
+                        
+                        const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'http://localhost:3000/api'
+                        const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
+                        const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
+                        
+                        if (!clientId || !clientSecret) {
+                          throw new Error('MIX ID не настроен. Обратитесь к администратору.')
+                        }
+                        
+                        mixIdApi.setConfig({ apiBase, clientId, clientSecret })
+                        
+                        const redirectUri = window.location.origin + '/mixid-callback'
+                        const { authorizationUrl, code } = await mixIdApi.initiateOAuth(redirectUri)
+                        
+                        const width = 600
+                        const height = 700
+                        const left = window.screenX + (window.outerWidth - width) / 2
+                        const top = window.screenY + (window.outerHeight - height) / 2
+                        
+                        const oauthWindow = window.open(
+                          authorizationUrl,
+                          'MIX ID Authorization',
+                          `width=${width},height=${height},left=${left},top=${top}`
+                        )
+                        
+                        const handleMessage = async (event: MessageEvent) => {
+                          if (event.origin !== window.location.origin) return
+                          if (event.data.type === 'mixid-oauth-callback') {
+                            window.removeEventListener('message', handleMessage)
+                            oauthWindow?.close()
+                            
+                            try {
+                              const { code: callbackCode } = event.data
+                              await mixIdApi.exchangeCodeForToken(callbackCode || code, redirectUri)
+                              
+                              // Dispatch event to trigger WebSocket connection and status update
+                              window.dispatchEvent(new Event('mixid-config-changed'))
+                              
+                              // Download settings
+                              const remoteSettings = await mixIdApi.downloadSettings()
+                              if (remoteSettings.settings) {
+                                updateSettings(remoteSettings.settings)
+                                setSyncSuccess(true)
+                                setProjects([]) // Will be loaded after settings are saved
+                              }
+                            } catch (error) {
+                              setSyncError(error instanceof Error ? error.message : 'Ошибка синхронизации')
+                            } finally {
+                              setSyncing(false)
+                            }
+                          }
+                        }
+                        
+                        window.addEventListener('message', handleMessage)
+                        
+                        const checkClosed = setInterval(() => {
+                          if (oauthWindow?.closed) {
+                            clearInterval(checkClosed)
+                            window.removeEventListener('message', handleMessage)
+                            if (!syncSuccess) {
+                              setSyncing(false)
+                            }
+                          }
+                        }, 1000)
+                      } catch (error) {
+                        setSyncError(error instanceof Error ? error.message : 'Ошибка подключения')
+                        setSyncing(false)
+                      }
+                    }}
+                    loading={syncing}
+                    leftSection={<IconPlug size={16} />}
+                    fullWidth
+                  >
+                    {syncing ? 'Подключение...' : 'Подключить MIX ID'}
+                  </Button>
+                  
+                  {syncSuccess && (
+                    <Alert color="green" title="Синхронизация успешна" icon={<IconCheck size={16} />}>
+                      <Text>Настройки загружены из облака</Text>
+                    </Alert>
+                  )}
+                  
+                  {syncError && (
+                    <Alert color="red" title="Ошибка синхронизации" icon={<IconX size={16} />}>
+                      {syncError}
+                    </Alert>
+                  )}
+                </>
+              ) : setupMethod === 'manual' ? (
                 <>
                   <TextInput
                     label="URL Kimai"

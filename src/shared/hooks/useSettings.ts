@@ -6,7 +6,7 @@ export interface Settings {
   apiKey: string
   ratePerMinute: number
   useProxy: boolean
-  syncUrl: string
+  syncUrl?: string // Deprecated, kept for backward compatibility
   projectSettings: ProjectSettings
   excludedTags: string[]
 }

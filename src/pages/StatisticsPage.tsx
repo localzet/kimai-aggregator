@@ -20,7 +20,6 @@ import { LineChart, BarChart } from '@mantine/charts'
 import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
-import StatusIndicator from '../components/StatusIndicator'
 import { DataTableShared } from '@/shared/ui/table'
 import dayjs from 'dayjs'
 
@@ -435,12 +434,6 @@ function StatisticsPage() {
       <Group justify="space-between">
         <Title order={2}>Статистика</Title>
         <Group>
-          <StatusIndicator 
-            status={currentStatus} 
-            lastUpdate={syncStatus.lastUpdate}
-            onRefresh={reload}
-            loading={syncing}
-          />
           <Menu>
             <Menu.Target>
               <Button leftSection={<IconDownload size="1rem" />} variant="light">

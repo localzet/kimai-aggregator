@@ -1,6 +1,5 @@
 import WeekProgress from '../components/WeekProgress'
 import DashboardMetrics from '../components/DashboardMetrics'
-import StatusIndicator from '../components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Stack, Button, Group } from '@mantine/core'
 import { motion } from 'motion/react'
@@ -53,22 +52,6 @@ function DashboardPage() {
           }
         }
       }}>
-        <Group justify="flex-end">
-          <StatusIndicator 
-            status={currentStatus} 
-            lastUpdate={syncStatus.lastUpdate}
-            onRefresh={reload}
-            loading={syncing}
-          />
-        </Group>
-
-        {/* Quick settings summary to help debug rate issues */}
-        <Group style={{ marginTop: 8, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, color: '#666' }}>Ставка: <strong>{settings.ratePerMinute ?? 0}</strong> руб/мин</div>
-          {(!settings.ratePerMinute || Number(settings.ratePerMinute) === 0) && (
-            <div style={{ fontSize: 12, color: '#a00' }}>Ставка равна 0 — откройте настройки и задайте ставку</div>
-          )}
-        </Group>
 
         {currentWeek ? (
           <WeekProgress week={currentWeek} settings={settings} />

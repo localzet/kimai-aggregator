@@ -15,7 +15,6 @@ import {
 } from '@mantine/core'
 import { IconDownload, IconHistory, IconListNumbers } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
-import StatusIndicator from '../components/StatusIndicator'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { DataTableShared } from '@/shared/ui/table'
 import { WeekData } from '@/shared/api/kimaiApi'
@@ -415,12 +414,6 @@ function PaymentHistoryPage() {
       <Group justify="space-between">
         <Title order={2}>История оплат</Title>
         <Group>
-          <StatusIndicator 
-            status={currentStatus} 
-            lastUpdate={syncStatus.lastUpdate}
-            onRefresh={reload}
-            loading={syncing}
-          />
           <Select
             placeholder="Все проекты"
             clearable

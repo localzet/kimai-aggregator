@@ -22,6 +22,7 @@ import { useForm } from '@mantine/form'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings } from '@/shared/hooks/useSettings'
 import ProjectSettingsForm from './ProjectSettingsForm'
+import MixIdConnection from './MixIdConnection'
 
 interface SettingsFormProps {
   settings: Settings
@@ -34,8 +35,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
   const [loadingProjects, setLoadingProjects] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tags, setTags] = useState<string[]>([]);
-
-  const [importingFromUrl, setImportingFromUrl] = useState(false)
   
   // Запоминаем, были ли настройки пустыми до сохранения
   const wasEmpty = !settings.apiUrl || !settings.apiKey
@@ -46,7 +45,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       apiKey: settings.apiKey || '',
       ratePerMinute: settings.ratePerMinute || 0,
       useProxy: settings.useProxy || false,
-      syncUrl: settings.syncUrl || '',
       excludedTags: (settings.excludedTags || []).join(', '),
     },
   })
@@ -144,7 +142,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
       apiKey: values.apiKey,
       ratePerMinute: values.ratePerMinute,
       useProxy: values.useProxy || false,
-      syncUrl: values.syncUrl || '',
       excludedTags: excludedTagsArray,
     }
     
@@ -173,56 +170,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
     }, 100)
   }
 
-  const handleImportFromUrl = async () => {
-    if (!form.values.syncUrl) {
-      setError('Укажите URL для импорта настроек')
-      return
-    }
-
-    try {
-      setImportingFromUrl(true)
-      setError(null)
-      const response = await fetch(form.values.syncUrl)
-      if (!response.ok) {
-        throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`)
-      }
-      const imported = await response.json() as Settings
-      const wasConfigured = !!(settings.apiUrl && settings.apiKey)
-      const isNowConfigured = !!(imported.apiUrl && imported.apiKey)
-      
-      onUpdate(imported)
-      if (imported.apiUrl && imported.apiKey) {
-        form.setFieldValue('apiUrl', imported.apiUrl)
-        form.setFieldValue('apiKey', imported.apiKey)
-      }
-      
-      setTimeout(() => {
-        notifications.show({
-          title: 'Настройки импортированы',
-          message: isNowConfigured && !wasConfigured
-            ? 'Настройки импортированы. Меню обновлено. Перенаправление на главную страницу...'
-            : 'Настройки успешно загружены из URL',
-          color: 'green',
-        })
-        
-        if (isNowConfigured && !wasConfigured) {
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 1000)
-        }
-      }, 100)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-      setError('Ошибка при импорте из URL: ' + errorMessage)
-      notifications.show({
-        title: 'Ошибка импорта',
-        message: errorMessage,
-        color: 'red',
-      })
-    } finally {
-      setImportingFromUrl(false)
-    }
-  }
 
   const handleExport = () => {
     const dataStr = JSON.stringify(settings, null, 2)
@@ -290,6 +237,8 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
 
   return (
     <Stack gap="xl">
+      <MixIdConnection settings={settings} onSettingsUpdate={onUpdate} />
+      
       <Paper p="xl" withBorder>
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
@@ -333,12 +282,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
               }}
             />
 
-            <TextInput
-              label="URL для синхронизации настроек"
-              placeholder="https://example.com/settings.json"
-              description="URL для импорта настроек с другого устройства"
-              {...form.getInputProps('syncUrl')}
-            />
 
             {import.meta.env.DEV && (
               <Switch
@@ -365,22 +308,6 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
             </Group>
           </Group>
 
-          <Group>
-            <TextInput
-              placeholder="https://example.com/settings.json"
-              value={form.values.syncUrl}
-              onChange={(e) => form.setFieldValue('syncUrl', e.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              onClick={handleImportFromUrl}
-              loading={importingFromUrl}
-              disabled={!form.values.syncUrl}
-              variant="light"
-            >
-              Импорт из URL
-            </Button>
-          </Group>
 
           {error && (
             <Alert color="red" title="Ошибка">

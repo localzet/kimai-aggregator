@@ -13,6 +13,7 @@ const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
 const FinancialPage = lazy(() => import("./pages/FinancialPage"))
 const PaymentHistoryPage = lazy(() => import("./pages/PaymentHistoryPage"))
 const StatisticsPage = lazy(() => import("./pages/StatisticsPage"))
+const MixIdCallbackPage = lazy(() => import("./pages/MixIdCallbackPage"))
 const MainLayout = lazy(() => import("./layout").then(module => ({ default: module.MainLayout })))
 
 import classesError from './error.module.css'
@@ -55,6 +56,10 @@ const router = createBrowserRouter(
             <Route
                 element={<SetupPage />}
                 path='/setup'
+            />
+            <Route
+                element={<MixIdCallbackPage />}
+                path='/mixid-callback'
             />
             <Route element={<MainLayout />} path='/'>
                 <Route element={<InitialRedirect />} index path='/' />
