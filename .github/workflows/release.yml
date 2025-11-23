@@ -26,7 +26,7 @@ jobs:
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
+          name: web
           path: dist
           retention-days: 30
 
@@ -72,7 +72,7 @@ jobs:
           $exeFile = Get-ChildItem -Path dist -Filter "*.exe" | Select-Object -First 1
           if ($exeFile) {
             # Normalize name: lowercase with dashes
-            $newName = "kimai-aggregator-$version.exe"
+            $newName = "windows-$version.exe"
             Rename-Item -Path $exeFile.FullName -NewName $newName
             echo "Renamed to: $newName"
           }
@@ -124,7 +124,7 @@ jobs:
           APPIMAGE=$(find dist -name "*.AppImage" -type f | head -n 1)
           if [ -n "$APPIMAGE" ]; then
             # Normalize name: lowercase with dashes
-            NEW_NAME="kimai-aggregator-$VERSION.AppImage"
+            NEW_NAME="linux-$VERSION.AppImage"
             mv "$APPIMAGE" "dist/$NEW_NAME"
             echo "Renamed to: $NEW_NAME"
           fi
@@ -148,7 +148,7 @@ jobs:
       - name: Download web build
         uses: actions/download-artifact@v4
         with:
-          name: web-build
+          name: web
           path: web-dist
 
       - name: Download Windows build
@@ -173,13 +173,13 @@ jobs:
       - name: Create web archive
         run: |
           cd web-dist
-          zip -r ../web-build-${{ steps.version.outputs.version }}.zip .
+          zip -r ../web-${{ steps.version.outputs.version }}.zip .
 
       - name: Attach files to release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            kimai-aggregator-${{ steps.version.outputs.version }}.zip
+            web-${{ steps.version.outputs.version }}.zip
             windows-dist/*.exe
             linux-dist/*.AppImage
         env:
