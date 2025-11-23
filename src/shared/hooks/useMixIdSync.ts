@@ -47,9 +47,9 @@ export function useMixIdSync() {
 
         for (const id of allIds) {
           const localItem = localMap.get(id)
-          const remoteItem = remoteMap.get(id)
+          const remoteItem = remoteMap.get(id) as any
 
-          if (remoteItem && (!localItem || new Date(remoteItem.updatedAt || 0) > new Date(localItem.updatedAt || 0))) {
+          if (remoteItem && (!localItem || (remoteItem.updatedAt && (!(localItem as any).updatedAt || new Date(remoteItem.updatedAt) > new Date((localItem as any).updatedAt || 0))))) {
             merged.push(remoteItem)
           } else if (localItem) {
             merged.push(localItem)
@@ -67,9 +67,9 @@ export function useMixIdSync() {
 
         for (const id of allIds) {
           const localItem = localMap.get(id)
-          const remoteItem = remoteMap.get(id)
+          const remoteItem = remoteMap.get(id) as any
 
-          if (remoteItem && (!localItem || new Date(remoteItem.updatedAt || 0) > new Date(localItem.updatedAt || 0))) {
+          if (remoteItem && (!localItem || (remoteItem.updatedAt && (!(localItem as any).updatedAt || new Date(remoteItem.updatedAt) > new Date((localItem as any).updatedAt || 0))))) {
             merged.push(remoteItem)
           } else if (localItem) {
             merged.push(localItem)
@@ -87,9 +87,9 @@ export function useMixIdSync() {
 
         for (const id of allIds) {
           const localItem = localMap.get(id)
-          const remoteItem = remoteMap.get(id)
+          const remoteItem = remoteMap.get(id) as any
 
-          if (remoteItem && (!localItem || new Date(remoteItem.updatedAt || 0) > new Date(localItem.updatedAt || 0))) {
+          if (remoteItem && (!localItem || (remoteItem.updatedAt && (!(localItem as any).updatedAt || new Date(remoteItem.updatedAt) > new Date((localItem as any).updatedAt || 0))))) {
             merged.push(remoteItem)
           } else if (localItem) {
             merged.push(localItem)
