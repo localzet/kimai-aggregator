@@ -21,5 +21,8 @@ mac:
   target: dmg
   icon: build/icon.icns
 linux:
-  target: AppImage
+  target:
+    - deb
+    - AppImage
   icon: build/icon.png
+  category: Utility

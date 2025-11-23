@@ -118,22 +118,31 @@ jobs:
         env:
           ELECTRON_BUILDER_CACHE: /tmp/.electron-builder-cache
 
-      - name: Rename Linux build
+      - name: Rename Linux builds
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          # Rename deb package
+          DEB=$(find dist -name "*.deb" -type f | head -n 1)
+          if [ -n "$DEB" ]; then
+            NEW_NAME="linux-$VERSION.deb"
+            mv "$DEB" "dist/$NEW_NAME"
+            echo "Renamed deb to: $NEW_NAME"
+          fi
+          # Rename AppImage (optional, for compatibility)
           APPIMAGE=$(find dist -name "*.AppImage" -type f | head -n 1)
           if [ -n "$APPIMAGE" ]; then
-            # Normalize name: lowercase with dashes
             NEW_NAME="linux-$VERSION.AppImage"
             mv "$APPIMAGE" "dist/$NEW_NAME"
-            echo "Renamed to: $NEW_NAME"
+            echo "Renamed AppImage to: $NEW_NAME"
           fi
 
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: dist/*.AppImage
+          path: |
+            dist/*.deb
+            dist/*.AppImage
           retention-days: 30
 
   attach-to-release:
@@ -181,6 +190,7 @@ jobs:
           files: |
             web-${{ steps.version.outputs.version }}.zip
             windows-dist/*.exe
+            linux-dist/*.deb
             linux-dist/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
