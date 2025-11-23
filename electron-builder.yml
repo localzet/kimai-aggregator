@@ -26,3 +26,4 @@ linux:
     - AppImage
   icon: build/icon.png
   category: Utility
+  maintainer: creator@localzet.com
