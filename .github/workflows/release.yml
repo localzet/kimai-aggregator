@@ -36,6 +36,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract version from tag
+        id: version
+        run: |
+          $VERSION = $env:GITHUB_REF -replace 'refs/tags/', ''
+          $VERSION = $VERSION -replace '^v', ''
+          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Update version in package.json
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $packageJson = Get-Content package.json -Raw | ConvertFrom-Json
+          $packageJson.version = $version
+          $packageJson | ConvertTo-Json -Depth 10 | Set-Content package.json
+          Get-Content package.json | Select-String '"version"'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -50,11 +66,22 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Rename Windows build
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $exeFile = Get-ChildItem -Path dist -Filter "*.exe" | Select-Object -First 1
+          if ($exeFile) {
+            # Normalize name: replace spaces and dots with dashes
+            $newName = "Kimai-Aggregator-Setup-$version.exe"
+            Rename-Item -Path $exeFile.FullName -NewName $newName
+            echo "Renamed to: $newName"
+          }
+
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/**/*.exe
+          path: dist/*.exe
           retention-days: 30
 
   build-linux:
@@ -62,6 +89,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Update version in package.json
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '$VERSION'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+          cat package.json | grep '"version"'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -77,11 +118,22 @@ jobs:
         env:
           ELECTRON_BUILDER_CACHE: /tmp/.electron-builder-cache
 
+      - name: Rename Linux build
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          APPIMAGE=$(find dist -name "*.AppImage" -type f | head -n 1)
+          if [ -n "$APPIMAGE" ]; then
+            # Normalize name: replace spaces and dots with dashes
+            NEW_NAME="Kimai-Aggregator-$VERSION.AppImage"
+            mv "$APPIMAGE" "dist/$NEW_NAME"
+            echo "Renamed to: $NEW_NAME"
+          fi
+
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: dist/**/*.AppImage
+          path: dist/*.AppImage
           retention-days: 30
 
   attach-to-release:
