@@ -22,6 +22,10 @@ jobs:
 
       - name: Build web
         run: npm run build
+        env:
+          VITE_MIX_ID_API_BASE: ${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
+          VITE_MIX_ID_CLIENT_ID: ${{ secrets.VITE_MIX_ID_CLIENT_ID }}
+          VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
@@ -65,6 +69,9 @@ jobs:
         run: npm run electron:build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          VITE_MIX_ID_API_BASE: ${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
+          VITE_MIX_ID_CLIENT_ID: ${{ secrets.VITE_MIX_ID_CLIENT_ID }}
+          VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
 
       - name: Rename Windows build
         run: |
@@ -117,6 +124,9 @@ jobs:
         run: npm run electron:build
         env:
           ELECTRON_BUILDER_CACHE: /tmp/.electron-builder-cache
+          VITE_MIX_ID_API_BASE: ${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
+          VITE_MIX_ID_CLIENT_ID: ${{ secrets.VITE_MIX_ID_CLIENT_ID }}
+          VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
 
       - name: Rename Linux builds
         run: |
