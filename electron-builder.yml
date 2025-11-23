@@ -1,5 +1,8 @@
 appId: com.kimai.aggregator
 productName: Kimai Aggregator
+publish:
+  provider: github
+  releaseType: release
 directories:
   buildResources: build
 files:

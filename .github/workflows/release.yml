@@ -49,6 +49,7 @@ jobs:
         run: npm run electron:build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
@@ -76,6 +77,7 @@ jobs:
         run: npm run electron:build
         env:
           ELECTRON_BUILDER_CACHE: /tmp/.electron-builder-cache
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
@@ -99,18 +101,6 @@ jobs:
           name: web-build
           path: web-dist
 
-      - name: Download Windows build
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build
-          path: windows-dist
-
-      - name: Download Linux build
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-build
-          path: linux-dist
-
       - name: Extract version from tag
         id: version
         run: |
@@ -123,13 +113,11 @@ jobs:
           cd web-dist
           zip -r ../web-build-${{ steps.version.outputs.version }}.zip .
 
-      - name: Attach files to release
+      - name: Attach web build to release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             web-build-${{ steps.version.outputs.version }}.zip
-            windows-dist/*.exe
-            linux-dist/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
