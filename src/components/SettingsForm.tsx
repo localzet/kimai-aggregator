@@ -22,7 +22,7 @@ import { useForm } from '@mantine/form'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings } from '@/shared/hooks/useSettings'
 import ProjectSettingsForm from './ProjectSettingsForm'
-import MixIdConnection from './MixIdConnection'
+import { MixIdConnection } from '@localzet/data-connector/components'
 
 interface SettingsFormProps {
   settings: Settings
@@ -237,7 +237,13 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
 
   return (
     <Stack gap="xl">
-      <MixIdConnection settings={settings} onSettingsUpdate={onUpdate} />
+      <MixIdConnection 
+        onConnected={() => {}}
+        onDisconnected={() => {}}
+        showSyncSettings={true}
+        showSyncData={true}
+        notifications={notifications}
+      />
       
       <Paper p="xl" withBorder>
         <form onSubmit={form.onSubmit(handleSubmit)}>

@@ -19,7 +19,7 @@ import { notifications } from '@mantine/notifications'
 import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug } from '@tabler/icons-react'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings, useSettings } from '@/shared/hooks/useSettings'
-import { mixIdApi } from '@/shared/api/mixIdApi'
+import { mixIdApi } from '@localzet/data-connector/api'
 
 interface SetupWizardProps {
   onComplete: () => void

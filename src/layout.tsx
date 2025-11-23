@@ -14,7 +14,7 @@ import { HiCurrencyDollar } from 'react-icons/hi'
 import { useSettings } from "@/shared/hooks/useSettings"
 import { NotificationsButton } from "@/components/NotificationsButton"
 import { HeaderStatusIndicator } from "@/components/HeaderStatusIndicator"
-import { useMixIdStatus } from "@/shared/hooks/useMixIdStatus"
+import { useMixIdStatus } from "@localzet/data-connector/hooks"
 import clsx from 'clsx'
 
 import classes from './app/AppShell.module.css'

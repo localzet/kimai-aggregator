@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import { mixIdApi } from '@/shared/api/mixIdApi'
-import { wsClient } from '@/shared/api/websocket'
+export { useMixIdStatus, type MixIdSyncStatus, type UseMixIdStatusReturn } from '@localzet/data-connector/hooks'
 
 export type MixIdSyncStatus = 'connected-ws' | 'connected-rest' | 'disconnected' | 'checking'
 

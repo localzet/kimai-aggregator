@@ -2,7 +2,7 @@ import { Group, Badge, Tooltip } from '@mantine/core'
 import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { useSettings, useSyncStatus } from '@/shared/hooks'
-import { useMixIdStatus } from '@/shared/hooks/useMixIdStatus'
+import { useMixIdStatus } from '@localzet/data-connector/hooks'
 import { useDashboardData } from '@/shared/hooks/useDashboardData'
 
 export function HeaderStatusIndicator() {

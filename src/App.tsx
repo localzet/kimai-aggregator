@@ -23,6 +23,8 @@ import { ModalsProvider } from '@mantine/modals'
 import { NavigationProgress } from '@mantine/nprogress'
 import { Router } from './router'
 import { useMixIdSync } from './shared/hooks/useMixIdSync'
+import { useMixIdSession } from '@localzet/data-connector/hooks'
+import { notifications } from '@mantine/notifications'
 
 export interface MenuItem {
   header?: string
@@ -47,6 +49,24 @@ function App() {
   
   // Initialize MIX ID sync
   useMixIdSync()
+  
+  // Session management with mutual deletion
+  useMixIdSession({
+    onSessionDeleted: () => {
+      notifications.show({
+        title: 'Сессия удалена',
+        message: 'Ваша сессия была удалена в личном кабинете. Приложение отключено.',
+        color: 'red',
+      })
+    },
+    onSessionExpired: () => {
+      notifications.show({
+        title: 'Сессия истекла',
+        message: 'Ваша сессия истекла. Пожалуйста, войдите снова.',
+        color: 'orange',
+      })
+    },
+  })
 
   useEffect(() => {
     const root = document.getElementById('root')

@@ -13,7 +13,7 @@ const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
 const FinancialPage = lazy(() => import("./pages/FinancialPage"))
 const PaymentHistoryPage = lazy(() => import("./pages/PaymentHistoryPage"))
 const StatisticsPage = lazy(() => import("./pages/StatisticsPage"))
-const MixIdCallbackPage = lazy(() => import("./pages/MixIdCallbackPage"))
+const MixIdCallbackPage = lazy(() => import("@localzet/data-connector/components").then(m => ({ default: m.MixIdCallbackPage })))
 const MainLayout = lazy(() => import("./layout").then(module => ({ default: module.MainLayout })))
 
 import classesError from './error.module.css'
