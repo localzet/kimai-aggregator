@@ -71,8 +71,8 @@ jobs:
           $version = "${{ steps.version.outputs.version }}"
           $exeFile = Get-ChildItem -Path dist -Filter "*.exe" | Select-Object -First 1
           if ($exeFile) {
-            # Normalize name: replace spaces and dots with dashes
-            $newName = "Kimai-Aggregator-Setup-$version.exe"
+            # Normalize name: lowercase with dashes
+            $newName = "kimai-aggregator-$version.exe"
             Rename-Item -Path $exeFile.FullName -NewName $newName
             echo "Renamed to: $newName"
           }
@@ -123,8 +123,8 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           APPIMAGE=$(find dist -name "*.AppImage" -type f | head -n 1)
           if [ -n "$APPIMAGE" ]; then
-            # Normalize name: replace spaces and dots with dashes
-            NEW_NAME="Kimai-Aggregator-$VERSION.AppImage"
+            # Normalize name: lowercase with dashes
+            NEW_NAME="kimai-aggregator-$VERSION.AppImage"
             mv "$APPIMAGE" "dist/$NEW_NAME"
             echo "Renamed to: $NEW_NAME"
           fi
@@ -179,7 +179,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            web-build-${{ steps.version.outputs.version }}.zip
+            kimai-aggregator-${{ steps.version.outputs.version }}.zip
             windows-dist/*.exe
             linux-dist/*.AppImage
         env:
