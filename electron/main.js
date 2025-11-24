@@ -1,9 +1,9 @@
 import { app, BrowserWindow, Menu } from 'electron'
-import path from 'path'
 import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __dirname = dirname(__filename)
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -12,27 +12,24 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      // preload: join(__dirname, 'preload.js'),
     },
-    autoHideMenuBar: true, // Скрываем меню приложения
+    autoHideMenuBar: true,
   })
 
-  // Отключаем контекстное меню
   win.webContents.on('context-menu', (e) => {
     e.preventDefault()
   })
 
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
-
-  // Allow opening devtools in packaged app by passing --devtools or setting env KIMAI_DEVTOOLS=1
-  const openDevTools = process.env.KIMAI_DEVTOOLS === '1' || process.argv.includes('--devtools')
+  const openDevTools = process.env.ENABLE_DEVTOOLS === '1' || process.argv.includes('--devtools')
 
   if (isDev) {
     win.loadURL('http://localhost:5173')
   } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'))
+    win.loadFile(join(__dirname, '../dist/index.html'))
   }
 
-  // Forward renderer console messages and load failures to main process logs
   win.webContents.on('console-message', (e, level, message, line, sourceId) => {
     console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`)
   })
@@ -46,13 +43,11 @@ function createWindow() {
   })
 
   if (openDevTools) {
-    // Detached window so devtools stay open separately
     win.webContents.openDevTools({ mode: 'detach' })
   }
 }
 
 app.whenReady().then(() => {
-  // Полностью отключаем меню приложения
   Menu.setApplicationMenu(null)
   
   createWindow()
