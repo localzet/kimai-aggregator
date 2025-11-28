@@ -722,12 +722,23 @@ function CalendarPage() {
                                     }}
                                   >
                                     <Text size="xs" fw={600} lineClamp={1}>
-                                      {begin.format('HH:mm')} · {projectName}
+                                      {projectName}
                                     </Text>
-                                    {height > 48 && (
-                                      <Text size="xs" lineClamp={1}>
-                                        {entry.description ?? activityName}
+
+
+                                    {height >= 44 && (
+                                      <Text size="xs" fw={500} lineClamp={1}>
+                                        {begin.format('HH:mm')} - {isRunning ? '...' : end.format('HH:mm')}
                                       </Text>
+                                    )}
+
+                                    {height >= 60 && (
+                                      <>
+                                        {/* <hr /> */}
+                                        <Text size="xs" lineClamp={1 + Math.floor((height - 60) / 16)}>
+                                          {entry.description ?? activityName}
+                                        </Text>
+                                      </>
                                     )}
                                   </Box>
                                 </Tooltip>
