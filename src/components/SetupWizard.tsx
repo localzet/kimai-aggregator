@@ -297,7 +297,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                         setSyncing(true)
                         setSyncError(null)
                         
-                        const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'http://localhost:3000/api'
+                        const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
                         const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
                         const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
                         

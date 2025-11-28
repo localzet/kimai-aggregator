@@ -10,7 +10,7 @@ dayjs.extend(isoWeeksInYear)
 export interface Timesheet {
   id: number
   begin: string
-  end: string
+  end: string | null
   project?: number | Project
   activity?: number | Activity
   description?: string
@@ -256,17 +256,21 @@ export function groupByWeek(timesheets: Timesheet[], excludedTags: string[] = []
     }
 
     const begin = dayjs(entry.begin)
-    const end = dayjs(entry.end)
+    // Для активных задач (без end) используем текущее время
+    const end = entry.end ? dayjs(entry.end) : dayjs()
     const duration = end.diff(begin, 'minute')
+    
+    // Проверяем на валидность, если duration NaN или отрицательный, используем 0
+    const validDuration = isNaN(duration) || duration < 0 ? 0 : duration
 
     grouped[weekKey].entries.push({
       ...entry,
-      duration,
+      duration: validDuration,
       date: begin,
       isExcluded: entry.tags?.some(tag => excludedTagsLower.includes(tag.toLowerCase())) ?? false,
     })
 
-    grouped[weekKey].totalMinutes += duration
+    grouped[weekKey].totalMinutes += validDuration
   })
 
   return Object.values(grouped).sort((a, b) => {

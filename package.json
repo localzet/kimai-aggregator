@@ -6,9 +6,9 @@
     "main": "electron/main.js",
     "scripts": {
         "dev": "vite",
-        "build": "tsc \u0026\u0026 vite build",
-        "electron:dev": "vite build \u0026\u0026 electron .",
-        "electron:build": "vite build \u0026\u0026 electron-builder",
+        "build": "tsc && vite build",
+        "electron:dev": "vite build && electron .",
+        "electron:build": "vite build && electron-builder",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview",
         "typecheck": "tsc --noEmit"
@@ -16,7 +16,7 @@
     "dependencies": {
         "@gfazioli/mantine-list-view-table": "^1.1.4",
         "@gfazioli/mantine-split-pane": "^2.5.1",
-        "@localzet/data-connector": "^1.0.0",
+        "@localzet/data-connector": "^1.0.1",
         "@mantine/charts": "^8.3.6",
         "@mantine/core": "^8.3.6",
         "@mantine/dates": "^8.3.6",

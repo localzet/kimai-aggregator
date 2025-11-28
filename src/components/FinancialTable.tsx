@@ -54,6 +54,10 @@ function FinancialTable({ weeks, settings }: FinancialTableProps) {
   }
 
   const formatDuration = (minutes: number) => {
+    // Обработка NaN и невалидных значений
+    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
+      return '0ч 0м'
+    }
     const roundedMinutes = Math.round(minutes)
     const hours = Math.floor(roundedMinutes / 60)
     const mins = roundedMinutes % 60

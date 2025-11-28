@@ -37,6 +37,10 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
     : weeks[0]
 
   const formatDuration = (minutes: number) => {
+    // Обработка NaN и невалидных значений
+    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
+      return '0ч 0м'
+    }
     const roundedMinutes = Math.round(minutes)
     const hours = Math.floor(roundedMinutes / 60)
     const mins = roundedMinutes % 60
@@ -102,7 +106,10 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       accessorKey: 'end',
       id: 'endTime',
       header: 'Время окончания',
-      Cell: ({ cell }) => dayjs(cell.getValue() as string).format('HH:mm'),
+      Cell: ({ cell }) => {
+        const endValue = cell.getValue() as string | null
+        return endValue ? dayjs(endValue).format('HH:mm') : <Text c="dimmed">В процессе...</Text>
+      },
     },
     {
       accessorKey: 'duration',
