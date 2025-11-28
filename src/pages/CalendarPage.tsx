@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Alert,
   SegmentedControl,
@@ -73,6 +73,9 @@ function CalendarPage() {
   const { weeks, loading, error, syncing } = useDashboardData(settings, syncStatus)
   const [view, setView] = useState<ViewType>('week')
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
+  const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  const weekScrollRef = useRef<HTMLDivElement>(null)
+  const dayScrollRef = useRef<HTMLDivElement>(null)
 
   // Собираем все записи из всех недель
   const allEntries = useMemo(() => {
@@ -237,6 +240,40 @@ function CalendarPage() {
     setCurrentDate(parsed.isValid() ? parsed.toDate() : new Date())
   }
 
+  // Обновляем текущее время каждую минуту
+  useEffect(() => {
+    const updateTime = () => setCurrentTime(new Date())
+    updateTime()
+    const interval = setInterval(updateTime, 60000) // Обновляем каждую минуту
+    return () => clearInterval(interval)
+  }, [])
+
+  // Скроллим к текущему моменту при загрузке недельного/дневного вида
+  useEffect(() => {
+    if (view === 'week' || view === 'day') {
+      const now = dayjs()
+      const currentHour = now.hour()
+      const currentMinute = now.minute()
+      const HEADER_HEIGHT = view === 'week' ? 70 : 0 // Высота шапки колонки для недельного вида
+      const scrollPosition = HEADER_HEIGHT + (currentHour * HOUR_HEIGHT) + (currentMinute * MINUTE_HEIGHT) - 200 // Отступ сверху 200px
+
+      setTimeout(() => {
+        if (view === 'week' && weekScrollRef.current) {
+          const scrollArea = weekScrollRef.current.querySelector('.mantine-ScrollArea-viewport') as HTMLElement
+          if (scrollArea) {
+            scrollArea.scrollTop = Math.max(0, scrollPosition)
+          }
+        }
+        if (view === 'day' && dayScrollRef.current) {
+          const scrollArea = dayScrollRef.current.querySelector('.mantine-ScrollArea-viewport') as HTMLElement
+          if (scrollArea) {
+            scrollArea.scrollTop = Math.max(0, scrollPosition)
+          }
+        }
+      }, 200)
+    }
+  }, [view, currentDate])
+
   const currentDateEntries = getEntriesForDate(currentDate)
   const currentDaySegments = useMemo(() => getSegmentsForDay(dayjs(currentDate), allEntries), [currentDate, allEntries])
   const weekStart = dayjs(currentDate).startOf('week')
@@ -302,12 +339,6 @@ function CalendarPage() {
                 Обновление...
               </Badge>
             )}
-            {/* <Badge color="green" variant="light" size="lg">
-              Всего: {formatDuration(totalDuration)}
-            </Badge>
-            <Badge color="blue" variant="light" size="lg">
-              {allEntries.length} событий
-            </Badge> */}
           </Group>
         </Group>
 
@@ -497,23 +528,62 @@ function CalendarPage() {
               </Group>
             </Group>
 
-            <ScrollArea h={770}>
+            <ScrollArea h={770} ref={weekScrollRef}>
               <Box style={{ display: 'flex', gap: '12px' }}>
-                <Box style={{ width: '80px', flexShrink: 0 }}>
+                <Box style={{ width: '80px', flexShrink: 0, position: 'relative' }}>
+                  {/* Отступ для выравнивания с шапками колонок */}
+                  <Box style={{ height: '70px' }} />
                   {Array.from({ length: 24 }).map((_, hour) => (
                     <Box
                       key={hour}
                       style={{
                         height: `${HOUR_HEIGHT}px`,
-                        borderBottom: '1px solid var(--mantine-color-dark-5)',
+                        borderBottom: '1px solid var(--mantine-color-dark-4)',
                         padding: '4px',
+                        position: 'relative',
                       }}
                     >
                       <Text size="xs" c="dimmed">
                         {String(hour).padStart(2, '0')}:00
                       </Text>
+                      {/* Полоски для разделения получасов */}
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          borderTop: '1px dashed var(--mantine-color-dark-5)',
+                        }}
+                      />
                     </Box>
                   ))}
+                  {/* Красная линия текущего момента */}
+                  {(() => {
+                    const now = dayjs(currentTime)
+                    const isCurrentWeek = now.isAfter(weekStart.subtract(1, 'day')) && now.isBefore(weekEnd.add(1, 'day'))
+                    if (!isCurrentWeek) return null
+                    const currentHour = now.hour()
+                    const currentMinute = now.minute()
+                    const HEADER_HEIGHT = 70 // Высота шапки колонки
+                    const top = HEADER_HEIGHT + (currentHour * HOUR_HEIGHT) + (currentMinute * MINUTE_HEIGHT)
+                    return (
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          top: `${top}px`,
+                          left: 0,
+                          right: 0,
+                          height: '2px',
+                          backgroundColor: 'var(--mantine-color-red-6)',
+                          zIndex: 100,
+                          pointerEvents: 'none',
+                          boxShadow: '0 0 4px rgba(255, 0, 0, 0.5)',
+                        }}
+                      />
+                    )
+                  })()}
                 </Box>
                 <ScrollArea scrollbarSize={4} type="auto" style={{ width: '100%' }}>
                   <Box
@@ -546,19 +616,70 @@ function CalendarPage() {
                             <Text size="sm" fw={600}>
                               {dayDate.format('dd, DD.MM')}
                             </Text>
-                            {dayTotalMinutes > 0 && (
-                              <Badge size="xs" color="green" variant="light">
-                                {formatDuration(dayTotalMinutes)}
-                              </Badge>
-                            )}
+                            <Badge size="xs" color={dayTotalMinutes > 0 ? "green" : "gray"} variant="light">
+                              {formatDuration(dayTotalMinutes)}
+                            </Badge>
                           </Stack>
                           <Box
                             style={{
                               position: 'relative',
                               minHeight: `${HOUR_HEIGHT * 24}px`,
-                              borderTop: '1px solid var(--mantine-color-dark-5)',
+                              borderTop: '1px solid var(--mantine-color-dark-4)',
                             }}
                           >
+                            {/* Горизонтальные линии для разделения часов */}
+                            {Array.from({ length: 24 }).map((_, hour) => (
+                              <Box
+                                key={hour}
+                                style={{
+                                  position: 'absolute',
+                                  top: `${hour * HOUR_HEIGHT}px`,
+                                  left: 0,
+                                  right: 0,
+                                  height: '1px',
+                                  borderTop: '1px solid var(--mantine-color-dark-4)',
+                                  zIndex: 1,
+                                }}
+                              />
+                            ))}
+                            {/* Полоски для разделения получасов */}
+                            {Array.from({ length: 24 }).map((_, hour) => (
+                              <Box
+                                key={`half-${hour}`}
+                                style={{
+                                  position: 'absolute',
+                                  top: `${(hour * HOUR_HEIGHT) + (HOUR_HEIGHT / 2)}px`,
+                                  left: 0,
+                                  right: 0,
+                                  height: '1px',
+                                  borderTop: '1px dashed var(--mantine-color-dark-5)',
+                                  zIndex: 1,
+                                }}
+                              />
+                            ))}
+                            {/* Красная линия текущего момента для текущего дня */}
+                            {(() => {
+                              const now = dayjs(currentTime)
+                              if (!isToday || !now.isSame(dayDate, 'day')) return null
+                              const currentHour = now.hour()
+                              const currentMinute = now.minute()
+                              const top = (currentHour * HOUR_HEIGHT) + (currentMinute * MINUTE_HEIGHT)
+                              return (
+                                <Box
+                                  style={{
+                                    position: 'absolute',
+                                    top: `${top}px`,
+                                    left: 0,
+                                    right: 0,
+                                    height: '2px',
+                                    backgroundColor: 'var(--mantine-color-red-6)',
+                                    zIndex: 100,
+                                    pointerEvents: 'none',
+                                    boxShadow: '0 0 4px rgba(255, 0, 0, 0.5)',
+                                  }}
+                                />
+                              )
+                            })()}
                             {addGapsToSegments(daySegments).map(segment => {
                               const { entry, segmentStart, durationMinutes, top, height } = segment
                               const projectId = getProjectId(entry)
@@ -597,6 +718,7 @@ function CalendarPage() {
                                       borderLeft: isRunning ? '4px solid var(--mantine-color-red-5)' : undefined,
                                       color: 'white',
                                       overflow: 'hidden',
+                                      zIndex: 10,
                                     }}
                                   >
                                     <Text size="xs" fw={600} lineClamp={1}>
@@ -638,7 +760,7 @@ function CalendarPage() {
               </Group>
             </Group>
 
-            <ScrollArea h={770}>
+            <ScrollArea h={770} ref={dayScrollRef}>
               <Box style={{ position: 'relative', minHeight: '1440px' }}>
                 {/* Временная шкала */}
                 <Box
@@ -649,6 +771,7 @@ function CalendarPage() {
                     bottom: 0,
                     width: '80px',
                     borderRight: '1px solid var(--mantine-color-dark-5)',
+                    zIndex: 10,
                   }}
                 >
                   {Array.from({ length: 24 }).map((_, hour) => (
@@ -656,15 +779,51 @@ function CalendarPage() {
                       key={hour}
                       style={{
                         height: `${HOUR_HEIGHT}px`,
-                        borderBottom: '1px solid var(--mantine-color-dark-5)',
+                        borderBottom: '1px solid var(--mantine-color-dark-4)',
                         padding: '4px',
+                        position: 'relative',
                       }}
                     >
                       <Text size="xs" c="dimmed">
                         {String(hour).padStart(2, '0')}:00
                       </Text>
+                      {/* Полоски для разделения получасов */}
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: '1px',
+                          borderTop: '1px dashed var(--mantine-color-dark-5)',
+                        }}
+                      />
                     </Box>
                   ))}
+                  {/* Красная линия текущего момента */}
+                  {(() => {
+                    const now = dayjs(currentTime)
+                    const isCurrentDay = now.isSame(dayjs(currentDate), 'day')
+                    if (!isCurrentDay) return null
+                    const currentHour = now.hour()
+                    const currentMinute = now.minute()
+                    const top = (currentHour * HOUR_HEIGHT) + (currentMinute * MINUTE_HEIGHT)
+                    return (
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          top: `${top}px`,
+                          left: 0,
+                          right: 0,
+                          height: '2px',
+                          backgroundColor: 'var(--mantine-color-red-6)',
+                          zIndex: 100,
+                          pointerEvents: 'none',
+                          boxShadow: '0 0 4px rgba(255, 0, 0, 0.5)',
+                        }}
+                      />
+                    )
+                  })()}
                 </Box>
 
                 {/* События */}
@@ -675,6 +834,60 @@ function CalendarPage() {
                     minHeight: '1440px',
                   }}
                 >
+                  {/* Горизонтальные линии для разделения часов */}
+                  {Array.from({ length: 24 }).map((_, hour) => (
+                    <Box
+                      key={hour}
+                      style={{
+                        position: 'absolute',
+                        top: `${hour * HOUR_HEIGHT}px`,
+                        left: 0,
+                        right: 0,
+                        height: '1px',
+                        borderTop: '1px solid var(--mantine-color-dark-4)',
+                        zIndex: 1,
+                      }}
+                    />
+                  ))}
+                  {/* Полоски для разделения получасов */}
+                  {Array.from({ length: 24 }).map((_, hour) => (
+                    <Box
+                      key={`half-${hour}`}
+                      style={{
+                        position: 'absolute',
+                        top: `${(hour * HOUR_HEIGHT) + (HOUR_HEIGHT / 2)}px`,
+                        left: 0,
+                        right: 0,
+                        height: '1px',
+                        borderTop: '1px dashed var(--mantine-color-dark-5)',
+                        zIndex: 1,
+                      }}
+                    />
+                  ))}
+                  {/* Красная линия текущего момента */}
+                  {(() => {
+                    const now = dayjs(currentTime)
+                    const isCurrentDay = now.isSame(dayjs(currentDate), 'day')
+                    if (!isCurrentDay) return null
+                    const currentHour = now.hour()
+                    const currentMinute = now.minute()
+                    const top = (currentHour * HOUR_HEIGHT) + (currentMinute * MINUTE_HEIGHT)
+                    return (
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          top: `${top}px`,
+                          left: 0,
+                          right: 0,
+                          height: '2px',
+                          backgroundColor: 'var(--mantine-color-red-6)',
+                          zIndex: 100,
+                          pointerEvents: 'none',
+                          boxShadow: '0 0 4px rgba(255, 0, 0, 0.5)',
+                        }}
+                      />
+                    )
+                  })()}
                   {addGapsToSegments(currentDaySegments).map(segment => {
                     const { entry, segmentStart, segmentEnd, durationMinutes, top, height } = segment
                     const projectId = getProjectId(entry)
@@ -711,6 +924,7 @@ function CalendarPage() {
                             borderLeft: isRunning ? '4px solid var(--mantine-color-red-6)' : `4px solid var(--mantine-color-${color}-7)`,
                             cursor: 'pointer',
                             opacity: isRunning ? 0.9 : 1,
+                            zIndex: 10,
                           }}
                         >
                           <Stack gap={4}>
