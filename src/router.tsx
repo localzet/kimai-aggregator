@@ -13,6 +13,7 @@ const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
 const FinancialPage = lazy(() => import("./pages/FinancialPage"))
 const PaymentHistoryPage = lazy(() => import("./pages/PaymentHistoryPage"))
 const StatisticsPage = lazy(() => import("./pages/StatisticsPage"))
+const CalendarPage = lazy(() => import("./pages/CalendarPage"))
 const MixIdCallbackPage = lazy(() => import("@localzet/data-connector/components").then(m => ({ default: m.MixIdCallbackPage })))
 const MainLayout = lazy(() => import("./layout").then(module => ({ default: module.MainLayout })))
 
@@ -110,6 +111,15 @@ const router = createBrowserRouter(
                         </SetupGuard>
                     }
                     path='/statistics'
+                />
+
+                <Route
+                    element={
+                        <SetupGuard>
+                            <CalendarPage />
+                        </SetupGuard>
+                    }
+                    path='/calendar'
                 />
 
             </Route>

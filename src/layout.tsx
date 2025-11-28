@@ -8,6 +8,7 @@ import { PiArrowRight, PiCpu, PiListChecks, PiStarDuotone } from "react-icons/pi
 import {
     TbDeviceAnalytics,
     TbReportAnalytics,
+    TbCalendar,
 } from 'react-icons/tb'
 import { HiCurrencyDollar } from 'react-icons/hi'
 
@@ -115,6 +116,12 @@ export function MainLayout() {
                     href: '/statistics',
                     name: 'Статистика',
                     icon: TbDeviceAnalytics,
+                },
+                {
+                    id: 'calendar',
+                    href: '/calendar',
+                    name: 'Календарь',
+                    icon: TbCalendar,
                 },
             ]
         })
