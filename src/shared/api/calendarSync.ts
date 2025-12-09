@@ -376,7 +376,7 @@ export class NotionCalendarSync {
           title: [
             {
               text: {
-                content: `${entry.description ? `: ${entry.description}` : `${projectName}`}`,
+                content: `${entry.description ? `${entry.description}` : `${projectName}`}`,
               },
             },
           ],
