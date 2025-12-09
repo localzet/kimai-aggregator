@@ -255,6 +255,33 @@ export class GoogleCalendarSync {
   }
 }
 
+// Проверка доступности Electron
+const isElectron = typeof window !== 'undefined' && window.electron?.isElectron
+
+// Универсальная функция для запросов к Notion API
+async function notionFetch(url: string, options: RequestInit): Promise<Response> {
+  if (isElectron && window.electron?.notionApi) {
+    // Используем Electron IPC для обхода CORS
+    const result = await window.electron.notionApi.request(url, options)
+    
+    if (!result.ok) {
+      throw new Error(result.error || `HTTP ${result.status}: ${result.statusText}`)
+    }
+    
+    // Создаем Response-подобный объект
+    return {
+      ok: result.ok,
+      status: result.status,
+      statusText: result.statusText,
+      json: async () => result.data,
+      text: async () => JSON.stringify(result.data),
+    } as Response
+  } else {
+    // В браузере используем обычный fetch (будет ошибка CORS)
+    return fetch(url, options)
+  }
+}
+
 export class NotionCalendarSync {
   private settings: CalendarSyncSettings
 
@@ -308,7 +335,10 @@ export class NotionCalendarSync {
     // Ищем существующую страницу по Kimai ID
     const existingPage = await this.findPageByKimaiId(entry.id)
 
-    const pageData = {
+    const pageData: {
+      parent: { database_id: string }
+      properties: Record<string, any>
+    } = {
       parent: {
         database_id: this.settings.notionDatabaseId!,
       },
@@ -369,7 +399,7 @@ export class NotionCalendarSync {
 
     if (existingPage) {
       // Обновляем существующую страницу
-      const updateResponse = await fetch(`https://api.notion.com/v1/pages/${existingPage.id}`, {
+      const updateResponse = await notionFetch(`https://api.notion.com/v1/pages/${existingPage.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${this.settings.notionApiKey}`,
@@ -382,13 +412,14 @@ export class NotionCalendarSync {
       })
       
       if (!updateResponse.ok) {
-        throw new Error(`Ошибка обновления страницы: ${updateResponse.statusText}`)
+        const errorText = await updateResponse.text().catch(() => 'Unknown error')
+        throw new Error(`Ошибка обновления страницы: ${updateResponse.statusText} - ${errorText}`)
       }
       
       return true
     } else {
       // Создаем новую страницу
-      const createResponse = await fetch('https://api.notion.com/v1/pages', {
+      const createResponse = await notionFetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.settings.notionApiKey}`,
@@ -399,7 +430,8 @@ export class NotionCalendarSync {
       })
       
       if (!createResponse.ok) {
-        throw new Error(`Ошибка создания страницы: ${createResponse.statusText}`)
+        const errorText = await createResponse.text().catch(() => 'Unknown error')
+        throw new Error(`Ошибка создания страницы: ${createResponse.statusText} - ${errorText}`)
       }
       
       return false
@@ -410,29 +442,34 @@ export class NotionCalendarSync {
    * Ищет страницу в Notion по Kimai ID
    */
   private async findPageByKimaiId(kimaiId: number): Promise<{ id: string } | null> {
-    const response = await fetch(`https://api.notion.com/v1/databases/${this.settings.notionDatabaseId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.settings.notionApiKey}`,
-        'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28',
-      },
-      body: JSON.stringify({
-        filter: {
-          property: 'Kimai ID',
-          number: {
-            equals: kimaiId,
-          },
+    try {
+      const response = await notionFetch(`https://api.notion.com/v1/databases/${this.settings.notionDatabaseId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.settings.notionApiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28',
         },
-      }),
-    })
+        body: JSON.stringify({
+          filter: {
+            property: 'Kimai ID',
+            number: {
+              equals: kimaiId,
+            },
+          },
+        }),
+      })
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return null
+      }
+
+      const data = await response.json()
+      return data.results.length > 0 ? { id: data.results[0].id } : null
+    } catch (error) {
+      console.error('Ошибка поиска страницы в Notion:', error)
       return null
     }
-
-    const data = await response.json()
-    return data.results.length > 0 ? { id: data.results[0].id } : null
   }
 }
 

@@ -12,10 +12,14 @@ import {
   Text,
   Alert,
   Divider,
+  Badge,
 } from '@mantine/core'
+import { IconRefresh, IconCheck, IconX } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { CalendarSyncSettings } from '@/shared/hooks/useSettings'
 import { GoogleCalendarSync } from '@/shared/api/calendarSync'
+import { useCalendarSync } from '@/shared/hooks'
+import { useSettings } from '@/shared/hooks/useSettings'
 
 interface CalendarSyncSettingsProps {
   settings: CalendarSyncSettings
@@ -27,6 +31,8 @@ export default function CalendarSyncSettingsComponent({
   onUpdate,
 }: CalendarSyncSettingsProps) {
   const [authorizing, setAuthorizing] = useState(false)
+  const { settings: allSettings } = useSettings()
+  const { sync: syncCalendar, syncing: syncingCalendar } = useCalendarSync()
 
   const handleAuthorizeGoogle = async () => {
     if (!settings.googleClientId) {
@@ -176,6 +182,16 @@ export default function CalendarSyncSettingsComponent({
             {settings.syncType === 'notion' && (
               <Stack gap="md">
                 <Divider label="Настройки Notion" labelPosition="left" />
+                {typeof window !== 'undefined' && !window.electron?.isElectron && (
+                  <Alert color="orange" title="Важно">
+                    <Text size="sm" fw={500} mb="xs">
+                      Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS браузера.
+                    </Text>
+                    <Text size="sm">
+                      Используйте команду <code>npm run electron:dev</code> для запуска Electron версии.
+                    </Text>
+                  </Alert>
+                )}
                 <Alert color="blue" title="Инструкция">
                   <Text size="sm" mb="xs">
                     1. Создайте интеграцию в Notion (Settings & Members → Integrations → New integration)
@@ -236,6 +252,20 @@ export default function CalendarSyncSettingsComponent({
                     })
                   }
                 />
+
+                {settings.notionApiKey && settings.notionDatabaseId ? (
+                  <Alert color="green" title="Готово к синхронизации">
+                    <Text size="sm">
+                      Все необходимые данные заполнены. Перейдите на страницу Календарь и нажмите кнопку "Синхронизировать с Notion".
+                    </Text>
+                  </Alert>
+                ) : (
+                  <Alert color="yellow" title="Требуется настройка">
+                    <Text size="sm">
+                      Заполните API Key и Database ID для начала синхронизации.
+                    </Text>
+                  </Alert>
+                )}
               </Stack>
             )}
 

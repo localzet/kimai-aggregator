@@ -21,8 +21,50 @@ export function useCalendarSync() {
       return null
     }
 
+    // Проверяем наличие необходимых данных
+    if (settings.syncType === 'google') {
+      if (!settings.googleAccessToken && !settings.googleRefreshToken) {
+        notifications.show({
+          title: 'Ошибка',
+          message: 'Google Calendar не авторизован. Перейдите в Настройки и авторизуйте календарь.',
+          color: 'red',
+        })
+        return null
+      }
+    } else if (settings.syncType === 'notion') {
+      if (!settings.notionApiKey || !settings.notionDatabaseId) {
+        notifications.show({
+          title: 'Ошибка',
+          message: 'Notion API Key или Database ID не заполнены. Проверьте настройки.',
+          color: 'red',
+        })
+        return null
+      }
+      
+      // Предупреждение о CORS в браузере
+      const isElectron = typeof window !== 'undefined' && window.electron?.isElectron
+      if (!isElectron) {
+        notifications.show({
+          title: 'Предупреждение',
+          message: 'Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS. Используйте Electron версию приложения.',
+          color: 'yellow',
+          autoClose: 10000,
+        })
+        return null
+      }
+    }
+
     try {
       setSyncing(true)
+
+      notifications.show({
+        title: 'Синхронизация начата',
+        message: `Синхронизация с ${settings.syncType === 'notion' ? 'Notion' : 'Google Calendar'}...`,
+        color: 'blue',
+        loading: true,
+        autoClose: false,
+        id: 'calendar-sync',
+      })
 
       // Фильтруем записи по диапазону дат
       const now = dayjs()
@@ -37,20 +79,28 @@ export function useCalendarSync() {
         return entryDate.isAfter(startDate) && entryDate.isBefore(endDate)
       })
 
+      console.log(`Синхронизация ${filteredEntries.length} записей с ${settings.syncType}`)
+
       const result = await syncCalendar(filteredEntries, settings)
 
-      notifications.show({
+      notifications.update({
+        id: 'calendar-sync',
         title: 'Синхронизация завершена',
         message: `Создано: ${result.created}, Обновлено: ${result.updated}, Ошибок: ${result.errors}`,
         color: result.errors === 0 ? 'green' : 'yellow',
+        loading: false,
+        autoClose: 5000,
       })
 
       return result
     } catch (error) {
-      notifications.show({
+      notifications.update({
+        id: 'calendar-sync',
         title: 'Ошибка синхронизации',
         message: error instanceof Error ? error.message : 'Неизвестная ошибка',
         color: 'red',
+        loading: false,
+        autoClose: 5000,
       })
       return null
     } finally {

@@ -341,19 +341,30 @@ function CalendarPage() {
               </Badge>
             )}
             {settings.calendarSync?.enabled && (
-              <Button
-                leftSection={<IconRefresh size={16} />}
-                onClick={() => {
-                  if (settings.calendarSync) {
-                    syncCalendar(allEntries, settings.calendarSync)
-                  }
-                }}
-                loading={syncingCalendar}
-                variant="light"
-                size="sm"
-              >
-                Синхронизировать календарь
-              </Button>
+              <>
+                {syncingCalendar && (
+                  <Badge color="cyan" variant="light" leftSection={<IconRefresh size={12} />}>
+                    Синхронизация календаря...
+                  </Badge>
+                )}
+                <Button
+                  leftSection={<IconRefresh size={16} />}
+                  onClick={() => {
+                    if (settings.calendarSync) {
+                      syncCalendar(allEntries, settings.calendarSync)
+                    }
+                  }}
+                  loading={syncingCalendar}
+                  disabled={syncingCalendar}
+                  variant={settings.calendarSync.syncType === 'notion' ? 'filled' : 'light'}
+                  color={settings.calendarSync.syncType === 'notion' ? 'violet' : undefined}
+                  size="sm"
+                >
+                  {syncingCalendar 
+                    ? 'Синхронизация...' 
+                    : `Синхронизировать с ${settings.calendarSync.syncType === 'notion' ? 'Notion' : 'Google'}`}
+                </Button>
+              </>
             )}
           </Group>
         </Group>

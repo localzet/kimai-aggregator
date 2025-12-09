@@ -156,20 +156,30 @@ export class KimaiApi {
 
     while (true) {
       const endpoint = `/api/timesheets?begin=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&size=${size}&page=${page}`
-      const data = await this.request(endpoint) as Timesheet[]
+      
+      try {
+        const data = await this.request(endpoint) as Timesheet[]
 
-      if (!data || data.length === 0) {
-        break
+        if (!data || data.length === 0) {
+          break
+        }
+
+        allTimesheets.push(...data)
+
+        // Если получили меньше записей, чем размер страницы, значит это последняя страница
+        if (data.length < size) {
+          break
+        }
+
+        page++
+      } catch (error) {
+        // Если получили 404 или другую ошибку, значит страниц больше нет
+        if (error instanceof Error && error.message.includes('404')) {
+          break
+        }
+        // Для других ошибок пробрасываем дальше
+        throw error
       }
-
-      allTimesheets.push(...data)
-
-      // Если получили меньше записей, чем размер страницы, значит это последняя страница
-      if (data.length < size) {
-        break
-      }
-
-      page++
     }
 
     return allTimesheets

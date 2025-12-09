@@ -110,6 +110,8 @@ npm run electron:build
 
 #### Notion Calendar
 
+**Важно:** Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS браузера. Используйте `npm run electron:dev` для запуска.
+
 1. Перейдите в **Настройки** → **Синхронизация календаря**
 2. Включите синхронизацию и выберите "Notion Calendar"
 3. Создайте интеграцию в Notion (Settings & Members → Integrations → New integration)
