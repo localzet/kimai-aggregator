@@ -376,7 +376,7 @@ export class NotionCalendarSync {
           title: [
             {
               text: {
-                content: `${projectName}${activityName !== 'Без задачи' ? ` - ${activityName}` : ''}`,
+                content: `${projectName}${entry.description ? `: ${entry.description}` : ''}`,
               },
             },
           ],
@@ -414,12 +414,12 @@ export class NotionCalendarSync {
       },
     }
 
-    if (entry.description) {
+    if (projectName) {
       pageData.properties['Description'] = {
         rich_text: [
           {
             text: {
-              content: entry.description,
+                content: `${activityName !== 'Без задачи' ? ` - ${activityName}` : ''}`,
             },
           },
         ],
