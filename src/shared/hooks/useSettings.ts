@@ -1,6 +1,24 @@
 import { useState, useEffect } from 'react'
 import { ProjectSettings } from '@/shared/api/kimaiApi'
 
+export interface CalendarSyncSettings {
+  enabled: boolean
+  syncType: 'google' | 'notion' | null
+  // Google Calendar settings
+  googleCalendarId?: string
+  googleClientId?: string
+  googleClientSecret?: string
+  googleAccessToken?: string
+  googleRefreshToken?: string
+  // Notion settings
+  notionApiKey?: string
+  notionDatabaseId?: string
+  // Sync options
+  syncPastDays?: number // Сколько дней назад синхронизировать
+  syncFutureDays?: number // Сколько дней вперед синхронизировать
+  autoSync?: boolean // Автоматическая синхронизация
+}
+
 export interface Settings {
   apiUrl: string
   apiKey: string
@@ -9,6 +27,7 @@ export interface Settings {
   syncUrl?: string // Deprecated, kept for backward compatibility
   projectSettings: ProjectSettings
   excludedTags: string[]
+  calendarSync?: CalendarSyncSettings
 }
 
 const defaultSettings: Settings = {
@@ -19,6 +38,13 @@ const defaultSettings: Settings = {
   syncUrl: '',
   projectSettings: {},
   excludedTags: [],
+  calendarSync: {
+    enabled: false,
+    syncType: null,
+    syncPastDays: 30,
+    syncFutureDays: 7,
+    autoSync: false,
+  },
 }
 
 export function useSettings() {

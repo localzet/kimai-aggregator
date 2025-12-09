@@ -14,11 +14,11 @@ import {
   Grid,
   Card,
 } from '@mantine/core'
-import { IconChevronLeft, IconChevronRight, IconClock } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconClock, IconRefresh } from '@tabler/icons-react'
 import { DatePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
+import { useSettings, useDashboardData, useSyncStatus, useCalendarSync } from '@/shared/hooks'
 import { Timesheet } from '@/shared/api/kimaiApi'
 import { formatDuration } from '@/shared/utils'
 import { LoadingScreen } from '../shared/ui/loading-screen'
@@ -71,6 +71,7 @@ function CalendarPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, syncing } = useDashboardData(settings, syncStatus)
+  const { sync: syncCalendar, syncing: syncingCalendar } = useCalendarSync()
   const [view, setView] = useState<ViewType>('week')
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
@@ -338,6 +339,21 @@ function CalendarPage() {
               <Badge color="blue" variant="light">
                 Обновление...
               </Badge>
+            )}
+            {settings.calendarSync?.enabled && (
+              <Button
+                leftSection={<IconRefresh size={16} />}
+                onClick={() => {
+                  if (settings.calendarSync) {
+                    syncCalendar(allEntries, settings.calendarSync)
+                  }
+                }}
+                loading={syncingCalendar}
+                variant="light"
+                size="sm"
+              >
+                Синхронизировать календарь
+              </Button>
             )}
           </Group>
         </Group>

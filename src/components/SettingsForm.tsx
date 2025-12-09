@@ -22,6 +22,7 @@ import { useForm } from '@mantine/form'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings } from '@/shared/hooks/useSettings'
 import ProjectSettingsForm from './ProjectSettingsForm'
+import CalendarSyncSettings from './CalendarSyncSettings'
 import { MixIdConnection } from '@localzet/data-connector/components'
 
 interface SettingsFormProps {
@@ -301,6 +302,22 @@ export default function SettingsForm({ settings, onUpdate }: SettingsFormProps) 
           </Stack>
         </form>
       </Paper>
+
+      <CalendarSyncSettings
+        settings={settings.calendarSync || {
+          enabled: false,
+          syncType: null,
+          syncPastDays: 30,
+          syncFutureDays: 7,
+          autoSync: false,
+        }}
+        onUpdate={(calendarSync) => {
+          onUpdate({
+            ...settings,
+            calendarSync,
+          })
+        }}
+      />
 
       <Paper p="xl" withBorder>
         <Stack gap="md">
