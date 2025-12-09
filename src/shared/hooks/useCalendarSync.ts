@@ -41,16 +41,22 @@ export function useCalendarSync() {
         return null
       }
       
-      // Предупреждение о CORS в браузере
-      const isElectron = typeof window !== 'undefined' && window.electron?.isElectron
+      // Проверка доступности Electron (не блокируем, просто предупреждаем)
+      const isElectron = typeof window !== 'undefined' && (
+        window.electron?.isElectron || 
+        (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron'))
+      )
+      
       if (!isElectron) {
+        console.warn('Notion sync: Electron not detected, CORS may fail')
+        // Не блокируем синхронизацию, просто предупреждаем
+        // В Electron приложении это должно работать через IPC
         notifications.show({
           title: 'Предупреждение',
-          message: 'Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS. Используйте Electron версию приложения.',
+          message: 'Синхронизация с Notion может не работать в браузере из-за CORS. Убедитесь, что используете Electron версию.',
           color: 'yellow',
-          autoClose: 10000,
+          autoClose: 5000,
         })
-        return null
       }
     }
 

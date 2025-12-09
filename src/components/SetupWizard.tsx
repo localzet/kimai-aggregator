@@ -307,7 +307,26 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                         
                         mixIdApi.setConfig({ apiBase, clientId, clientSecret })
                         
-                        const redirectUri = window.location.origin + '/mixid-callback'
+                        // Для Electron используем file:// или localhost в зависимости от режима
+                        const isElectron = typeof window !== 'undefined' && (
+                          window.electron?.isElectron || 
+                          (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron')) ||
+                          window.location.protocol === 'file:'
+                        )
+                        
+                        let redirectUri
+                        if (isElectron && window.location.protocol === 'file:') {
+                          // В production Electron используем file://
+                          redirectUri = 'file:///mixid-callback'
+                        } else if (isElectron) {
+                          // В dev режиме используем localhost
+                          redirectUri = window.location.origin + '/mixid-callback'
+                        } else {
+                          // В браузере используем текущий origin
+                          redirectUri = window.location.origin + '/mixid-callback'
+                        }
+                        
+                        console.log('MIX ID redirect URI:', redirectUri, 'isElectron:', isElectron, 'protocol:', window.location.protocol)
                         const { authorizationUrl, code } = await mixIdApi.initiateOAuth(redirectUri)
                         
                         const width = 600

@@ -182,16 +182,29 @@ export default function CalendarSyncSettingsComponent({
             {settings.syncType === 'notion' && (
               <Stack gap="md">
                 <Divider label="Настройки Notion" labelPosition="left" />
-                {typeof window !== 'undefined' && !window.electron?.isElectron && (
-                  <Alert color="orange" title="Важно">
-                    <Text size="sm" fw={500} mb="xs">
-                      Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS браузера.
-                    </Text>
-                    <Text size="sm">
-                      Используйте команду <code>npm run electron:dev</code> для запуска Electron версии.
-                    </Text>
-                  </Alert>
-                )}
+                {(() => {
+                  const isElectron = typeof window !== 'undefined' && (
+                    window.electron?.isElectron || 
+                    (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron'))
+                  )
+                  return !isElectron ? (
+                    <Alert color="orange" title="Важно">
+                      <Text size="sm" fw={500} mb="xs">
+                        Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS браузера.
+                      </Text>
+                      <Text size="sm">
+                        Если вы используете собранное Electron приложение, убедитесь, что preload.js загружается правильно.
+                        Откройте DevTools (Ctrl+Shift+I) и проверьте консоль на наличие ошибок.
+                      </Text>
+                    </Alert>
+                  ) : (
+                    <Alert color="green" title="Electron обнаружен">
+                      <Text size="sm">
+                        Electron окружение обнаружено. Синхронизация с Notion должна работать.
+                      </Text>
+                    </Alert>
+                  )
+                })()}
                 <Alert color="blue" title="Инструкция">
                   <Text size="sm" mb="xs">
                     1. Создайте интеграцию в Notion (Settings & Members → Integrations → New integration)
