@@ -20,6 +20,7 @@ import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug,
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
 import { mixIdApi } from '@localzet/data-connector/api'
+import { BackendApi } from '@/shared/api/backendApi'
 
 interface SetupWizardProps {
   onComplete: () => void
@@ -158,15 +159,72 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       }
       updateSettings(newSettings)
 
-      // Если обычный режим, авторизуемся в бэкенде
+      // Если обычный режим, авторизуемся в бэкенде через MIX ID
       if (appMode === 'normal' && backendUrl.trim()) {
         try {
-          // TODO: Реализовать авторизацию через MIX ID в бэкенде
-          // const response = await fetch(`${backendUrl}/api/auth/login`, { ... })
-          // newSettings.backendToken = response.token
-          // updateSettings(newSettings)
+          // Получаем токен MIX ID из localStorage или из mixIdApi
+          let mixIdToken: string | null = null
+          
+          // Пытаемся получить токен из mixIdApi
+          try {
+            // Проверяем, есть ли токен в localStorage (mixIdApi хранит его там)
+            const storedToken = localStorage.getItem('mixid_access_token') || 
+                               localStorage.getItem('mixid_token') ||
+                               (window as any).mixidToken
+            mixIdToken = storedToken
+          } catch (e) {
+            console.warn('Could not get MIX ID token:', e)
+          }
+          
+          // Если токена нет, пытаемся получить его из localStorage
+          // (токен мог быть сохранен при предыдущей авторизации или при синхронизации)
+          if (!mixIdToken) {
+            try {
+              const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
+              const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
+              const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
+              
+              if (clientId && clientSecret) {
+                mixIdApi.setConfig({ apiBase, clientId, clientSecret })
+                // Проверяем localStorage снова после настройки mixIdApi
+                mixIdToken = localStorage.getItem('mixid_access_token') || 
+                             localStorage.getItem('mixid_token')
+              }
+            } catch (e) {
+              console.warn('Could not retrieve MIX ID token:', e)
+            }
+          }
+          
+          if (!mixIdToken) {
+            notifications.show({
+              title: 'Требуется авторизация MIX ID',
+              message: 'Для работы в обычном режиме необходимо авторизоваться через MIX ID. Используйте синхронизацию MIX ID на шаге 2.',
+              color: 'yellow',
+            })
+            // Не блокируем завершение, но предупреждаем
+          } else {
+            // Авторизуемся в бэкенде
+            const backendApi = new BackendApi(backendUrl.trim())
+            const authResponse = await backendApi.login(mixIdToken)
+            
+            // Сохраняем токен бэкенда
+            newSettings.backendToken = authResponse.token
+            updateSettings(newSettings)
+            
+            notifications.show({
+              title: 'Авторизация успешна',
+              message: 'Подключение к бэкенду установлено',
+              color: 'green',
+            })
+          }
         } catch (error) {
           console.error('Backend auth error:', error)
+          notifications.show({
+            title: 'Ошибка авторизации в бэкенде',
+            message: error instanceof Error ? error.message : 'Не удалось авторизоваться в бэкенде. Вы можете авторизоваться позже в настройках.',
+            color: 'orange',
+          })
+          // Не блокируем завершение настройки, пользователь может авторизоваться позже
         }
       }
     } else if (setupMethod === 'sync' && syncSuccess) {
@@ -444,7 +502,12 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                             
                             try {
                               const { code: callbackCode } = event.data
-                              await mixIdApi.exchangeCodeForToken(callbackCode || code, redirectUri)
+                              const tokenResponse = await mixIdApi.exchangeCodeForToken(callbackCode || code, redirectUri)
+                              
+                              // Сохраняем токен для использования в бэкенде
+                              if (tokenResponse?.access_token) {
+                                localStorage.setItem('mixid_access_token', tokenResponse.access_token)
+                              }
                               
                               // Dispatch event to trigger WebSocket connection and status update
                               window.dispatchEvent(new Event('mixid-config-changed'))
