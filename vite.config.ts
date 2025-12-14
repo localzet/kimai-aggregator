@@ -21,11 +21,11 @@ export default defineConfig({
         background_color: '#161B23',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: './',
+        start_url: './',
         icons: [
           {
-            src: '/vite.svg',
+            src: 'vite.svg',
             sizes: 'any',
             type: 'image/svg+xml',
           },

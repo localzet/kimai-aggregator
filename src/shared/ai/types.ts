@@ -5,15 +5,15 @@ export interface TimesheetEntry {
   begin: string
   end: string | null
   duration: number // минуты
-  projectId: number | null
-  projectName: string
-  activityId: number | null
-  activityName: string
+  project_id: number | null
+  project_name: string
+  activity_id: number | null
+  activity_name: string
   description?: string
   tags?: string[]
-  dayOfWeek: number
-  hourOfDay: number
-  weekOfYear: number
+  day_of_week: number
+  hour_of_day: number
+  week_of_year: number
   month: number
   year: number
 }
@@ -21,13 +21,13 @@ export interface TimesheetEntry {
 export interface Project {
   id: number
   name: string
-  totalHours: number
-  avgHoursPerWeek: number
-  weeksCount: number
+  total_hours: number
+  avg_hours_per_week: number
+  weeks_count: number
 }
 
 export interface ProjectStats {
-  projectId: number
+  project_id: number
   minutes: number
   hours: number
 }
@@ -35,10 +35,10 @@ export interface ProjectStats {
 export interface WeekData {
   year: number
   week: number
-  totalMinutes: number
-  totalHours: number
-  totalAmount: number
-  projectStats: ProjectStats[]
+  total_minutes: number
+  total_hours: number
+  total_amount: number
+  project_stats: ProjectStats[]
 }
 
 export interface MLInputData {
@@ -46,30 +46,30 @@ export interface MLInputData {
   projects: Project[]
   weeks: WeekData[]
   settings: {
-    ratePerMinute: number
-    projectSettings?: Record<number, {
+    rate_per_minute: number
+    project_settings?: Record<number, {
       enabled: boolean
-      weeklyGoalHours?: number
-      paymentPeriodWeeks?: number
+      weekly_goal_hours?: number
+      payment_period_weeks?: number
     }>
   }
   context?: {
-    targetWeek?: number
-    targetYear?: number
-    targetProjectId?: number
+    target_week?: number
+    target_year?: number
+    target_project_id?: number
   }
 }
 
 export interface ForecastingOutput {
-  weeklyHours: number
-  weeklyHoursByProject: Record<number, number>
-  monthlyHours: number
+  weekly_hours: number
+  weekly_hours_by_project: Record<number, number>
+  monthly_hours: number
   confidence: number
   trend: 'increasing' | 'decreasing' | 'stable'
 }
 
 export interface AnomalyOutput {
-  entryId: number
+  entry_id: number
   type: 'duration' | 'time' | 'pattern' | 'project'
   severity: 'low' | 'medium' | 'high'
   reason: string
@@ -81,8 +81,8 @@ export interface RecommendationOutput {
   priority: 'low' | 'medium' | 'high'
   title: string
   description: string
-  actionItems: string[]
-  expectedImpact: string
+  action_items: string[]
+  expected_impact: string
   confidence: number
 }
 
@@ -93,17 +93,17 @@ export interface OptimalWorkHours {
 }
 
 export interface BreakRecommendations {
-  optimalBreakDuration: number
-  breakFrequency: number
+  optimal_break_duration: number
+  break_frequency: number
 }
 
 export interface ProductivityOutput {
-  optimalWorkHours: OptimalWorkHours
-  efficiencyByTime: Array<{
+  optimal_work_hours: OptimalWorkHours
+  efficiency_by_time: Array<{
     hour: number
     efficiency: number
   }>
-  breakRecommendations: BreakRecommendations
+  break_recommendations: BreakRecommendations
 }
 
 export interface MLOutputData {

@@ -78,10 +78,10 @@ export default function MLInsights() {
                   </Badge>
                 </Group>
                 <Text size="xl" fw={700} c="cyan">
-                  {forecast.weeklyHours.toFixed(1)} часов
+                  {forecast.weekly_hours.toFixed(1)} часов
                 </Text>
                 <Text size="sm" c="dimmed" mt="xs">
-                  Прогноз на месяц: {forecast.monthlyHours.toFixed(1)} часов
+                  Прогноз на месяц: {forecast.monthly_hours.toFixed(1)} часов
                 </Text>
                 <Stack gap="xs" mt="xs">
                   <Group justify="space-between">
@@ -92,11 +92,11 @@ export default function MLInsights() {
                 </Stack>
               </Card>
 
-              {Object.keys(forecast.weeklyHoursByProject).length > 0 && (
+              {Object.keys(forecast.weekly_hours_by_project || {}).length > 0 && (
                 <Card withBorder p="md">
                   <Text fw={600} mb="xs">Прогноз по проектам</Text>
                   <Stack gap="xs">
-                    {Object.entries(forecast.weeklyHoursByProject).map(([projectId, hours]) => (
+                    {Object.entries(forecast.weekly_hours_by_project || {}).map(([projectId, hours]) => (
                       <Group key={projectId} justify="space-between">
                         <Text size="sm">Проект {projectId}</Text>
                         <Text size="sm" fw={500}>{hours.toFixed(1)} ч</Text>
@@ -118,9 +118,9 @@ export default function MLInsights() {
             <Stack gap="sm">
               {anomalies.map((anomaly) => (
                 <Alert
-                  key={anomaly.entryId}
+                  key={anomaly.entry_id}
                   color={anomaly.severity === 'high' ? 'red' : anomaly.severity === 'medium' ? 'yellow' : 'blue'}
-                  title={`Аномалия #${anomaly.entryId}`}
+                  title={`Аномалия #${anomaly.entry_id}`}
                   icon={<IconAlertTriangle size={16} />}
                 >
                   <Text size="sm" mb="xs">
@@ -154,12 +154,12 @@ export default function MLInsights() {
                   </Text>
                   <Text size="sm" fw={500} mb="xs">Действия:</Text>
                   <List size="sm" spacing="xs">
-                    {rec.actionItems.map((item, i) => (
+                    {rec.action_items.map((item, i) => (
                       <List.Item key={i}>{item}</List.Item>
                     ))}
                   </List>
                   <Text size="sm" c="cyan" mt="md">
-                    Ожидаемый эффект: {rec.expectedImpact}
+                    Ожидаемый эффект: {rec.expected_impact}
                   </Text>
                   <Stack gap="xs" mt="xs">
                     <Group justify="space-between">
@@ -184,17 +184,17 @@ export default function MLInsights() {
               <Card withBorder p="md">
                 <Text fw={600} mb="md">Оптимальные часы работы</Text>
                 <Text size="sm" mb="xs">
-                  <strong>Время:</strong> {productivity.optimalWorkHours.start}:00 - {productivity.optimalWorkHours.end}:00
+                  <strong>Время:</strong> {productivity.optimal_work_hours.start}:00 - {productivity.optimal_work_hours.end}:00
                 </Text>
                 <Text size="sm">
-                  <strong>Дни:</strong> {productivity.optimalWorkHours.days.map(d => ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][d]).join(', ')}
+                  <strong>Дни:</strong> {productivity.optimal_work_hours.days.map(d => ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][d]).join(', ')}
                 </Text>
               </Card>
 
               <Card withBorder p="md">
                 <Text fw={600} mb="md">Эффективность по часам</Text>
                 <Stack gap="xs">
-                  {productivity.efficiencyByTime
+                  {productivity.efficiency_by_time
                     .filter(e => e.efficiency > 0)
                     .sort((a, b) => b.efficiency - a.efficiency)
                     .slice(0, 5)
@@ -213,10 +213,10 @@ export default function MLInsights() {
               <Card withBorder p="md">
                 <Text fw={600} mb="md">Рекомендации по перерывам</Text>
                 <Text size="sm">
-                  Оптимальная длительность перерыва: <strong>{productivity.breakRecommendations.optimalBreakDuration} минут</strong>
+                  Оптимальная длительность перерыва: <strong>{productivity.break_recommendations.optimal_break_duration} минут</strong>
                 </Text>
                 <Text size="sm" mt="xs">
-                  Частота перерывов: каждые <strong>{productivity.breakRecommendations.breakFrequency} часа</strong>
+                  Частота перерывов: каждые <strong>{productivity.break_recommendations.break_frequency} часа</strong>
                 </Text>
               </Card>
             </Stack>

@@ -8,7 +8,7 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 
 dayjs.extend(isoWeek)
 
-const ML_API_URL = import.meta.env.VITE_ML_API_URL || 'http://localhost:8000'
+const ML_API_URL = import.meta.env.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud'
 
 class PythonMLService {
   constructor(private baseUrl: string) {}
@@ -71,15 +71,15 @@ export class MLClient {
           begin: entry.begin,
           end: entry.end || null,
           duration: entry.duration || 0,
-          projectId: project?.id || null,
-          projectName: project?.name || 'Unknown',
-          activityId: activity?.id || null,
-          activityName: activity?.name || 'Unknown',
+          project_id: project?.id || null,
+          project_name: project?.name || 'Unknown',
+          activity_id: activity?.id || null,
+          activity_name: activity?.name || 'Unknown',
           description: entry.description,
           tags: entry.tags || [],
-          dayOfWeek: begin.day(),
-          hourOfDay: begin.hour(),
-          weekOfYear: begin.isoWeek(),
+          day_of_week: begin.day(),
+          hour_of_day: begin.hour(),
+          week_of_year: begin.isoWeek(),
           month: begin.month() + 1,
           year: begin.year(),
         })
@@ -90,29 +90,29 @@ export class MLClient {
           projectsMap.set(project.id, {
             id: project.id,
             name: project.name,
-            totalHours: stats?.hours || 0,
-            avgHoursPerWeek: stats?.hours || 0,
-            weeksCount: 1,
+            total_hours: stats?.hours || 0,
+            avg_hours_per_week: stats?.hours || 0,
+            weeks_count: 1,
           })
         }
       }
     }
 
     // Агрегируем статистику по проектам
-    const projects: MLInputData['projects'] = []
+    const projects: any[] = []
     for (const week of weeks) {
       for (const stat of week.projectStats || []) {
         const existing = projects.find((p) => p.id === stat.id)
         if (existing) {
-          existing.totalHours += stat.hours
-          existing.weeksCount += 1
+          existing.total_hours += stat.hours
+          existing.weeks_count += 1
         } else if (stat.id) {
           projects.push({
             id: stat.id,
             name: stat.name,
-            totalHours: stat.hours,
-            avgHoursPerWeek: stat.hours,
-            weeksCount: 1,
+            total_hours: stat.hours,
+            avg_hours_per_week: stat.hours,
+            weeks_count: 1,
           })
         }
       }
@@ -120,7 +120,7 @@ export class MLClient {
 
     // Вычисляем средние значения
     for (const project of projects) {
-      project.avgHoursPerWeek = project.totalHours / project.weeksCount
+      project.avg_hours_per_week = project.total_hours / project.weeks_count
     }
 
     return {
@@ -129,18 +129,25 @@ export class MLClient {
       weeks: weeks.map((w) => ({
         year: w.year,
         week: w.week,
-        totalMinutes: w.totalMinutes,
-        totalHours: w.totalHours || 0,
-        totalAmount: w.totalAmount || 0,
-        projectStats: (w.projectStats || []).map((p) => ({
-          projectId: p.id || 0,
+        total_minutes: w.totalMinutes,
+        total_hours: w.totalHours || 0,
+        total_amount: w.totalAmount || 0,
+        project_stats: (w.projectStats || []).map((p) => ({
+          project_id: p.id || 0,
           minutes: p.minutes,
           hours: p.hours,
         })),
       })),
       settings: {
-        ratePerMinute: settings.ratePerMinute,
-        projectSettings: settings.projectSettings || {},
+        rate_per_minute: settings.ratePerMinute,
+        project_settings: Object.entries(settings.projectSettings || {}).reduce((acc, [key, value]) => {
+          acc[parseInt(key)] = {
+            enabled: value.enabled,
+            weekly_goal_hours: value.weeklyGoalHours,
+            payment_period_weeks: value.paymentPeriodWeeks,
+          }
+          return acc
+        }, {} as Record<number, any>),
       },
     }
   }
