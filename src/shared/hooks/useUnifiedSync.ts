@@ -14,6 +14,14 @@ export interface SyncProgress {
   error?: string
 }
 
+// Минимальные интервалы между синхронизациями (в миллисекундах)
+// Вынесено за пределы компонента для оптимизации
+const MIN_SYNC_INTERVALS = {
+  'manual': 0, // Ручная синхронизация всегда разрешена
+  'page-change': 2 * 60 * 1000, // 2 минуты для смены страниц
+  'periodic': 30 * 60 * 1000, // 30 минут для периодической
+} as const
+
 export function useUnifiedSync() {
   const { settings } = useSettings()
   const { performSync: performMixIdSync } = useMixIdSync()
@@ -23,6 +31,7 @@ export function useUnifiedSync() {
     message: '',
   })
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastSyncTimeRef = useRef<number>(0)
 
   const syncNotion = useCallback(async (entries: Timesheet[]): Promise<{ created: number; updated: number; errors: number } | null> => {
     if (!settings.calendarSync?.enabled || settings.calendarSync?.syncType !== 'notion') {
@@ -64,6 +73,16 @@ export function useUnifiedSync() {
       return
     }
 
+    // Проверяем минимальный интервал между синхронизациями
+    const now = Date.now()
+    const minInterval = MIN_SYNC_INTERVALS[triggerSource]
+    const timeSinceLastSync = now - lastSyncTimeRef.current
+    
+    if (minInterval > 0 && timeSinceLastSync < minInterval) {
+      // Слишком рано для синхронизации, пропускаем
+      return
+    }
+
     try {
       setSyncing(true)
       setProgress({
@@ -86,6 +105,9 @@ export function useUnifiedSync() {
         message: 'Синхронизация завершена',
       })
 
+      // Обновляем время последней синхронизации
+      lastSyncTimeRef.current = Date.now()
+      
       // Сбрасываем прогресс через 2 секунды
       setTimeout(() => {
         setProgress({

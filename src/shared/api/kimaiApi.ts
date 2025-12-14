@@ -123,10 +123,8 @@ export class KimaiApi {
       // Прокси настроен на конкретный URL в vite.config.ts
       // endpoint уже содержит /api, поэтому просто добавляем /api/proxy
       url = `/api/proxy${endpoint}`
-      console.log('Using proxy, URL:', url, 'Endpoint:', endpoint)
     } else {
       url = `${this.apiUrl}${endpoint}`
-      console.log('Direct request, URL:', url)
     }
 
     const response = await fetch(url, {
@@ -304,7 +302,6 @@ export function calculateFinancials(
     const rate = Number(ratePerMinute)
 
     let payableMinutes = 0
-    console.debug('calculateFinancials: ratePerMinute=', ratePerMinute, 'coercedRate=', rate, 'excludedTags=', excludedTags, 'week.entries=', week.entries.length)
 
     week.entries.forEach(entry => {
       const isExcluded = entry.isExcluded ?? (entry.tags?.some(tag => excludedTagsLower.includes(String(tag).toLowerCase())) ?? false)
@@ -400,7 +397,6 @@ export function calculateFinancials(
       }
     })
 
-    console.debug('calculateFinancials week result:', { weekKey: week.weekKey, payableMinutes, totalAmount: payableMinutes * (isFinite(rate) ? rate : 0) })
 
     return {
       ...week,

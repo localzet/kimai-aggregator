@@ -263,14 +263,48 @@ export function useDashboardData(
   }, [settings.apiUrl, settings.apiKey])
 
   // Отдельный эффект для пересчета финансовых данных при изменении ratePerMinute или projectSettings
+  // Используем ref для хранения предыдущих значений, чтобы избежать лишних пересчетов
+  const prevSettingsRef = useRef<{
+    ratePerMinute: number
+    projectSettings: Settings['projectSettings']
+    excludedTags: string[]
+  } | null>(null)
+  
   useEffect(() => {
-    if (weeks.length > 0) {
+    const currentRate = settings.ratePerMinute
+    const currentProjectSettings = settings.projectSettings || {}
+    const currentExcludedTags = settings.excludedTags || []
+    
+    const prevSettings = prevSettingsRef.current
+    
+    // Проверяем, действительно ли изменились настройки
+    const rateChanged = prevSettings === null || prevSettings.ratePerMinute !== currentRate
+    const projectSettingsChanged = prevSettings === null || 
+      JSON.stringify(prevSettings.projectSettings) !== JSON.stringify(currentProjectSettings)
+    const excludedTagsChanged = prevSettings === null ||
+      JSON.stringify(prevSettings.excludedTags?.sort()) !== JSON.stringify(currentExcludedTags?.sort())
+    
+    if (weeks.length > 0 && (rateChanged || projectSettingsChanged || excludedTagsChanged)) {
+      // Обновляем ref перед пересчетом
+      prevSettingsRef.current = {
+        ratePerMinute: currentRate,
+        projectSettings: currentProjectSettings,
+        excludedTags: currentExcludedTags,
+      }
+      
       // Пересчитываем только финансовые данные из уже загруженных данных
       // Загружаем из кэша и пересчитываем (не используем кэш обработанных недель, так как настройки изменились)
       loadFromCache(false)
+    } else if (prevSettings === null) {
+      // Инициализируем ref при первой загрузке
+      prevSettingsRef.current = {
+        ratePerMinute: currentRate,
+        projectSettings: currentProjectSettings,
+        excludedTags: currentExcludedTags,
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.ratePerMinute, settings.projectSettings, settings.excludedTags])
+  }, [settings.ratePerMinute, settings.projectSettings, settings.excludedTags, weeks.length])
 
   return { 
     weeks, 

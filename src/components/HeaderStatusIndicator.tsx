@@ -1,6 +1,7 @@
 import { Group, Badge, Tooltip } from '@mantine/core'
 import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX, IconCalendar, IconCheck, IconX } from '@tabler/icons-react'
 import { motion } from 'motion/react'
+import { useMemo } from 'react'
 import { useSettings, useSyncStatus } from '@/shared/hooks'
 import { useMixIdStatus } from '@localzet/data-connector/hooks'
 import { useDashboardData } from '@/shared/hooks/useDashboardData'
@@ -15,8 +16,8 @@ export function HeaderStatusIndicator() {
 
   const currentDataStatus = syncing ? 'updating' : syncStatus.status
 
-  // Get data status config
-  const getDataStatusConfig = () => {
+  // Мемоизируем конфигурации для оптимизации производительности
+  const dataConfig = useMemo(() => {
     switch (currentDataStatus) {
       case 'online':
         return {
@@ -49,10 +50,9 @@ export function HeaderStatusIndicator() {
           description: '',
         }
     }
-  }
+  }, [currentDataStatus, syncStatus.lastUpdate])
 
-  // Get MIX ID sync status config
-  const getMixIdStatusConfig = () => {
+  const mixIdConfig = useMemo(() => {
     if (!mixIdStatus.hasConfig) {
       return null
     }
@@ -89,10 +89,9 @@ export function HeaderStatusIndicator() {
       default:
         return null
     }
-  }
+  }, [mixIdStatus.hasConfig, mixIdStatus.syncStatus])
 
-  // Get unified sync status config
-  const getUnifiedSyncConfig = () => {
+  const unifiedSyncConfig = useMemo(() => {
     if (!unifiedSyncing && unifiedProgress.stage === 'idle') {
       return null
     }
@@ -129,11 +128,7 @@ export function HeaderStatusIndicator() {
       default:
         return null
     }
-  }
-
-  const dataConfig = getDataStatusConfig()
-  const mixIdConfig = getMixIdStatusConfig()
-  const unifiedSyncConfig = getUnifiedSyncConfig()
+  }, [unifiedSyncing, unifiedProgress.stage, unifiedProgress.message, unifiedProgress.error])
   const isDataClickable = !!reload && currentDataStatus !== 'updating' && !unifiedSyncing
   const isUnifiedSyncClickable = !unifiedSyncing && unifiedProgress.stage === 'idle'
 

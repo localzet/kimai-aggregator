@@ -46,7 +46,6 @@ export interface MenuItem {
 export function MainLayout() {
     const [mobileOpened, { toggle: toggleMobile }] = useDisclosure()
     const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
-    const [isMediaQueryReady, setIsMediaQueryReady] = useState(false)
     const pinned = useHeadroom({ fixedAt: 120 })
 
     const isMobile = useMediaQuery(`(max-width: 64rem)`, undefined, {
@@ -55,10 +54,6 @@ export function MainLayout() {
     const isSocialButton = useMediaQuery(`(max-width: 40rem)`, undefined, {
         getInitialValueInEffect: false
     })
-
-    useEffect(() => {
-        setIsMediaQueryReady(true)
-    }, [isMobile, isSocialButton])
 
     const ref = useClickOutside(() => {
         if (isMobile && mobileOpened) {
@@ -82,17 +77,32 @@ export function MainLayout() {
     const mixIdStatus = useMixIdStatus()
     const { performSync } = useUnifiedSync()
     const prevPathnameRef = useRef<string>(pathname)
+    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     
     // Вычисляем showFullMenu напрямую из settings, чтобы меню обновлялось автоматически
     const showFullMenu = !!(settings.apiUrl && settings.apiKey)
 
-    // Триггер синхронизации при переходе по страницам
+    // Триггер синхронизации при переходе по страницам с дебаунсингом
     useEffect(() => {
         if (prevPathnameRef.current !== pathname && prevPathnameRef.current !== '/') {
-            // Запускаем синхронизацию при переходе на новую страницу (кроме первой загрузки)
-            performSync('page-change')
+            // Очищаем предыдущий таймер, если он есть
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current)
+            }
+            
+            // Дебаунсинг: запускаем синхронизацию через 1 секунду после последнего изменения страницы
+            syncTimeoutRef.current = setTimeout(() => {
+                performSync('page-change')
+            }, 1000)
         }
         prevPathnameRef.current = pathname
+        
+        // Очистка таймера при размонтировании
+        return () => {
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current)
+            }
+        }
     }, [pathname, performSync])
 
     const menu: MenuItem[] = []
@@ -165,10 +175,6 @@ export function MainLayout() {
             },
         ]
     })
-
-    if (!isMediaQueryReady) {
-        return <div style={{ height: '100vh' }}></div>
-    }
 
     return (
         <AppShell
