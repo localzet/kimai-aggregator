@@ -83,7 +83,13 @@ export default function MLInsights() {
                 <Text size="sm" c="dimmed" mt="xs">
                   Прогноз на месяц: {forecast.monthlyHours.toFixed(1)} часов
                 </Text>
-                <Progress value={forecast.confidence * 100} size="sm" mt="xs" label={`Уверенность: ${(forecast.confidence * 100).toFixed(0)}%`} />
+                <Stack gap="xs" mt="xs">
+                  <Group justify="space-between">
+                    <Text size="xs" c="dimmed">Уверенность</Text>
+                    <Text size="xs" c="dimmed">{(forecast.confidence * 100).toFixed(0)}%</Text>
+                  </Group>
+                  <Progress value={forecast.confidence * 100} size="sm" />
+                </Stack>
               </Card>
 
               {Object.keys(forecast.weeklyHoursByProject).length > 0 && (
@@ -155,7 +161,13 @@ export default function MLInsights() {
                   <Text size="sm" c="cyan" mt="md">
                     Ожидаемый эффект: {rec.expectedImpact}
                   </Text>
-                  <Progress value={rec.confidence * 100} size="xs" mt="xs" label={`Уверенность: ${(rec.confidence * 100).toFixed(0)}%`} />
+                  <Stack gap="xs" mt="xs">
+                    <Group justify="space-between">
+                      <Text size="xs" c="dimmed">Уверенность</Text>
+                      <Text size="xs" c="dimmed">{(rec.confidence * 100).toFixed(0)}%</Text>
+                    </Group>
+                    <Progress value={rec.confidence * 100} size="xs" />
+                  </Stack>
                 </Card>
               ))}
             </Stack>
