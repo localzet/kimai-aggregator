@@ -1,9 +1,10 @@
 import { Group, Badge, Tooltip } from '@mantine/core'
-import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX, IconCalendar, IconCheck, IconX } from '@tabler/icons-react'
+import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX, IconCalendar, IconCheck, IconX, IconClock } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import { useSettings, useSyncStatus } from '@/shared/hooks'
 import { useMixIdStatus } from '@localzet/data-connector/hooks'
+import { useDataFreshness } from '@/shared/hooks/useDataFreshness'
 import { useDashboardData } from '@/shared/hooks/useDashboardData'
 import { useUnifiedSync } from '@/shared/hooks/useUnifiedSync'
 
@@ -13,6 +14,7 @@ export function HeaderStatusIndicator() {
   const mixIdStatus = useMixIdStatus()
   const { syncing, reload } = useDashboardData(settings, syncStatus)
   const { syncing: unifiedSyncing, progress: unifiedProgress, performSync } = useUnifiedSync()
+  const dataFreshness = useDataFreshness(settings)
 
   const currentDataStatus = syncing ? 'updating' : syncStatus.status
 
@@ -132,8 +134,58 @@ export function HeaderStatusIndicator() {
   const isDataClickable = !!reload && currentDataStatus !== 'updating' && !unifiedSyncing
   const isUnifiedSyncClickable = !unifiedSyncing && unifiedProgress.stage === 'idle'
 
+  // Конфигурация индикатора актуальности данных
+  const freshnessConfig = useMemo(() => {
+    switch (dataFreshness.status) {
+      case 'fresh':
+        return {
+          color: 'green' as const,
+          icon: <IconClock size="1rem" />,
+          label: 'Актуально',
+          description: dataFreshness.message,
+        }
+      case 'stale':
+        return {
+          color: 'orange' as const,
+          icon: <IconClock size="1rem" />,
+          label: 'Устарело',
+          description: dataFreshness.message,
+        }
+      case 'very_stale':
+        return {
+          color: 'red' as const,
+          icon: <IconClock size="1rem" />,
+          label: 'Сильно устарело',
+          description: dataFreshness.message,
+        }
+      default:
+        return null
+    }
+  }, [dataFreshness.status, dataFreshness.message])
+
   return (
     <Group gap="xs">
+      {/* Data freshness indicator */}
+      {freshnessConfig && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Tooltip label={freshnessConfig.description}>
+            <Badge
+              color={freshnessConfig.color}
+              variant="light"
+              leftSection={freshnessConfig.icon}
+              size="lg"
+              style={{
+                userSelect: 'none',
+              }}
+            />
+          </Tooltip>
+        </motion.div>
+      )}
+
       {/* Data status indicator */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}

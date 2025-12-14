@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Container,
   Loader,
@@ -15,6 +15,9 @@ import {
   Progress,
   Tabs,
   Menu,
+  MultiSelect,
+  Checkbox,
+  Box,
 } from '@mantine/core'
 import { LineChart, BarChart } from '@mantine/charts'
 import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react'
@@ -27,6 +30,8 @@ function StatisticsPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
+  const [showAllProjects, setShowAllProjects] = useState(true)
 
   // Общая статистика
   const totalStats = useMemo(() => {
@@ -156,6 +161,98 @@ function StatisticsPage() {
       amount: project.totalAmount,
     }))
   }, [projectStats])
+
+  // Данные для графика часов по проектам за неделю
+  const weeklyProjectHoursData = useMemo(() => {
+    const projectMap = new Map<number, string>()
+    projectStats.forEach(p => {
+      if (p.id) projectMap.set(p.id, p.name)
+    })
+
+    const weekData: Array<{
+      week: string
+      weekKey: string
+      [key: string]: string | number
+    }> = []
+
+    weeks.forEach(week => {
+      const weekKey = `${week.year}-W${String(week.week).padStart(2, '0')}`
+      const weekLabel = `Неделя ${week.week}, ${week.year}`
+      
+      const data: Record<string, string | number> = {
+        week: weekLabel,
+        weekKey,
+      }
+
+      week.projectStats?.forEach(project => {
+        if (project.id) {
+          const projectName = projectMap.get(project.id) || `Проект ${project.id}`
+          data[projectName] = (data[projectName] as number || 0) + project.hours
+        }
+      })
+
+      weekData.push(data as typeof weekData[0])
+    })
+
+    // Сортируем по неделям
+    weekData.sort((a, b) => a.weekKey.localeCompare(b.weekKey))
+
+    return weekData
+  }, [weeks, projectStats])
+
+  // Получаем список всех проектов для фильтра
+  const allProjectNames = useMemo(() => {
+    return projectStats.map(p => p.name).filter(Boolean)
+  }, [projectStats])
+
+  // Фильтруем данные для графика
+  const filteredWeeklyProjectHoursData = useMemo(() => {
+    if (showAllProjects) {
+      return weeklyProjectHoursData
+    }
+
+    if (selectedProjects.length === 0) {
+      return weeklyProjectHoursData
+    }
+
+    return weeklyProjectHoursData.map(week => {
+      const filtered: Record<string, string | number> = {
+        week: week.week,
+        weekKey: week.weekKey,
+      }
+
+      selectedProjects.forEach(projectName => {
+        if (week[projectName] !== undefined) {
+          filtered[projectName] = week[projectName]
+        }
+      })
+
+      return filtered as typeof weeklyProjectHoursData[0]
+    })
+  }, [weeklyProjectHoursData, selectedProjects, showAllProjects])
+
+  // Получаем серии для графика (только выбранные проекты или все)
+  const weeklyProjectSeries = useMemo(() => {
+    if (showAllProjects) {
+      // Берем топ-10 проектов по общему количеству часов
+      const topProjects = projectStats
+        .sort((a, b) => b.totalHours - a.totalHours)
+        .slice(0, 10)
+        .map(p => p.name)
+      
+      return topProjects.map((name, idx) => ({
+        name,
+        label: name.length > 20 ? name.substring(0, 20) + '...' : name,
+        color: `cyan.${Math.min(6 + idx, 9)}`,
+      }))
+    } else {
+      return selectedProjects.map((name, idx) => ({
+        name,
+        label: name.length > 20 ? name.substring(0, 20) + '...' : name,
+        color: `cyan.${Math.min(6 + idx, 9)}`,
+      }))
+    }
+  }, [projectStats, selectedProjects, showAllProjects])
 
   const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) return
@@ -495,6 +592,7 @@ function StatisticsPage() {
         <Tabs.List>
           <Tabs.Tab value="trends">Тренды</Tabs.Tab>
           <Tabs.Tab value="projects">Проекты</Tabs.Tab>
+          <Tabs.Tab value="weekly">Часы по неделям</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="trends" pt="md">
@@ -569,6 +667,50 @@ function StatisticsPage() {
               </Paper>
             </Grid.Col>
           </Grid>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="weekly" pt="md">
+          <Paper p="md" withBorder>
+            <Stack gap="md">
+              <Group justify="space-between">
+                <Title order={4}>Часы по проектам за неделю</Title>
+                <Group>
+                  <Checkbox
+                    label="Показать все проекты"
+                    checked={showAllProjects}
+                    onChange={(e) => {
+                      setShowAllProjects(e.currentTarget.checked)
+                      if (e.currentTarget.checked) {
+                        setSelectedProjects([])
+                      }
+                    }}
+                  />
+                  {!showAllProjects && (
+                    <MultiSelect
+                      placeholder="Выберите проекты"
+                      data={allProjectNames}
+                      value={selectedProjects}
+                      onChange={setSelectedProjects}
+                      searchable
+                      clearable
+                      style={{ minWidth: 300 }}
+                    />
+                  )}
+                </Group>
+              </Group>
+              <Box h={400}>
+                <BarChart
+                  h={400}
+                  data={filteredWeeklyProjectHoursData}
+                  dataKey="weekKey"
+                  series={weeklyProjectSeries}
+                  tickLine="xy"
+                  gridAxis="xy"
+                  valueFormatter={(value) => `${value.toFixed(1)} ч`}
+                />
+              </Box>
+            </Stack>
+          </Paper>
         </Tabs.Panel>
       </Tabs>
 

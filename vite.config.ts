@@ -85,6 +85,21 @@ export default defineConfig({
               networkTimeoutSeconds: 10,
             },
           },
+          {
+            // Кэширование месячных данных из IndexedDB через специальный endpoint
+            urlPattern: /\/api\/monthly-data/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'monthly-data-cache',
+              expiration: {
+                maxEntries: 12, // 12 месяцев
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
         ],
       },
       devOptions: {

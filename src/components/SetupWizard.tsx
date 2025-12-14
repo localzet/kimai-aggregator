@@ -16,9 +16,9 @@ import {
   Badge,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug } from '@tabler/icons-react'
+import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug, IconDeviceDesktop, IconCloudComputing } from '@tabler/icons-react'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
-import { Settings, useSettings } from '@/shared/hooks/useSettings'
+import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
 import { mixIdApi } from '@localzet/data-connector/api'
 
 interface SetupWizardProps {
@@ -29,6 +29,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const navigate = useNavigate()
   const { updateSettings } = useSettings()
   const [active, setActive] = useState(0)
+  const [appMode, setAppMode] = useState<AppMode | null>(null)
+  const [backendUrl, setBackendUrl] = useState('')
   const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | 'sync' | null>(null)
   
   // Для ручного ввода
@@ -139,7 +141,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     reader.readAsText(file)
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (setupMethod === 'manual' && connectionStatus === 'success') {
       // Сохраняем настройки
       const newSettings: Settings = {
@@ -150,10 +152,31 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
         syncUrl: '',
         projectSettings: {},
         excludedTags: [],
+        appMode: appMode || 'normal',
+        backendUrl: appMode === 'normal' ? backendUrl.trim() : '',
+        backendToken: '',
       }
       updateSettings(newSettings)
+
+      // Если обычный режим, авторизуемся в бэкенде
+      if (appMode === 'normal' && backendUrl.trim()) {
+        try {
+          // TODO: Реализовать авторизацию через MIX ID в бэкенде
+          // const response = await fetch(`${backendUrl}/api/auth/login`, { ... })
+          // newSettings.backendToken = response.token
+          // updateSettings(newSettings)
+        } catch (error) {
+          console.error('Backend auth error:', error)
+        }
+      }
     } else if (setupMethod === 'sync' && syncSuccess) {
-      // Settings already loaded from sync
+      // Settings already loaded from sync, но обновляем режим
+      const currentSettings = JSON.parse(localStorage.getItem('kimai-settings') || '{}') as Settings
+      updateSettings({
+        ...currentSettings,
+        appMode: appMode || 'normal',
+        backendUrl: appMode === 'normal' ? backendUrl.trim() : currentSettings.backendUrl || '',
+      })
     }
 
     notifications.show({
@@ -169,8 +192,9 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     }, 1000)
   }
 
-  const canProceedFromStep0 = setupMethod !== null
-  const canProceedFromStep1 = setupMethod === 'import' 
+  const canProceedFromStep0 = appMode !== null && (appMode === 'standalone' || (appMode === 'normal' && backendUrl.trim() !== ''))
+  const canProceedFromStep1 = setupMethod !== null
+  const canProceedFromStep2 = setupMethod === 'import' 
     ? true 
     : setupMethod === 'sync'
     ? syncSuccess
@@ -186,10 +210,82 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
         <Stepper active={active} onStepClick={setActive}>
           <Stepper.Step 
+            label="Режим работы" 
+            description="Выберите режим работы приложения"
+            icon={<IconDeviceDesktop size={18} />}
+            allowStepSelect={active > 0}
+          >
+            <Stack gap="md" mt="xl">
+              <Text>В каком режиме будет работать приложение?</Text>
+              
+              <Group grow>
+                <Card
+                  p="md"
+                  withBorder
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setAppMode('standalone')}
+                  bg={appMode === 'standalone' ? 'var(--mantine-color-blue-9)' : undefined}
+                >
+                  <Stack align="center" gap="xs">
+                    <IconDeviceDesktop size={48} />
+                    <Text fw={500}>Автономный режим</Text>
+                    <Text size="sm" c="dimmed" ta="center">
+                      Данные хранятся локально. Опциональная синхронизация с MIX ID.
+                    </Text>
+                  </Stack>
+                </Card>
+
+                <Card
+                  p="md"
+                  withBorder
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setAppMode('normal')}
+                  bg={appMode === 'normal' ? 'var(--mantine-color-blue-9)' : undefined}
+                >
+                  <Stack align="center" gap="xs">
+                    <IconCloudComputing size={48} />
+                    <Text fw={500}>Обычный режим</Text>
+                    <Text size="sm" c="dimmed" ta="center">
+                      Данные синхронизируются с бэкендом. Требуется MIX ID и подключение к серверу.
+                    </Text>
+                  </Stack>
+                </Card>
+              </Group>
+
+              {appMode === 'normal' && (
+                <Stack gap="md" mt="md">
+                  <TextInput
+                    label="URL бэкенда"
+                    placeholder="https://backend.example.com"
+                    value={backendUrl}
+                    onChange={(e) => setBackendUrl(e.currentTarget.value)}
+                    description="Адрес сервера бэкенда для синхронизации данных"
+                  />
+                  <Alert color="blue">
+                    <Text size="sm">
+                      В обычном режиме требуется авторизация через MIX ID. 
+                      Данные старше месяца будут автоматически удаляться с устройства для экономии места.
+                    </Text>
+                  </Alert>
+                </Stack>
+              )}
+
+              {appMode === 'standalone' && (
+                <Alert color="blue" mt="md">
+                  <Text size="sm">
+                    В автономном режиме все данные хранятся на вашем устройстве. 
+                    Вы можете опционально подключить MIX ID для синхронизации между устройствами.
+                  </Text>
+                </Alert>
+              )}
+            </Stack>
+          </Stepper.Step>
+
+          <Stepper.Step 
             label="Способ настройки" 
             description="Выберите способ настройки"
             icon={<IconKey size={18} />}
-            allowStepSelect={active > 0}
+            allowStepSelect={active > 1}
           >
             <Stack gap="md" mt="xl">
               <Text>Как вы хотите настроить приложение?</Text>
@@ -279,7 +375,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 : 'Введите данные API'
             }
             icon={setupMethod === 'sync' ? <IconCloud size={18} /> : <IconServer size={18} />}
-            allowStepSelect={active > 1}
+            allowStepSelect={active > 2}
           >
             <Stack gap="md" mt="xl">
               {setupMethod === 'sync' ? (
@@ -477,7 +573,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             label="Завершение"
             description="Готово к работе"
             icon={<IconCheck size={18} />}
-            allowStepSelect={false}
+            allowStepSelect={active === 3}
           >
             <Stack gap="md" mt="xl">
               <Alert color="green" title="Настройка завершена!">
@@ -509,19 +605,20 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             </Button>
           )}
           
-          {active < 2 && (
+          {active < 3 && (
             <Button
               onClick={() => setActive(active + 1)}
               disabled={
                 (active === 0 && !canProceedFromStep0) ||
-                (active === 1 && !canProceedFromStep1)
+                (active === 1 && !canProceedFromStep1) ||
+                (active === 2 && !canProceedFromStep2)
               }
             >
               Далее
             </Button>
           )}
           
-          {active === 2 && (
+          {active === 3 && (
             <Button onClick={handleComplete}>
               Завершить настройку
             </Button>

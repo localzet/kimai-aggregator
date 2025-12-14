@@ -20,6 +20,8 @@ export interface CalendarSyncSettings {
   autoSync?: boolean // Автоматическая синхронизация
 }
 
+export type AppMode = 'standalone' | 'normal'
+
 export interface Settings {
   apiUrl: string
   apiKey: string
@@ -29,6 +31,9 @@ export interface Settings {
   projectSettings: ProjectSettings
   excludedTags: string[]
   calendarSync?: CalendarSyncSettings
+  appMode?: AppMode // 'standalone' | 'normal'
+  backendUrl?: string // URL бэкенда для обычного режима
+  backendToken?: string // JWT токен для бэкенда
 }
 
 const defaultSettings: Settings = {
@@ -46,6 +51,9 @@ const defaultSettings: Settings = {
     syncFutureDays: 7,
     autoSync: false,
   },
+  appMode: 'normal', // По умолчанию обычный режим
+  backendUrl: '',
+  backendToken: '',
 }
 
 export function useSettings() {

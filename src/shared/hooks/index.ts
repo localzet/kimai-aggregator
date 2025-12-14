@@ -4,3 +4,4 @@ export { useSyncStatus, type SyncStatus, type UseSyncStatusReturn } from './useS
 export { useCalendarSync } from './useCalendarSync'
 export { useUnifiedSync, type SyncStage, type SyncProgress } from './useUnifiedSync'
 export { useMixIdStatus, type MixIdSyncStatus, type UseMixIdStatusReturn } from '@localzet/data-connector/hooks'
+export { useDataFreshness, type DataFreshnessInfo } from './useDataFreshness'
