@@ -10,6 +10,7 @@ import {
     TbReportAnalytics,
     TbCalendar,
     TbClockHour4,
+    TbBrain,
 } from 'react-icons/tb'
 import { HiCurrencyDollar } from 'react-icons/hi'
 
@@ -141,6 +142,12 @@ export function MainLayout() {
                     href: '/time-analysis',
                     name: 'Анализ времени',
                     icon: TbClockHour4,
+                },
+                {
+                    id: 'ml-insights',
+                    href: '/ml-insights',
+                    name: 'AI Инсайты',
+                    icon: TbBrain,
                 },
             ]
         })
