@@ -14,8 +14,6 @@ RUN npm ci
 # Copy source code
 COPY src ./src
 COPY index.html ./
-COPY electron ./electron
-COPY electron-builder.yml ./
 
 # Build the application
 RUN npm run build
