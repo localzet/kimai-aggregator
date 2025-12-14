@@ -259,18 +259,18 @@ export class GoogleCalendarSync {
 // Используем несколько способов проверки для надежности
 function isElectronEnvironment(): boolean {
   if (typeof window === 'undefined') return false
-  
+
   // Способ 1: Проверка через contextBridge
   if (window.electron?.isElectron) return true
-  
+
   // Способ 2: Проверка через userAgent (Electron добавляет свой userAgent)
   if (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron')) {
     return true
   }
-  
+
   // Способ 3: Проверка наличия process.versions.electron
   // (но это работает только если nodeIntegration включен, что у нас не так)
-  
+
   return false
 }
 
@@ -279,16 +279,16 @@ const isElectron = isElectronEnvironment()
 // Универсальная функция для запросов к Notion API
 async function notionFetch(url: string, options: RequestInit): Promise<Response> {
   const electronAvailable = isElectronEnvironment() && window.electron?.notionApi
-  
+
   if (electronAvailable && window.electron?.notionApi) {
     // Используем Electron IPC для обхода CORS
     console.log('Using Electron IPC for Notion API request')
     const result = await window.electron.notionApi.request(url, options)
-    
+
     if (!result.ok) {
       throw new Error(result.error || `HTTP ${result.status}: ${result.statusText}`)
     }
-    
+
     // Создаем Response-подобный объект
     return {
       ok: result.ok,
@@ -334,12 +334,12 @@ export class NotionCalendarSync {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
         console.error(`Ошибка синхронизации записи ${entry.id}:`, errorMessage)
-        
+
         // Если это критическая ошибка (например, база данных не найдена), останавливаем синхронизацию
         if (errorMessage.includes('База данных не найдена') || errorMessage.includes('Database ID')) {
           throw error
         }
-        
+
         errors++
       }
     }
@@ -360,14 +360,16 @@ export class NotionCalendarSync {
     const start = dayjs(entry.begin)
     const end = entry.end ? dayjs(entry.end) : dayjs()
     const duration = end.diff(start, 'minute')
+    const projectTemplates = this.settings.notionProjectTemplates || {}
 
     // Ищем существующую страницу по Kimai ID
     const existingPage = await this.findPageByKimaiId(entry.id)
 
-    const pageData: {
-      parent: { database_id: string }
-      properties: Record<string, any>
-    } = {
+    const pageData: any = {
+      template: {
+        type: projectTemplates[projectName] ? "template_id" : "default",
+        template_id: projectTemplates[projectName] || undefined
+      },
       parent: {
         database_id: this.settings.notionDatabaseId!,
       },
@@ -382,22 +384,20 @@ export class NotionCalendarSync {
           ],
         },
         'Date': {
-          date: {
-            start: start.toISOString(),
-            end: end.toISOString(),
-          },
+          date: entry.begin
+            ? {
+              start: start.toISOString(),
+              end: end.toISOString(),
+            }
+            : null,
         },
         'Duration': {
-          number: duration / 60, // В часах
+          number: duration,
         },
         'Project': {
-          rich_text: [
-            {
-              text: {
-                content: projectName,
-              },
-            },
-          ],
+          select: {
+            name: projectName,
+          },
         },
         'Activity': {
           rich_text: [
@@ -411,85 +411,78 @@ export class NotionCalendarSync {
         'Kimai ID': {
           number: entry.id,
         },
+        'Tags': {
+          multi_select: entry.tags?.map((t) => ({
+            name: t,
+          })),
+        },
       },
     }
+    if (existingPage) {
+      // Обновляем существующую страницу
+      const updateResponse = await notionFetch(`https://api.notion.com/v1/pages/${existingPage.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${this.settings.notionApiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28',
+        },
+        body: JSON.stringify({
+          properties: pageData.properties,
+          template: pageData.template,
+        }),
+      })
 
-    if (projectName) {
-      pageData.properties['Description'] = {
-        rich_text: [
-          {
-            text: {
-                content: `${activityName !== 'Без задачи' ? ` - ${activityName}` : ''}`,
-            },
-          },
-        ],
+      if (!updateResponse.ok) {
+        let errorText = 'Unknown error'
+        try {
+          const errorData = await updateResponse.json()
+          errorText = errorData.message || JSON.stringify(errorData)
+        } catch {
+          try {
+            errorText = await updateResponse.text()
+          } catch {
+            errorText = updateResponse.statusText
+          }
+        }
+        throw new Error(`Ошибка обновления страницы (HTTP ${updateResponse.status}): ${errorText}`)
       }
+
+      return true
+    } else {
+      // Создаем новую страницу
+      const createResponse = await notionFetch('https://api.notion.com/v1/pages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.settings.notionApiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28',
+        },
+        body: JSON.stringify(pageData),
+      })
+
+      if (!createResponse.ok) {
+        let errorText = 'Unknown error'
+        try {
+          const errorData = await createResponse.json()
+          errorText = errorData.message || JSON.stringify(errorData)
+
+          // Специальная обработка для 404 - возможно неправильный Database ID
+          if (createResponse.status === 404) {
+            errorText = `База данных не найдена. Проверьте Database ID: ${this.settings.notionDatabaseId}. Убедитесь, что интеграция имеет доступ к базе данных.`
+          }
+        } catch {
+          try {
+            errorText = await createResponse.text()
+          } catch {
+            errorText = createResponse.statusText
+          }
+        }
+        throw new Error(`Ошибка создания страницы (HTTP ${createResponse.status}): ${errorText}`)
+      }
+
+      return false
     }
-
-      if (existingPage) {
-        // Обновляем существующую страницу
-        const updateResponse = await notionFetch(`https://api.notion.com/v1/pages/${existingPage.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${this.settings.notionApiKey}`,
-            'Content-Type': 'application/json',
-            'Notion-Version': '2022-06-28',
-          },
-          body: JSON.stringify({
-            properties: pageData.properties,
-          }),
-        })
-        
-        if (!updateResponse.ok) {
-          let errorText = 'Unknown error'
-          try {
-            const errorData = await updateResponse.json()
-            errorText = errorData.message || JSON.stringify(errorData)
-          } catch {
-            try {
-              errorText = await updateResponse.text()
-            } catch {
-              errorText = updateResponse.statusText
-            }
-          }
-          throw new Error(`Ошибка обновления страницы (HTTP ${updateResponse.status}): ${errorText}`)
-        }
-        
-        return true
-      } else {
-        // Создаем новую страницу
-        const createResponse = await notionFetch('https://api.notion.com/v1/pages', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.settings.notionApiKey}`,
-            'Content-Type': 'application/json',
-            'Notion-Version': '2022-06-28',
-          },
-          body: JSON.stringify(pageData),
-        })
-        
-        if (!createResponse.ok) {
-          let errorText = 'Unknown error'
-          try {
-            const errorData = await createResponse.json()
-            errorText = errorData.message || JSON.stringify(errorData)
-            
-            // Специальная обработка для 404 - возможно неправильный Database ID
-            if (createResponse.status === 404) {
-              errorText = `База данных не найдена. Проверьте Database ID: ${this.settings.notionDatabaseId}. Убедитесь, что интеграция имеет доступ к базе данных.`
-            }
-          } catch {
-            try {
-              errorText = await createResponse.text()
-            } catch {
-              errorText = createResponse.statusText
-            }
-          }
-          throw new Error(`Ошибка создания страницы (HTTP ${createResponse.status}): ${errorText}`)
-        }
-        
-        return false
-      }
   }
 
   /**

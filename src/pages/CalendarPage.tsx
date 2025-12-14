@@ -18,7 +18,7 @@ import { IconChevronLeft, IconChevronRight, IconClock, IconRefresh } from '@tabl
 import { DatePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { useSettings, useDashboardData, useSyncStatus, useCalendarSync } from '@/shared/hooks'
+import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Timesheet } from '@/shared/api/kimaiApi'
 import { formatDuration } from '@/shared/utils'
 import { LoadingScreen } from '../shared/ui/loading-screen'
@@ -71,7 +71,6 @@ function CalendarPage() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const { weeks, loading, error, syncing } = useDashboardData(settings, syncStatus)
-  const { sync: syncCalendar, syncing: syncingCalendar } = useCalendarSync()
   const [view, setView] = useState<ViewType>('week')
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
@@ -118,41 +117,97 @@ function CalendarPage() {
     return { top, height }
   }
 
-  // Обрабатывает сегменты и добавляет отступы между перекрывающимися событиями
-  function addGapsToSegments(segments: DaySegment[]): Array<DaySegment & { top: number; height: number }> {
-    // Сортируем сегменты по времени начала
+  // Обрабатывает сегменты и распределяет перекрывающиеся события по колонкам
+  function addGapsToSegments(segments: DaySegment[]): Array<DaySegment & { top: number; height: number; left: number; width: number }> {
+    if (segments.length === 0) return []
+
+    // Сортируем сегменты по времени начала, затем по времени окончания
     const sortedSegments = [...segments].sort((a, b) => {
-      return a.segmentStart.diff(b.segmentStart)
+      const startDiff = a.segmentStart.diff(b.segmentStart)
+      if (startDiff !== 0) return startDiff
+      return a.segmentEnd.diff(b.segmentEnd)
     })
 
-    const processed: Array<{ top: number; bottom: number }> = []
+    // Группируем перекрывающиеся события по колонкам
+    interface Column {
+      segments: Array<{ segment: DaySegment; endTime: number }>
+    }
+    const columns: Column[] = []
 
-    return sortedSegments.map((segment) => {
+    sortedSegments.forEach(segment => {
       const basePosition = getEventPosition(segment.segmentStart, segment.durationMinutes)
-      let top = basePosition.top
+      const segmentTop = basePosition.top
+      const segmentBottom = segmentTop + basePosition.height
+      const segmentStartTime = segment.segmentStart.valueOf()
+      const segmentEndTime = segment.segmentEnd.valueOf()
 
-      // Проверяем перекрытие с уже обработанными событиями
-      for (const prev of processed) {
-        // Если текущее событие начинается внутри предыдущего (перекрывается)
-        if (top <= (prev.bottom + EVENT_GAP) && top >= prev.top) {
-          // Сдвигаем вниз с отступом
-          top = prev.bottom + EVENT_GAP
+      // Ищем колонку, где нет перекрытий
+      let placed = false
+      for (const column of columns) {
+        // Проверяем, нет ли перекрытий с событиями в этой колонке
+        const hasOverlap = column.segments.some(({ endTime, segment: colSegment }) => {
+          const colStartTime = colSegment.segmentStart.valueOf()
+          const colEndTime = colSegment.segmentEnd.valueOf()
+          // Перекрытие: начало одного события внутри другого или наоборот
+          return (segmentStartTime < colEndTime && segmentEndTime > colStartTime)
+        })
+
+        if (!hasOverlap) {
+          column.segments.push({
+            segment,
+            endTime: segmentEndTime
+          })
+          placed = true
           break
         }
       }
 
-      const height = basePosition.height
-      const bottom = top + height
-
-      // Сохраняем обработанную позицию
-      processed.push({ top, bottom })
-
-      return {
-        ...segment,
-        top,
-        height,
+      // Если не нашли подходящую колонку, создаем новую
+      if (!placed) {
+        columns.push({
+          segments: [{
+            segment,
+            endTime: segmentEndTime
+          }]
+        })
       }
     })
+
+    // Вычисляем позиции и размеры для каждого сегмента
+    const totalColumns = columns.length
+    const result: Array<DaySegment & { top: number; height: number; left: number; width: number }> = []
+
+    columns.forEach((column, columnIndex) => {
+      column.segments.forEach(({ segment }) => {
+        const basePosition = getEventPosition(segment.segmentStart, segment.durationMinutes)
+        
+        // Рассчитываем ширину и позицию с учетом отступов
+        let left: number
+        let width: number
+        
+        if (totalColumns === 1) {
+          left = 0
+          width = 100
+        } else {
+          // Простой расчет: делим ширину на колонки с небольшими отступами
+          // Используем фиксированный отступ в процентах (примерно 0.5% на отступ)
+          const gapPercent = 0.5
+          const totalGaps = (totalColumns - 1) * gapPercent
+          width = (100 - totalGaps) / totalColumns
+          left = columnIndex * (width + gapPercent)
+        }
+
+        result.push({
+          ...segment,
+          top: basePosition.top,
+          height: basePosition.height,
+          left,
+          width,
+        })
+      })
+    })
+
+    return result
   }
 
   const entriesByDate = useMemo(() => {
@@ -339,32 +394,6 @@ function CalendarPage() {
               <Badge color="blue" variant="light">
                 Обновление...
               </Badge>
-            )}
-            {settings.calendarSync?.enabled && (
-              <>
-                {syncingCalendar && (
-                  <Badge color="cyan" variant="light" leftSection={<IconRefresh size={12} />}>
-                    Синхронизация календаря...
-                  </Badge>
-                )}
-                <Button
-                  leftSection={<IconRefresh size={16} />}
-                  onClick={() => {
-                    if (settings.calendarSync) {
-                      syncCalendar(allEntries, settings.calendarSync)
-                    }
-                  }}
-                  loading={syncingCalendar}
-                  disabled={syncingCalendar}
-                  variant={settings.calendarSync.syncType === 'notion' ? 'filled' : 'light'}
-                  color={settings.calendarSync.syncType === 'notion' ? 'violet' : undefined}
-                  size="sm"
-                >
-                  {syncingCalendar 
-                    ? 'Синхронизация...' 
-                    : `Синхронизировать с ${settings.calendarSync.syncType === 'notion' ? 'Notion' : 'Google'}`}
-                </Button>
-              </>
             )}
           </Group>
         </Group>
@@ -708,7 +737,7 @@ function CalendarPage() {
                               )
                             })()}
                             {addGapsToSegments(daySegments).map(segment => {
-                              const { entry, segmentStart, durationMinutes, top, height } = segment
+                              const { entry, segmentStart, durationMinutes, top, height, left, width } = segment
                               const projectId = getProjectId(entry)
                               const projectName = getProjectName(entry)
                               const activityName = getActivityName(entry)
@@ -735,8 +764,8 @@ function CalendarPage() {
                                     style={{
                                       position: 'absolute',
                                       top: `${top}px`,
-                                      left: '4px',
-                                      right: '4px',
+                                      left: `${left}%`,
+                                      width: `${width}%`,
                                       height: `${height}px`,
                                       backgroundColor: `var(--mantine-color-${color}-6)`,
                                       borderRadius: '6px',
@@ -746,6 +775,8 @@ function CalendarPage() {
                                       color: 'white',
                                       overflow: 'hidden',
                                       zIndex: 10,
+                                      marginLeft: '4px',
+                                      marginRight: '4px',
                                     }}
                                   >
                                     <Text size="xs" fw={600} lineClamp={1}>
@@ -927,7 +958,7 @@ function CalendarPage() {
                     )
                   })()}
                   {addGapsToSegments(currentDaySegments).map(segment => {
-                    const { entry, segmentStart, segmentEnd, durationMinutes, top, height } = segment
+                    const { entry, segmentStart, segmentEnd, durationMinutes, top, height, left, width } = segment
                     const projectId = getProjectId(entry)
                     const projectName = getProjectName(entry)
                     const activityName = getActivityName(entry)
@@ -954,8 +985,8 @@ function CalendarPage() {
                           style={{
                             position: 'absolute',
                             top: `${top}px`,
-                            left: 0,
-                            right: 0,
+                            left: `${left}%`,
+                            width: `${width}%`,
                             height: `${height}px`,
                             backgroundColor: `var(--mantine-color-${color}-6)`,
                             border: `1px solid var(--mantine-color-${color}-7)`,
@@ -963,6 +994,8 @@ function CalendarPage() {
                             cursor: 'pointer',
                             opacity: isRunning ? 0.9 : 1,
                             zIndex: 10,
+                            marginLeft: '8px',
+                            marginRight: '8px',
                           }}
                         >
                           <Stack gap={4}>

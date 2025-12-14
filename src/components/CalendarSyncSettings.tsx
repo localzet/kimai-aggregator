@@ -13,8 +13,10 @@ import {
   Alert,
   Divider,
   Badge,
+  ActionIcon,
+  Table,
 } from '@mantine/core'
-import { IconRefresh, IconCheck, IconX } from '@tabler/icons-react'
+import { IconRefresh, IconCheck, IconX, IconTrash, IconPlus } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { CalendarSyncSettings } from '@/shared/hooks/useSettings'
 import { GoogleCalendarSync } from '@/shared/api/calendarSync'
@@ -266,10 +268,96 @@ export default function CalendarSyncSettingsComponent({
                   }
                 />
 
+                <Divider label="Шаблоны страниц для проектов" labelPosition="left" />
+                <Alert color="blue" title="Информация">
+                  <Text size="sm" mb="xs">
+                    Вы можете настроить шаблоны страниц Notion для каждого проекта. 
+                    При создании записи в Notion будет использоваться соответствующий шаблон.
+                  </Text>
+                  <Text size="sm">
+                    Чтобы получить ID шаблона, создайте страницу в Notion с нужным шаблоном, 
+                    затем скопируйте ID из URL страницы (последняя часть после последнего дефиса).
+                  </Text>
+                </Alert>
+
+                <Table>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Название проекта</Table.Th>
+                      <Table.Th>ID шаблона Notion</Table.Th>
+                      <Table.Th style={{ width: '50px' }}></Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {Object.entries(settings.notionProjectTemplates || {}).map(([projectName, templateId]) => (
+                      <Table.Tr key={projectName}>
+                        <Table.Td>{projectName}</Table.Td>
+                        <Table.Td>
+                          <TextInput
+                            size="xs"
+                            value={templateId}
+                            onChange={(e) => {
+                              const newTemplates = { ...(settings.notionProjectTemplates || {}) }
+                              newTemplates[projectName] = e.currentTarget.value
+                              onUpdate({
+                                ...settings,
+                                notionProjectTemplates: newTemplates,
+                              })
+                            }}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <ActionIcon
+                            color="red"
+                            variant="subtle"
+                            onClick={() => {
+                              const newTemplates = { ...(settings.notionProjectTemplates || {}) }
+                              delete newTemplates[projectName]
+                              onUpdate({
+                                ...settings,
+                                notionProjectTemplates: newTemplates,
+                              })
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                    {(!settings.notionProjectTemplates || Object.keys(settings.notionProjectTemplates).length === 0) && (
+                      <Table.Tr>
+                        <Table.Td colSpan={3}>
+                          <Text size="sm" c="dimmed" ta="center">
+                            Нет настроенных шаблонов
+                          </Text>
+                        </Table.Td>
+                      </Table.Tr>
+                    )}
+                  </Table.Tbody>
+                </Table>
+
+                <Button
+                  variant="light"
+                  leftSection={<IconPlus size={16} />}
+                  onClick={() => {
+                    const projectName = prompt('Введите название проекта:')
+                    if (projectName && projectName.trim()) {
+                      const newTemplates = { ...(settings.notionProjectTemplates || {}) }
+                      newTemplates[projectName.trim()] = ''
+                      onUpdate({
+                        ...settings,
+                        notionProjectTemplates: newTemplates,
+                      })
+                    }
+                  }}
+                >
+                  Добавить шаблон проекта
+                </Button>
+
                 {settings.notionApiKey && settings.notionDatabaseId ? (
                   <Alert color="green" title="Готово к синхронизации">
                     <Text size="sm">
-                      Все необходимые данные заполнены. Перейдите на страницу Календарь и нажмите кнопку "Синхронизировать с Notion".
+                      Все необходимые данные заполнены. Синхронизация будет выполняться автоматически.
                     </Text>
                   </Alert>
                 ) : (

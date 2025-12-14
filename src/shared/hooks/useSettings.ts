@@ -13,6 +13,7 @@ export interface CalendarSyncSettings {
   // Notion settings
   notionApiKey?: string
   notionDatabaseId?: string
+  notionProjectTemplates?: Record<string, string> // Маппинг названий проектов на ID шаблонов Notion
   // Sync options
   syncPastDays?: number // Сколько дней назад синхронизировать
   syncFutureDays?: number // Сколько дней вперед синхронизировать

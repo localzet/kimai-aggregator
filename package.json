@@ -49,6 +49,7 @@
         "eslint": "^9.38.0",
         "typescript": "^5.9.2",
         "vite": "^7.1.12",
+        "vite-plugin-pwa": "^1.2.0",
         "vite-tsconfig-paths": "^5.1.4"
     },
     "description": "Web application and Electron desktop application for aggregating and analyzing data from Kimai time tracking system",

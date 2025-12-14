@@ -1,6 +1,6 @@
 import { AppShell, Box, Burger, Container, Divider, Group, Stack, Title, Text, ScrollArea, NavLink } from "@mantine/core"
 import { useClickOutside, useDisclosure, useHeadroom, useMediaQuery } from "@mantine/hooks"
-import { ElementType, useEffect, useState } from "react"
+import { ElementType, useEffect, useState, useRef } from "react"
 
 import { Outlet, useLocation } from "react-router-dom"
 import RouterLink from '@/shared/ui/RouterLink'
@@ -9,6 +9,7 @@ import {
     TbDeviceAnalytics,
     TbReportAnalytics,
     TbCalendar,
+    TbClockHour4,
 } from 'react-icons/tb'
 import { HiCurrencyDollar } from 'react-icons/hi'
 
@@ -16,6 +17,7 @@ import { useSettings } from "@/shared/hooks/useSettings"
 import { NotificationsButton } from "@/components/NotificationsButton"
 import { HeaderStatusIndicator } from "@/components/HeaderStatusIndicator"
 import { useMixIdStatus } from "@localzet/data-connector/hooks"
+import { useUnifiedSync } from "@/shared/hooks/useUnifiedSync"
 import clsx from 'clsx'
 
 import classes from './app/AppShell.module.css'
@@ -77,9 +79,20 @@ export function MainLayout() {
     const { settings } = useSettings()
     const { pathname } = useLocation()
     const mixIdStatus = useMixIdStatus()
+    const { performSync } = useUnifiedSync()
+    const prevPathnameRef = useRef<string>(pathname)
     
     // Вычисляем showFullMenu напрямую из settings, чтобы меню обновлялось автоматически
     const showFullMenu = !!(settings.apiUrl && settings.apiKey)
+
+    // Триггер синхронизации при переходе по страницам
+    useEffect(() => {
+        if (prevPathnameRef.current !== pathname && prevPathnameRef.current !== '/') {
+            // Запускаем синхронизацию при переходе на новую страницу (кроме первой загрузки)
+            performSync('page-change')
+        }
+        prevPathnameRef.current = pathname
+    }, [pathname, performSync])
 
     const menu: MenuItem[] = []
     if (showFullMenu) {
@@ -122,6 +135,12 @@ export function MainLayout() {
                     href: '/calendar',
                     name: 'Календарь',
                     icon: TbCalendar,
+                },
+                {
+                    id: 'time-analysis',
+                    href: '/time-analysis',
+                    name: 'Анализ времени',
+                    icon: TbClockHour4,
                 },
             ]
         })

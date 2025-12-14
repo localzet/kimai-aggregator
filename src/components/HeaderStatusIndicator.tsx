@@ -1,15 +1,17 @@
 import { Group, Badge, Tooltip } from '@mantine/core'
-import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX } from '@tabler/icons-react'
+import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX, IconCalendar, IconCheck, IconX } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { useSettings, useSyncStatus } from '@/shared/hooks'
 import { useMixIdStatus } from '@localzet/data-connector/hooks'
 import { useDashboardData } from '@/shared/hooks/useDashboardData'
+import { useUnifiedSync } from '@/shared/hooks/useUnifiedSync'
 
 export function HeaderStatusIndicator() {
   const { settings } = useSettings()
   const syncStatus = useSyncStatus(settings)
   const mixIdStatus = useMixIdStatus()
   const { syncing, reload } = useDashboardData(settings, syncStatus)
+  const { syncing: unifiedSyncing, progress: unifiedProgress, performSync } = useUnifiedSync()
 
   const currentDataStatus = syncing ? 'updating' : syncStatus.status
 
@@ -89,9 +91,51 @@ export function HeaderStatusIndicator() {
     }
   }
 
+  // Get unified sync status config
+  const getUnifiedSyncConfig = () => {
+    if (!unifiedSyncing && unifiedProgress.stage === 'idle') {
+      return null
+    }
+
+    switch (unifiedProgress.stage) {
+      case 'mixid':
+        return {
+          color: 'blue' as const,
+          icon: <IconCloud size="1rem" style={{ animation: 'spin 1s linear infinite' }} />,
+          label: 'Mix ID',
+          description: unifiedProgress.message,
+        }
+      case 'notion':
+        return {
+          color: 'violet' as const,
+          icon: <IconCalendar size="1rem" style={{ animation: 'spin 1s linear infinite' }} />,
+          label: 'Notion',
+          description: unifiedProgress.message,
+        }
+      case 'complete':
+        return {
+          color: 'green' as const,
+          icon: <IconCheck size="1rem" />,
+          label: 'Готово',
+          description: unifiedProgress.message,
+        }
+      case 'error':
+        return {
+          color: 'red' as const,
+          icon: <IconX size="1rem" />,
+          label: 'Ошибка',
+          description: unifiedProgress.error || unifiedProgress.message,
+        }
+      default:
+        return null
+    }
+  }
+
   const dataConfig = getDataStatusConfig()
   const mixIdConfig = getMixIdStatusConfig()
-  const isDataClickable = !!reload && currentDataStatus !== 'updating'
+  const unifiedSyncConfig = getUnifiedSyncConfig()
+  const isDataClickable = !!reload && currentDataStatus !== 'updating' && !unifiedSyncing
+  const isUnifiedSyncClickable = !unifiedSyncing && unifiedProgress.stage === 'idle'
 
   return (
     <Group gap="xs">
@@ -146,6 +190,44 @@ export function HeaderStatusIndicator() {
               size="lg"
               style={{
                 userSelect: 'none',
+              }}
+            />
+          </Tooltip>
+        </motion.div>
+      )}
+
+      {/* Unified sync status indicator */}
+      {unifiedSyncConfig && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Tooltip label={unifiedSyncConfig.description}>
+            <Badge
+              color={unifiedSyncConfig.color}
+              variant="light"
+              leftSection={unifiedSyncConfig.icon}
+              size="lg"
+              style={{
+                cursor: isUnifiedSyncClickable ? 'pointer' : 'default',
+                userSelect: 'none',
+              }}
+              onClick={isUnifiedSyncClickable ? () => performSync('manual') : undefined}
+              onMouseDown={(e) => {
+                if (isUnifiedSyncClickable) {
+                  e.currentTarget.style.transform = 'scale(0.95)'
+                }
+              }}
+              onMouseUp={(e) => {
+                if (isUnifiedSyncClickable) {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isUnifiedSyncClickable) {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }
               }}
             />
           </Tooltip>
