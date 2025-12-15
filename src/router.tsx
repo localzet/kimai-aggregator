@@ -7,6 +7,7 @@ import { SetupGuard } from "./components/SetupGuard"
 import { InitialRedirect } from "./components/InitialRedirect"
 
 const SettingsPage = lazy(() => import("./pages/SettingsPage"))
+const AuthPage = lazy(() => import("./pages/AuthPage"))
 const SetupPage = lazy(() => import("./pages/SetupPage"))
 const DashboardPage = lazy(() => import("./pages/DashboardPage"))
 const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
@@ -57,6 +58,10 @@ export function ErrorPageComponent() {
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc fallback={<ErrorPageComponent />} />}>
+            <Route
+                element={<AuthPage />}
+                path='/auth'
+            />
             <Route
                 element={<SetupPage />}
                 path='/setup'
