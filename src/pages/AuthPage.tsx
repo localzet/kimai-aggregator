@@ -95,6 +95,8 @@ function AuthPage() {
       const mergedLocalSettings = {
         ...settings,
         ...(downloadedSettings || {}),
+        // Для веб‑версии всегда используем обычный (многопользовательский) режим
+        appMode: 'normal',
         backendUrl,
         backendToken: backendToken || settings.backendToken || '',
       }
