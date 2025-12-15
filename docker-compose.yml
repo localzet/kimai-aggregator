@@ -1,18 +1,15 @@
-version: '3.8'
-
 services:
   kimai-aggregator:
     image: ghcr.io/localzet/kimai-aggregator:latest
     container_name: kimai-aggregator
-    ports:
-      - "3000:80"
-    restart: unless-stopped
+    restart: always
     environment:
       - NODE_ENV=production
     networks:
-      - kimai-network
+      - external
 
 networks:
-  kimai-network:
-    driver: bridge
+  external:
+    name: external
+    external: true
 

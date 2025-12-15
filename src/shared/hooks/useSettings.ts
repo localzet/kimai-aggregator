@@ -36,6 +36,8 @@ export interface Settings {
   backendToken?: string // JWT токен для бэкенда
 }
 
+const defaultBackendUrl = (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
+
 const defaultSettings: Settings = {
   apiUrl: '',
   apiKey: '',
@@ -52,7 +54,7 @@ const defaultSettings: Settings = {
     autoSync: false,
   },
   appMode: 'normal', // По умолчанию обычный режим
-  backendUrl: '',
+  backendUrl: defaultBackendUrl,
   backendToken: '',
 }
 

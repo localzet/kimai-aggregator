@@ -8,7 +8,7 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 
 dayjs.extend(isoWeek)
 
-const ML_API_URL = import.meta.env.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud'
+const ML_API_URL = (import.meta.env.VITE_ML_API_URL as string) || 'https://kimai-ml.zorin.cloud'
 
 class PythonMLService {
   constructor(private baseUrl: string) {}

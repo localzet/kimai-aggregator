@@ -31,7 +31,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const { updateSettings } = useSettings()
   const [active, setActive] = useState(0)
   const [appMode, setAppMode] = useState<AppMode | null>(null)
-  const [backendUrl, setBackendUrl] = useState('')
+  const defaultBackendUrl = (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
+  const [backendUrl, setBackendUrl] = useState(defaultBackendUrl)
   const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | 'sync' | null>(null)
   
   // Для ручного ввода
