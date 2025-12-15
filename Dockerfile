@@ -3,6 +3,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build-time envs for Vite (MIX ID, ML, backend)
+# Defaults are safe public URLs; can be overridden via --build-arg
+ARG VITE_MIX_ID_API_BASE=https://data-center.zorin.cloud/api
+ARG VITE_MIX_ID_CLIENT_ID
+ARG VITE_MIX_ID_CLIENT_SECRET
+ARG VITE_ML_API_URL=https://kimai-ml.zorin.cloud
+ARG VITE_BACKEND_URL=https://kimai-api.zorin.cloud
+
+ENV VITE_MIX_ID_API_BASE=${VITE_MIX_ID_API_BASE}
+ENV VITE_MIX_ID_CLIENT_ID=${VITE_MIX_ID_CLIENT_ID}
+ENV VITE_MIX_ID_CLIENT_SECRET=${VITE_MIX_ID_CLIENT_SECRET}
+ENV VITE_ML_API_URL=${VITE_ML_API_URL}
+ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
+
 # Copy package files
 COPY package*.json ./
 COPY tsconfig*.json ./

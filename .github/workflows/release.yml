@@ -210,6 +210,12 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          build-args: |
+            VITE_MIX_ID_API_BASE=${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
+            VITE_MIX_ID_CLIENT_ID=${{ secrets.VITE_MIX_ID_CLIENT_ID }}
+            VITE_MIX_ID_CLIENT_SECRET=${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
+            VITE_ML_API_URL=${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
+            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
