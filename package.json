@@ -53,7 +53,11 @@
         "vite-tsconfig-paths": "^5.1.4"
     },
     "description": "Web application and Electron desktop application for aggregating and analyzing data from Kimai time tracking system",
-    "author": "Localzet Group",
+    "author": {
+        "name": "Ivan Zorin",
+        "email": "creator@localzet.com",
+        "url": "https://github.com/localzet"
+    },
     "license": "AGPL-3.0",
     "repository": {
         "type": "git",
