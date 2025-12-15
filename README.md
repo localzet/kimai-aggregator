@@ -156,6 +156,25 @@ npm run electron:build
 └── package.json
 ```
 
+## Docker
+
+### Сборка образа
+
+```bash
+docker build -t kimai-aggregator:latest .
+```
+
+### Запуск через Docker
+
+```bash
+docker run -d \
+  -p 80:80 \
+  --name kimai-aggregator \
+  kimai-aggregator:latest
+```
+
 ## Лицензия
 
-MIT
+Copyright (C) 2025 Localzet Group
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
