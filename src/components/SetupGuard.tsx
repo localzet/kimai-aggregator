@@ -20,24 +20,15 @@ export function SetupGuard({ children }: SetupGuardProps) {
       if (!settings.apiUrl || !settings.apiKey) {
         navigate('/setup', { replace: true })
       }
-      return
     }
-
-    // В обычном режиме требуем активную MIX ID‑сессию
-    if (!mixIdStatus.isConnected) {
-      navigate('/auth', { replace: true })
-    }
-  }, [settings, mixIdStatus.isConnected, navigate])
+    // В normal‑режиме здесь НЕ редиректим, чтобы избежать петель;
+    // вход/выход через MIX ID обрабатывается InitialRedirect и AuthPage.
+  }, [settings, navigate])
 
   const appMode = settings.appMode ?? 'normal'
 
   // Standalone: блокируем без настроек Kimai
   if (appMode === 'standalone' && (!settings.apiUrl || !settings.apiKey)) {
-    return null
-  }
-
-  // Normal: блокируем без MIX ID‑сессии
-  if (appMode === 'normal' && !mixIdStatus.isConnected) {
     return null
   }
 
