@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { KimaiApi, groupByWeek, calculateFinancials, WeekData, Timesheet, Project, Activity } from '@/shared/api/kimaiApi'
+import { groupByWeek, calculateFinancials, WeekData, Timesheet, Project, Activity } from '@/shared/api/kimaiApi'
 import { BackendApi } from '@/shared/api/backendApi'
+import { WebSocketClient } from '@/shared/api/websocket'
 import { db } from '@/shared/api/db'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { Settings, AppMode } from './useSettings'
+import { Settings } from './useSettings'
 import { type UseSyncStatusReturn } from './useSyncStatus'
 
 dayjs.extend(isoWeek)
@@ -81,6 +82,9 @@ export function useDashboardData(
     settingsRef.current = settings
   }, [settings])
 
+  // WebSocket client ref
+  const wsClientRef = useRef<WebSocketClient | null>(null)
+
   // Загрузка данных из БД
   const loadFromCache = useCallback(async (useProcessedCache = true) => {
     try {
@@ -143,15 +147,20 @@ export function useDashboardData(
     }
   }, [])
 
-  // Обновление данных из API или бэкенда
-  const syncFromAPI = useCallback(async (forceOnline = false) => {
+  // Обновление данных из бэкенда
+  const syncFromBackend = useCallback(async (isFirstLoad = false) => {
     const currentSettings = settingsRef.current
-    const appMode: AppMode = currentSettings.appMode || 'normal'
     
+    if (!currentSettings.backendUrl || !currentSettings.backendToken) {
+      setError('Не настроен бэкенд')
+      return
+    }
+
     // Если forceOnline = true, игнорируем navigator.onLine и пытаемся обновить
-    const isOnline = forceOnline || navigator.onLine
-    if (!isOnline && !forceOnline) {
+    const isOnline = navigator.onLine
+    if (!isOnline) {
       syncStatusRef.current?.setOffline?.()
+      await loadFromCache()
       return
     }
 
@@ -161,119 +170,59 @@ export function useDashboardData(
 
       await db.init()
 
-      if (appMode === 'normal' && currentSettings.backendUrl && currentSettings.backendToken) {
-        // Обычный режим: синхронизация с бэкендом
-        const backendApi = new BackendApi(currentSettings.backendUrl, currentSettings.backendToken)
-        
-        // Получаем данные только за последний месяц (для экономии места)
-        const endDate = dayjs()
-        const startDate = endDate.subtract(1, 'month')
-        
-        const response = await backendApi.getTimesheets(
-          startDate.toISOString(),
-          endDate.toISOString(),
-          10000, // limit
-          0 // offset
-        )
+      const backendApi = new BackendApi(currentSettings.backendUrl, currentSettings.backendToken)
+      
+      // Определяем период загрузки
+      const endDate = dayjs()
+      const startDate = isFirstLoad 
+        ? endDate.subtract(3, 'year') // Первый вход: 3 года назад
+        : endDate.subtract(1, 'month')  // Обычная загрузка: 1 месяц назад
+      const fetchEndDate = isFirstLoad
+        ? endDate.add(1, 'month')      // Первый вход: 1 месяц вперед
+        : endDate.add(1, 'week')       // Обычная загрузка: 1 неделя вперед
+      
+      const response = await backendApi.getTimesheets(
+        startDate.toISOString(),
+        fetchEndDate.toISOString(),
+        10000, // limit
+        0 // offset
+      )
 
-        // Очищаем старые данные (старше месяца)
-        const allTimesheets = await db.getTimesheets()
-        const oneMonthAgo = dayjs().subtract(1, 'month')
-        const oldTimesheets = allTimesheets.filter(ts => {
-          const begin = dayjs(ts.begin)
-          return begin.isBefore(oneMonthAgo)
-        })
+      // Сохраняем данные в кэш
+      await db.saveTimesheets(response.timesheets)
 
-        // Удаляем старые записи из IndexedDB
-        if (oldTimesheets.length > 0) {
-          // IndexedDB не поддерживает массовое удаление, поэтому удаляем по одной
-          // В реальности лучше использовать транзакцию, но для простоты оставим так
-          console.log(`Cleaning up ${oldTimesheets.length} old timesheets`)
-        }
+      // Загружаем проекты и активности из кэша (они не удаляются)
+      const [cachedProjects, cachedActivities] = await Promise.all([
+        db.getProjects(),
+        db.getActivities(),
+      ])
 
-        // Сохраняем новые данные
-        await db.saveTimesheets(response.timesheets)
-
-        // Загружаем проекты и активности из кэша (они не удаляются)
-        const [cachedProjects, cachedActivities] = await Promise.all([
-          db.getProjects(),
-          db.getActivities(),
-        ])
-
-        // Обновляем данные
-        const weeksData = processData(
-          response.timesheets,
-          cachedProjects || [],
-          cachedActivities || [],
-          currentSettings.ratePerMinute,
-          currentSettings.projectSettings || {},
-          currentSettings.excludedTags || []
-        )
-        
-        const sortedWeeks = [...weeksData].sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year
-          return b.week - a.week
-        })
-        setWeeks(sortedWeeks)
-        
-        // Сохраняем обработанные недели в кэш
-        try {
-          await db.saveProcessedWeeks(sortedWeeks)
-        } catch (err) {
-          console.warn('Error saving processed weeks cache:', err)
-        }
-      } else {
-        // Автономный режим: синхронизация напрямую с Kimai
-        if (!currentSettings.apiUrl || !currentSettings.apiKey || !currentSettings.apiUrl.trim() || !currentSettings.apiKey.trim()) {
-          return
-        }
-
-        const endDate = dayjs()
-        const startDate = endDate.subtract(2, 'year')
-
-        const api = new KimaiApi(currentSettings.apiUrl.trim(), currentSettings.apiKey.trim(), currentSettings.useProxy)
-        
-        const [apiTimesheets, apiProjects, apiActivities] = await Promise.all([
-          api.getTimesheets(startDate, endDate),
-          api.getProjects(),
-          api.getActivities(),
-        ])
-
-        // Сохраняем в кэш
-        await Promise.all([
-          db.saveTimesheets(apiTimesheets),
-          db.saveProjects(apiProjects),
-          db.saveActivities(apiActivities),
-          db.saveMetadata('lastUpdate', new Date().toISOString()),
-        ])
-
-        // Обновляем данные
-        const weeksData = processData(
-          apiTimesheets,
-          apiProjects,
-          apiActivities,
-          currentSettings.ratePerMinute,
-          currentSettings.projectSettings || {},
-          currentSettings.excludedTags || []
-        )
-        
-        const sortedWeeks = [...weeksData].sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year
-          return b.week - a.week
-        })
-        setWeeks(sortedWeeks)
-        
-        // Сохраняем обработанные недели в кэш для быстрой загрузки
-        try {
-          await db.saveProcessedWeeks(sortedWeeks)
-        } catch (err) {
-          console.warn('Error saving processed weeks cache:', err)
-        }
+      // Обновляем данные
+      const weeksData = processData(
+        response.timesheets,
+        cachedProjects || [],
+        cachedActivities || [],
+        currentSettings.ratePerMinute,
+        currentSettings.projectSettings || {},
+        currentSettings.excludedTags || []
+      )
+      
+      const sortedWeeks = [...weeksData].sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year
+        return b.week - a.week
+      })
+      setWeeks(sortedWeeks)
+      
+      // Сохраняем обработанные недели в кэш
+      try {
+        await db.saveProcessedWeeks(sortedWeeks)
+      } catch (err) {
+        console.warn('Error saving processed weeks cache:', err)
       }
       
       syncStatusRef.current?.setOnline?.()
     } catch (apiError) {
-      console.warn('API request failed:', apiError)
+      console.warn('Backend request failed:', apiError)
       syncStatusRef.current?.setOffline?.()
       // Пытаемся загрузить из кэша, если API недоступен
       await loadFromCache()
@@ -282,24 +231,14 @@ export function useDashboardData(
     }
   }, [loadFromCache])
 
-  // Основная функция загрузки: сначала из БД, потом из API
-  const loadData = useCallback(async (forceOnline = false) => {
+  // Основная функция загрузки: сначала из БД, потом из бэкенда
+  const loadData = useCallback(async (isFirstLoad = false) => {
     const currentSettings = settingsRef.current
-    const appMode: AppMode = currentSettings.appMode || 'normal'
     
-    // Проверяем наличие необходимых данных в зависимости от режима
-    if (appMode === 'normal') {
-      if (!currentSettings.backendUrl || !currentSettings.backendToken) {
-        setError('В обычном режиме требуется URL бэкенда и токен авторизации')
-        setLoading(false)
-        return
-      }
-    } else {
-      if (!currentSettings.apiUrl || !currentSettings.apiKey || !currentSettings.apiUrl.trim() || !currentSettings.apiKey.trim()) {
-        setError('Необходимо указать API URL и API Key в настройках')
-        setLoading(false)
-        return
-      }
+    if (!currentSettings.backendUrl || !currentSettings.backendToken) {
+      setError('Не настроен бэкенд. Пожалуйста, войдите через MIX ID.')
+      setLoading(false)
+      return
     }
 
     try {
@@ -317,35 +256,88 @@ export function useDashboardData(
         setLoading(false)
       }
 
-      // Затем обновляем из API в фоне
-      await syncFromAPI(forceOnline)
+      // Затем обновляем из бэкенда в фоне
+      await syncFromBackend(isFirstLoad)
     } catch (err) {
       setError((err as Error).message)
       console.error('Error loading data:', err)
     } finally {
       setLoading(false)
     }
-  }, [loadFromCache, syncFromAPI])
+  }, [loadFromCache, syncFromBackend])
+
+  // Инициализация WebSocket соединения
+  useEffect(() => {
+    if (!settings.backendUrl || !settings.backendToken) {
+      return
+    }
+
+    // Создаем и подключаем WebSocket клиент
+    const wsClient = new WebSocketClient(settings.backendUrl, settings.backendToken)
+    wsClientRef.current = wsClient
+
+    wsClient.connect().then(() => {
+      // Подписываемся на обновления timesheets
+      wsClient.onTimesheetsUpdate(async (timesheets: Timesheet[]) => {
+        // Обновляем данные при получении обновлений через WebSocket
+        const currentSettings = settingsRef.current
+        try {
+          const [cachedProjects, cachedActivities] = await Promise.all([
+            db.getProjects(),
+            db.getActivities(),
+          ])
+
+          const weeksData = processData(
+            timesheets,
+            cachedProjects || [],
+            cachedActivities || [],
+            currentSettings.ratePerMinute,
+            currentSettings.projectSettings || {},
+            currentSettings.excludedTags || []
+          )
+          
+          const sortedWeeks = [...weeksData].sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year
+            return b.week - a.week
+          })
+          setWeeks(sortedWeeks)
+          
+          // Сохраняем в кэш
+          db.saveProcessedWeeks(sortedWeeks).catch(console.warn)
+          db.saveTimesheets(timesheets).catch(console.warn)
+        } catch (error) {
+          console.error('Error processing WebSocket update:', error)
+        }
+      })
+    }).catch((error) => {
+      console.warn('WebSocket connection failed:', error)
+    })
+
+    return () => {
+      wsClient.disconnect()
+      wsClientRef.current = null
+    }
+  }, [settings.backendUrl, settings.backendToken])
 
   // Эффект для первоначальной загрузки и при изменении настроек
   useEffect(() => {
-    const appMode: AppMode = settings.appMode || 'normal'
-    
-    let shouldLoad = false
-    if (appMode === 'normal') {
-      shouldLoad = !!(settings.backendUrl && settings.backendToken)
-    } else {
-      shouldLoad = !!(settings.apiUrl && settings.apiUrl.trim() && settings.apiKey && settings.apiKey.trim())
-    }
+    const shouldLoad = !!(settings.backendUrl && settings.backendToken)
     
     if (shouldLoad) {
-      loadData()
+      // Проверяем, первый ли это вход (нет данных в кэше)
+      db.init().then(async () => {
+        const cached = await db.getTimesheets().catch(() => [])
+        const isFirstLoad = cached.length === 0
+        loadData(isFirstLoad)
+      }).catch(() => {
+        loadData(true) // Если ошибка, считаем первым входом
+      })
     } else {
       setWeeks([])
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.apiUrl, settings.apiKey, settings.appMode, settings.backendUrl, settings.backendToken])
+  }, [settings.backendUrl, settings.backendToken])
 
   // Отдельный эффект для пересчета финансовых данных при изменении ratePerMinute или projectSettings
   // Используем ref для хранения предыдущих значений, чтобы избежать лишних пересчетов
@@ -396,6 +388,6 @@ export function useDashboardData(
     loading, 
     error, 
     syncing,
-    reload: () => loadData(true),
+    reload: () => loadData(false), // При ручной перезагрузке не используем первый вход
   }
 }
