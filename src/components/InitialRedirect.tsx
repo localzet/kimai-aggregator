@@ -7,13 +7,20 @@ export function InitialRedirect() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Если настройки не заполнены, перенаправляем на страницу настройки
-    if (!settings.apiUrl || !settings.apiKey) {
-      navigate('/setup', { replace: true })
-    } else {
-      // Если настройки есть, перенаправляем на dashboard
-      navigate('/dashboard', { replace: true })
+    const appMode = settings.appMode ?? 'normal'
+
+    // Для standalone‑режима по-прежнему требуем прямые креды Kimai
+    if (appMode === 'standalone') {
+      if (!settings.apiUrl || !settings.apiKey) {
+        navigate('/setup', { replace: true })
+      } else {
+        navigate('/dashboard', { replace: true })
+      }
+      return
     }
+
+    // Для обычного (многопользовательского) режима идём сразу на dashboard
+    navigate('/dashboard', { replace: true })
   }, [settings, navigate])
 
   return null

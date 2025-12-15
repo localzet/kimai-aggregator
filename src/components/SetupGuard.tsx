@@ -11,14 +11,24 @@ export function SetupGuard({ children }: SetupGuardProps) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Если настройки не заполнены, перенаправляем на страницу настройки
-    if (!settings.apiUrl || !settings.apiKey) {
+    const appMode = settings.appMode ?? 'normal'
+
+    // Требуем визард только в standalone‑режиме
+    if (
+      appMode === 'standalone' &&
+      (!settings.apiUrl || !settings.apiKey)
+    ) {
       navigate('/setup', { replace: true })
     }
   }, [settings, navigate])
 
-  // Если настройки не заполнены, не показываем содержимое
-  if (!settings.apiUrl || !settings.apiKey) {
+  const appMode = settings.appMode ?? 'normal'
+
+  // Блокируем контент только если standalone и нет настроек Kimai
+  if (
+    appMode === 'standalone' &&
+    (!settings.apiUrl || !settings.apiKey)
+  ) {
     return null
   }
 
