@@ -35,13 +35,13 @@ export class BackendApi {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: HeadersInit = {
+    const headers = new Headers({
       'Content-Type': 'application/json',
-      ...options.headers,
-    }
+      ...(options.headers ?? {}),
+    })
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`
+      headers.set('Authorization', `Bearer ${this.token}`)
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
