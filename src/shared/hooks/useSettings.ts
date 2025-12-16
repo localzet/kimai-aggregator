@@ -91,17 +91,17 @@ export function useSettings() {
     try {
       setLoading(true)
       const backendApi = new BackendApi(settings.backendUrl, settings.backendToken)
-      const backendSettings = await backendApi.getSettings()
+      // Ответ бэкенда в snake_case, поэтому приводим через any и маппим вручную
+      const backendSettings: any = await backendApi.getSettings()
       
-      // Преобразуем snake_case в camelCase
       const convertedSettings: Settings = {
-        apiUrl: backendSettings.kimai_api_url || '',
-        apiKey: backendSettings.kimai_api_key || '',
-        ratePerMinute: backendSettings.rate_per_minute || 0,
+        apiUrl: backendSettings?.kimai_api_url || '',
+        apiKey: backendSettings?.kimai_api_key || '',
+        ratePerMinute: backendSettings?.rate_per_minute || 0,
         useProxy: false,
-        projectSettings: backendSettings.project_settings || {},
-        excludedTags: backendSettings.excluded_tags || [],
-        calendarSync: backendSettings.calendar_sync || defaultSettings.calendarSync,
+        projectSettings: backendSettings?.project_settings || {},
+        excludedTags: backendSettings?.excluded_tags || [],
+        calendarSync: backendSettings?.calendar_sync || defaultSettings.calendarSync,
         appMode: 'normal',
         backendUrl: settings.backendUrl,
         backendToken: settings.backendToken,
@@ -138,15 +138,17 @@ export function useSettings() {
       try {
         const backendApi = new BackendApi(newSettings.backendUrl, newSettings.backendToken)
         
-        // Отправляем настройки в бэкенд
-        await backendApi.updateSettings({
+        // Отправляем настройки в бэкенд (payload в snake_case)
+        const payload: any = {
           kimai_api_url: newSettings.apiUrl,
           kimai_api_key: newSettings.apiKey,
           rate_per_minute: newSettings.ratePerMinute,
           project_settings: newSettings.projectSettings,
           excluded_tags: newSettings.excludedTags,
           calendar_sync: newSettings.calendarSync,
-        } as any)
+        }
+
+        await backendApi.updateSettings(payload)
 
         // Отправляем настройки в MIX ID (только настройки, не данные!)
         try {
