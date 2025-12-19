@@ -29,7 +29,7 @@ export interface Settings {
   apiKey: string
   ratePerMinute: number
   useProxy: boolean
-  syncUrl?: string // Deprecated, kept for backward compatibility
+  syncUrl?: string
   projectSettings: ProjectSettings
   excludedTags: string[]
   calendarSync?: CalendarSyncSettings
