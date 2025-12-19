@@ -1,8 +1,8 @@
-import { AppShell, Box, Burger, Container, Divider, Group, Stack, Title, Text, ScrollArea, NavLink } from "@mantine/core"
+import { AppShell, Box, Burger, Container, Divider, Group, Stack, Title, Text, ScrollArea, NavLink, Button } from "@mantine/core"
 import { useClickOutside, useDisclosure, useHeadroom, useMediaQuery } from "@mantine/hooks"
 import { ElementType, useEffect, useState, useRef } from "react"
 
-import { Outlet, useLocation } from "react-router-dom"
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import RouterLink from '@/shared/ui/RouterLink'
 import { PiArrowRight, PiCpu, PiListChecks, PiStarDuotone } from "react-icons/pi"
 import {
@@ -11,6 +11,7 @@ import {
     TbCalendar,
     TbClockHour4,
     TbBrain,
+    TbLogout,
 } from 'react-icons/tb'
 import { HiCurrencyDollar } from 'react-icons/hi'
 
@@ -19,6 +20,7 @@ import { NotificationsButton } from "@/components/NotificationsButton"
 import { HeaderStatusIndicator } from "@/components/HeaderStatusIndicator"
 import { useMixIdStatus } from "@localzet/data-connector/hooks"
 import { useUnifiedSync } from "@/shared/hooks/useUnifiedSync"
+import { notifications } from '@mantine/notifications'
 import clsx from 'clsx'
 
 import classes from './app/AppShell.module.css'
@@ -47,6 +49,7 @@ export function MainLayout() {
     const [mobileOpened, { toggle: toggleMobile }] = useDisclosure()
     const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
     const pinned = useHeadroom({ fixedAt: 120 })
+    const navigate = useNavigate()
 
     const isMobile = useMediaQuery(`(max-width: 64rem)`, undefined, {
         getInitialValueInEffect: false
@@ -72,7 +75,7 @@ export function MainLayout() {
         }
     }, [])
 
-    const { settings } = useSettings()
+    const { settings, updateSettings } = useSettings()
     const { pathname } = useLocation()
     const mixIdStatus = useMixIdStatus()
     const { performSync } = useUnifiedSync()
@@ -81,6 +84,49 @@ export function MainLayout() {
     
     // Вычисляем showFullMenu напрямую из settings, чтобы меню обновлялось автоматически
     const showFullMenu = !!(settings.apiUrl && settings.apiKey)
+
+    // Если нет настроек и мы не на странице настроек, редиректим на страницу настроек
+    useEffect(() => {
+      const appMode = settings.appMode ?? 'normal'
+      if (appMode === 'normal' && !settings.apiUrl && !settings.apiKey && pathname !== '/settings') {
+        navigate('/settings', { replace: true })
+      }
+    }, [settings, pathname, navigate])
+
+    // Функция выхода
+    const handleLogout = () => {
+        // Очищаем токены
+        const clearedSettings = {
+            ...settings,
+            backendToken: '',
+        }
+        updateSettings(clearedSettings)
+        
+        // Очищаем токены из localStorage
+        try {
+            localStorage.removeItem('mixid_access_token')
+            localStorage.removeItem('mixid_token')
+            const saved = localStorage.getItem('kimai-settings')
+            if (saved) {
+                const parsed = JSON.parse(saved)
+                localStorage.setItem('kimai-settings', JSON.stringify({
+                    ...parsed,
+                    backendToken: '',
+                }))
+            }
+        } catch (e) {
+            console.warn('Error clearing tokens:', e)
+        }
+
+        notifications.show({
+            title: 'Выход выполнен',
+            message: 'Вы успешно вышли из системы',
+            color: 'blue',
+        })
+
+        // Редиректим на страницу авторизации
+        navigate('/auth', { replace: true })
+    }
 
     // Триггер синхронизации при переходе по страницам с дебаунсингом
     useEffect(() => {
@@ -200,9 +246,20 @@ export function MainLayout() {
                                 size="md"
                             />
                         </Group>
-                        <Group style={{ flexShrink: 0 }}>
+                        <Group style={{ flexShrink: 0 }} gap="xs">
                             <HeaderStatusIndicator />
                             {mixIdStatus.isConnected && <NotificationsButton />}
+                            {mixIdStatus.isConnected && (
+                                <Button
+                                    variant="subtle"
+                                    color="red"
+                                    leftSection={<TbLogout size="1rem" />}
+                                    onClick={handleLogout}
+                                    size="sm"
+                                >
+                                    Выход
+                                </Button>
+                            )}
                             {/* <HeaderControls
                                 githubLink="https://github.com/remnawave/panel"
                                 isGithubLoading={isLoadingUpdates}

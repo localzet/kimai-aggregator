@@ -21,9 +21,16 @@ export function InitialRedirect() {
       return
     }
 
-    // Normal (многопользовательский): сначала требуем MIX ID, потом дашборд
+    // Normal (многопользовательский): проверяем MIX ID и настройки
     if (!mixIdStatus.isConnected) {
       navigate('/auth', { replace: true })
+      return
+    }
+
+    // Если подключен к MIX ID, проверяем наличие настроек
+    // Если настроек нет (нет apiUrl или apiKey), редиректим на страницу настроек
+    if (!settings.apiUrl || !settings.apiKey) {
+      navigate('/settings', { replace: true })
     } else {
       navigate('/dashboard', { replace: true })
     }

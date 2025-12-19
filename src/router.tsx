@@ -5,6 +5,7 @@ import { FC, lazy } from 'react'
 import { Button, Container, Group, Title, Text } from "@mantine/core"
 import { SetupGuard } from "./components/SetupGuard"
 import { InitialRedirect } from "./components/InitialRedirect"
+import { AuthGuard } from "./components/AuthGuard"
 
 const SettingsPage = lazy(() => import("./pages/SettingsPage"))
 const AuthPage = lazy(() => import("./pages/AuthPage"))
@@ -74,7 +75,7 @@ const router = createBrowserRouter(
                 element={<OAuthCallbackPage />}
                 path='/oauth/callback'
             />
-            <Route element={<MainLayout />} path='/'>
+            <Route element={<AuthGuard><MainLayout /></AuthGuard>} path='/'>
                 <Route element={<InitialRedirect />} index path='/' />
                 <Route
                     element={<SettingsPage />}
@@ -154,7 +155,7 @@ const router = createBrowserRouter(
 
             </Route>
             {/* Catch-all route for unknown URLs (file:// protocol paths, etc) */}
-            <Route path="*" element={<Navigate replace to="/dashboard" />} />
+            <Route path="*" element={<Navigate replace to="/" />} />
         </Route>
     )
 )

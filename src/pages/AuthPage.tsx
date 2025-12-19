@@ -28,7 +28,7 @@ function AuthPage() {
 
       if (!mixIdToken) {
         // Если по какой‑то причине токена нет, просто идём дальше — MIX ID всё равно подключён
-        navigate('/dashboard', { replace: true })
+        navigate('/settings', { replace: true })
         return
       }
 
@@ -52,79 +52,78 @@ function AuthPage() {
       }
 
       // 2) Пытаемся получить настройки из MIX ID и синхронизировать с бэком
-      if (backendApi && backendToken) {
+      const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
+      const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
+      const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
+
+      let remoteSettings: any | null = null
+      if (clientId && clientSecret) {
         try {
-          const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
-          const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
-          const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
-
-          let remoteSettings: any | null = null
-          if (clientId && clientSecret) {
-            mixIdApi.setConfig({ apiBase, clientId, clientSecret })
-            remoteSettings = await mixIdApi.downloadSettings()
-          }
-
-          const downloadedSettings = remoteSettings?.settings
-
-          // Получаем текущие настройки с бэка
-          let backendSettings: any = null
-          try {
-            backendSettings = await backendApi.getSettings()
-          } catch (e) {
-            console.warn('Could not get settings from backend:', e)
-          }
-
-          // Определяем актуальные настройки: приоритет у MIX ID, если их нет - используем бэкенд
-          const effectiveSettings = downloadedSettings || backendSettings
-
-          // Если есть настройки из MIX ID, отправляем их в бэкенд
-          if (downloadedSettings && downloadedSettings.apiUrl && downloadedSettings.apiKey) {
-            try {
-              await backendApi.updateSettings({
-                kimai_api_url: downloadedSettings.apiUrl,
-                kimai_api_key: downloadedSettings.apiKey,
-                rate_per_minute: downloadedSettings.ratePerMinute,
-                project_settings: downloadedSettings.projectSettings,
-                excluded_tags: downloadedSettings.excludedTags,
-                calendar_sync: downloadedSettings.calendarSync,
-              } as any)
-            } catch (e) {
-              console.warn('Could not push settings to backend on AuthPage:', e)
-            }
-          }
-
-          // Если на бэке нет настроек, но есть локальные - отправляем их
-          if (!backendSettings && settings.apiUrl && settings.apiKey) {
-            try {
-              await backendApi.updateSettings({
-                kimai_api_url: settings.apiUrl,
-                kimai_api_key: settings.apiKey,
-                rate_per_minute: settings.ratePerMinute,
-                project_settings: settings.projectSettings,
-                excluded_tags: settings.excludedTags,
-                calendar_sync: settings.calendarSync,
-              } as any)
-            } catch (e) {
-              console.warn('Could not push local settings to backend on AuthPage:', e)
-            }
-          }
-
-          // Триггерим начальный импорт из Kimai (если настройки есть)
-          const finalSettings = effectiveSettings || backendSettings || settings
-          if (finalSettings?.apiUrl && finalSettings?.apiKey) {
-            await backendApi.triggerSync().catch((e) => {
-              console.warn('Could not trigger initial Kimai sync:', e)
-            })
-          }
+          mixIdApi.setConfig({ apiBase, clientId, clientSecret })
+          remoteSettings = await mixIdApi.downloadSettings()
         } catch (e) {
-          console.warn('Could not sync settings from MIX ID on AuthPage:', e)
+          console.warn('Could not download settings from MIX ID:', e)
         }
       }
 
-      // 3) Локально сохраняем только токен бэкенда и URL (для работы приложения)
-      // Сами настройки не храним локально, они всегда берутся с бэка
+      const downloadedSettings = remoteSettings?.settings
+
+      // Получаем текущие настройки с бэка (если есть бэкенд и токен)
+      let backendSettings: any = null
+      if (backendApi && backendToken) {
+        try {
+          backendSettings = await backendApi.getSettings()
+        } catch (e) {
+          console.warn('Could not get settings from backend:', e)
+        }
+      }
+
+      // Определяем актуальные настройки: приоритет у MIX ID, если их нет - используем бэкенд
+      const effectiveSettings = downloadedSettings || backendSettings
+
+      // Если есть настройки из MIX ID, отправляем их в бэкенд
+      if (backendApi && backendToken && downloadedSettings && downloadedSettings.apiUrl && downloadedSettings.apiKey) {
+        try {
+          await backendApi.updateSettings({
+            kimai_api_url: downloadedSettings.apiUrl,
+            kimai_api_key: downloadedSettings.apiKey,
+            rate_per_minute: downloadedSettings.ratePerMinute || 0,
+            project_settings: downloadedSettings.projectSettings || {},
+            excluded_tags: downloadedSettings.excludedTags || [],
+            calendar_sync: downloadedSettings.calendarSync || {},
+          } as any)
+        } catch (e) {
+          console.warn('Could not push settings to backend on AuthPage:', e)
+        }
+      }
+
+      // Если на бэке нет настроек, но есть локальные - отправляем их
+      if (backendApi && backendToken && !backendSettings && settings.apiUrl && settings.apiKey) {
+        try {
+          await backendApi.updateSettings({
+            kimai_api_url: settings.apiUrl,
+            kimai_api_key: settings.apiKey,
+            rate_per_minute: settings.ratePerMinute,
+            project_settings: settings.projectSettings,
+            excluded_tags: settings.excludedTags,
+            calendar_sync: settings.calendarSync,
+          } as any)
+        } catch (e) {
+          console.warn('Could not push local settings to backend on AuthPage:', e)
+        }
+      }
+
+      // Триггерим начальный импорт из Kimai (если настройки есть)
+      const finalSettings = effectiveSettings || backendSettings || settings
+      if (backendApi && backendToken && finalSettings?.apiUrl && finalSettings?.apiKey) {
+        await backendApi.triggerSync().catch((e) => {
+          console.warn('Could not trigger initial Kimai sync:', e)
+        })
+      }
+
+      // 3) Локально сохраняем настройки и токен бэкенда
       const localSettings = {
-        ...settings,
+        ...(effectiveSettings || backendSettings || settings),
         appMode: 'normal' as const,
         backendUrl,
         backendToken: backendToken || settings.backendToken || '',
@@ -133,9 +132,20 @@ function AuthPage() {
 
       notifications.show({
         title: 'MIX ID подключён',
-        message: 'Бэкенд авторизован. Настройки синхронизированы с MIX ID и бэкендом.',
+        message: backendToken 
+          ? 'Бэкенд авторизован. Настройки синхронизированы с MIX ID и бэкендом.'
+          : 'MIX ID подключён. Настройки загружены из MIX ID.',
         color: 'green',
       })
+
+      // Проверяем наличие настроек и редиректим соответственно
+      const hasSettings = (effectiveSettings || backendSettings)?.apiUrl && 
+                         (effectiveSettings || backendSettings)?.apiKey
+      if (hasSettings) {
+        navigate('/dashboard', { replace: true })
+      } else {
+        navigate('/settings', { replace: true })
+      }
     } catch (error) {
       console.error('Error during MIX ID connect flow on AuthPage:', error)
       notifications.show({
@@ -146,8 +156,7 @@ function AuthPage() {
             : 'Не удалось автоматически подтянуть настройки из MIX ID. Вы можете настроить позже.',
         color: 'orange',
       })
-    } finally {
-      navigate('/dashboard', { replace: true })
+      navigate('/settings', { replace: true })
     }
   }
 
