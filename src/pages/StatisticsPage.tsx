@@ -24,6 +24,7 @@ import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { DataTableShared } from '@/shared/ui/table'
+import { formatCurrency } from '@/shared/utils'
 import dayjs from 'dayjs'
 
 function StatisticsPage() {
@@ -312,13 +313,6 @@ function StatisticsPage() {
   // Определяем актуальный статус с учетом syncing
   const currentStatus = syncing ? 'updating' : syncStatus.status
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
 
   // Таблица проектов
   interface ProjectStatsRow {

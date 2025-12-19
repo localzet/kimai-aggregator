@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { Paper, Grid, Card, Text, Progress, Group, Badge, Stack, Title, RingProgress, Center, ThemeIcon } from '@mantine/core'
 import { IconTrendingUp, IconClock, IconMoneybag, IconTarget } from '@tabler/icons-react'
 import { LineChart, BarChart } from '@mantine/charts'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { WeekData } from '@/shared/api/kimaiApi'
+import { formatCurrency, formatDuration } from '@/shared/utils'
 
 dayjs.extend(isoWeek)
 
@@ -13,25 +14,7 @@ interface DashboardMetricsProps {
   ratePerMinute: number
 }
 
-function DashboardMetrics({ weeks, ratePerMinute }: DashboardMetricsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
-
-  const formatDuration = (minutes: number) => {
-    // Обработка NaN и невалидных значений
-    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
-      return '0ч 0м'
-    }
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
+const DashboardMetrics = memo(function DashboardMetrics({ weeks, ratePerMinute }: DashboardMetricsProps) {
 
   // Общая статистика
   const stats = useMemo(() => {
@@ -243,6 +226,6 @@ function DashboardMetrics({ weeks, ratePerMinute }: DashboardMetricsProps) {
       </Paper>
     </Stack>
   )
-}
+})
 
 export default DashboardMetrics

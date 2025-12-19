@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, memo } from 'react'
+import { formatCurrency, formatDuration } from '@/shared/utils'
 import {
   Select,
   Text,
@@ -29,7 +30,7 @@ interface ProjectPeriod {
   id: string
 }
 
-function FinancialTable({ weeks, settings }: FinancialTableProps) {
+const FinancialTable = memo(function FinancialTable({ weeks, settings }: FinancialTableProps) {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
 
   const weekOptions = weeks.map(week => {
@@ -45,24 +46,6 @@ function FinancialTable({ weeks, settings }: FinancialTableProps) {
     ? weeks.find(w => w.weekKey === selectedWeek)
     : weeks[0]
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
-
-  const formatDuration = (minutes: number) => {
-    // Обработка NaN и невалидных значений
-    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
-      return '0ч 0м'
-    }
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
 
   // Агрегация периодов для всех проектов с настройками
   const projectPeriods = useMemo(() => {
@@ -193,6 +176,8 @@ function FinancialTable({ weeks, settings }: FinancialTableProps) {
     </DataTableShared.Container>
   )
 }
+
+})
 
 export default FinancialTable
 

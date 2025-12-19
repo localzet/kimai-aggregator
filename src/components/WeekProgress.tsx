@@ -1,9 +1,11 @@
+import { memo } from 'react'
 import { Paper, Title, Stack, Text, Progress, Group, Badge, Card } from '@mantine/core'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { motion } from 'motion/react'
 import { WeekData } from '@/shared/api/kimaiApi'
 import { Settings } from '@/shared/hooks/useSettings'
+import { formatCurrency, formatDuration } from '@/shared/utils'
 
 dayjs.extend(isoWeek)
 
@@ -15,25 +17,7 @@ interface WeekProgressProps {
 const MotionCard = motion.div
 const MotionPaper = motion.div
 
-function WeekProgress({ week, settings }: WeekProgressProps) {
-  const formatDuration = (minutes: number) => {
-    // Обработка NaN и невалидных значений
-    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
-      return '0ч 0м'
-    }
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
+const WeekProgress = memo(function WeekProgress({ week, settings }: WeekProgressProps) {
 
   const isCurrentWeek = () => {
     const now = dayjs()
@@ -181,7 +165,7 @@ function WeekProgress({ week, settings }: WeekProgressProps) {
       </Paper>
     </MotionPaper>
   )
-}
+})
 
 export default WeekProgress
 

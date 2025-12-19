@@ -1,6 +1,7 @@
 import { Button, Group, Modal, Stack, TextInput, NumberInput, Select, Paper, Text, Badge } from '@mantine/core'
 import { IconFileTypePdf } from '@tabler/icons-react'
 import { useState, useRef } from 'react'
+import { formatCurrency, formatDuration } from '@/shared/utils'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { WeekData } from '@/shared/api/kimaiApi'
@@ -25,24 +26,6 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
   })
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
-
-  const formatDuration = (minutes: number) => {
-    // Обработка NaN и невалидных значений
-    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
-      return '0ч 0м'
-    }
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
 
   const getSelectedWeeks = () => {
     const startIdx = weeks.findIndex(w => w.weekKey === reportConfig.startWeek)

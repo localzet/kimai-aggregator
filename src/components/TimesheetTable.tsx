@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, memo } from 'react'
+import { formatDuration } from '@/shared/utils'
 import {
   Select,
   Text,
@@ -19,7 +20,7 @@ interface TimesheetRow extends Omit<Timesheet, 'id'> {
   id: string | number
 }
 
-export default function TimesheetTable({ weeks }: TimesheetTableProps) {
+const TimesheetTable = memo(function TimesheetTable({ weeks }: TimesheetTableProps) {
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
   const [showExcluded, setShowExcluded] = useState<boolean>(true)
 
@@ -35,17 +36,6 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
   const selectedWeekData = selectedWeek
     ? weeks.find(w => w.weekKey === selectedWeek)
     : weeks[0]
-
-  const formatDuration = (minutes: number) => {
-    // Обработка NaN и невалидных значений
-    if (!isFinite(minutes) || isNaN(minutes) || minutes < 0) {
-      return '0ч 0м'
-    }
-    const roundedMinutes = Math.round(minutes)
-    const hours = Math.floor(roundedMinutes / 60)
-    const mins = roundedMinutes % 60
-    return `${hours}ч ${mins}м`
-  }
 
   const columns = useMemo<MRT_ColumnDef<TimesheetRow>[]>(() => [
     {
@@ -261,5 +251,7 @@ export default function TimesheetTable({ weeks }: TimesheetTableProps) {
       </DataTableShared.Content>
     </DataTableShared.Container>
   )
-}
+})
+
+export default TimesheetTable
 

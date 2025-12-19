@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { formatCurrency } from '@/shared/utils'
 import {
   Container,
   Loader,
@@ -28,14 +29,6 @@ function PaymentHistoryPage() {
   
   const currentStatus = syncing ? 'updating' : syncStatus.status
 
-  // Форматирование валюты
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
 
   // Агрегация по неделям для всех проектов
   const weeklyPayments = useMemo(() => {

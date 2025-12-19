@@ -1,8 +1,10 @@
 import { SimpleGrid, Group, Stack, Box, Loader } from '@mantine/core'
 import { IconCurrencyDollar, IconClock, IconTrendingUp, IconCalendar } from '@tabler/icons-react'
 import { motion } from 'motion/react'
+import { memo } from 'react'
 import { MetricCard } from '@/shared/ui/metrics'
 import { WeekData } from '@/shared/api/kimaiApi'
+import { formatCurrency } from '@/shared/utils'
 
 interface FinancialMetricsProps {
   weeks: WeekData[]
@@ -11,19 +13,11 @@ interface FinancialMetricsProps {
 
 const MotionMetricCard = motion(MetricCard.Root)
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
-
 function formatInt(value: number) {
   return new Intl.NumberFormat('ru-RU').format(value)
 }
 
-export function FinancialMetrics({ weeks, isLoading }: FinancialMetricsProps) {
+export const FinancialMetrics = memo(function FinancialMetrics({ weeks, isLoading }: FinancialMetricsProps) {
   const totalAmount = weeks.reduce((sum, week) => sum + (week.totalAmount || 0), 0)
   const totalHours = weeks.reduce((sum, week) => sum + (week.totalHours || 0), 0)
   const avgAmountPerWeek = weeks.length > 0 ? totalAmount / weeks.length : 0
@@ -109,5 +103,5 @@ export function FinancialMetrics({ weeks, isLoading }: FinancialMetricsProps) {
       </SimpleGrid>
     </motion.div>
   )
-}
+})
 
