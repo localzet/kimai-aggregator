@@ -9,23 +9,22 @@ import { createBrowserRouter, createRoutesFromElements, Navigate, Route, RouterP
 import { ErrorBoundary, ErrorBoundaryProps } from 'react-error-boundary'
 import { Outlet } from 'react-router-dom'
 import { FC, lazy } from 'react'
-import { AuthGuard, SetupGuard } from '@/app/router/guards'
-import { InitialRedirect } from '@/app/router/components'
-import { ErrorPage } from '@/app/router/components'
+import { AuthGuard, SetupGuard } from './guards'
+import { InitialRedirect, ErrorPage } from './components'
 
 // Lazy load pages for code splitting
-const SettingsPage = lazy(() => import("./pages/SettingsPage"))
-const AuthPage = lazy(() => import("./pages/AuthPage"))
-const SetupPage = lazy(() => import("./pages/SetupPage"))
-const DashboardPage = lazy(() => import("./pages/DashboardPage"))
-const TimesheetPage = lazy(() => import("./pages/TimesheetPage"))
-const FinancialPage = lazy(() => import("./pages/FinancialPage"))
-const PaymentHistoryPage = lazy(() => import("./pages/PaymentHistoryPage"))
-const StatisticsPage = lazy(() => import("./pages/StatisticsPage"))
-const CalendarPage = lazy(() => import("./pages/CalendarPage"))
-const TimeAnalysisPage = lazy(() => import("./pages/TimeAnalysisPage"))
-const MLInsightsPage = lazy(() => import("./pages/MLInsightsPage"))
-const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"))
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"))
+const AuthPage = lazy(() => import("@/pages/AuthPage"))
+const SetupPage = lazy(() => import("@/pages/SetupPage"))
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"))
+const TimesheetPage = lazy(() => import("@/pages/TimesheetPage"))
+const FinancialPage = lazy(() => import("@/pages/FinancialPage"))
+const PaymentHistoryPage = lazy(() => import("@/pages/PaymentHistoryPage"))
+const StatisticsPage = lazy(() => import("@/pages/StatisticsPage"))
+const CalendarPage = lazy(() => import("@/pages/CalendarPage"))
+const TimeAnalysisPage = lazy(() => import("@/pages/TimeAnalysisPage"))
+const MLInsightsPage = lazy(() => import("@/pages/MLInsightsPage"))
+const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage"))
 const MixIdCallbackPage = lazy(() => import("@localzet/data-connector/components").then(m => ({ default: m.MixIdCallbackPage })))
 const MainLayout = lazy(() => import("@/widgets/layout").then(module => ({ default: module.MainLayout })))
 
@@ -41,6 +40,7 @@ export const ErrorBoundaryHoc: FC<ErrorBoundaryProps> = (props) => {
         </ErrorBoundary>
     )
 }
+
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc fallback={<ErrorPage />} />}>
@@ -148,3 +148,4 @@ const router = createBrowserRouter(
 export function Router() {
     return <RouterProvider router={router} />
 }
+
