@@ -109,7 +109,6 @@ export function useMixIdSync() {
     mergeStrategy: 'newer-wins',
   })
 
-  // Wrapper functions for backward compatibility
   const uploadSettings = async (settingsToUpload: Settings) => {
     await uploadSettingsLib(settingsToUpload)
   }

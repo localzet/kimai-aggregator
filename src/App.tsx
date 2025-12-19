@@ -22,7 +22,7 @@ import '@gfazioli/mantine-split-pane/styles.css'
 import './global.css'
 
 import { AppProviders } from '@/app/providers'
-import { Router } from './router'
+import { Router } from '@/app/router'
 
 function App() {
   return (

@@ -165,14 +165,14 @@ features/dashboard/
 - `types/` - Типы
 - `constants/` - Константы
 
-## 🔄 Миграция
+## 🔄 Структура
 
-Старые файлы постепенно перемещаются в новую структуру:
+Проект использует следующую структуру:
 
-- `components/` → `widgets/` или `features/*/components/`
-- `layout.tsx` → `widgets/layout/MainLayout.tsx`
-- `router.tsx` → `app/router/router.tsx`
-- Guards → `app/router/guards/`
+- `components/` → Компоненты страниц (будут перемещены в `features/*/components/`)
+- `widgets/layout/MainLayout.tsx` → Главный layout
+- `app/router/router.tsx` → Конфигурация роутера
+- `app/router/guards/` → Защита маршрутов
 
 ## 📝 Best Practices
 

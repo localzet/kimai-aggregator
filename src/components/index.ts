@@ -2,7 +2,6 @@
  * Components Barrel Export
  * 
  * Централизованный экспорт всех компонентов для удобного импорта.
- * Компоненты постепенно перемещаются в features/ и widgets/.
  */
 
 // Dashboard components
@@ -26,5 +25,4 @@ export { default as SetupWizard } from './SetupWizard'
 // Other components
 export { default as MLInsights } from './MLInsights'
 export { default as StatusIndicator } from './StatusIndicator'
-export { default as loading-screen } from './loading-screen'
 
