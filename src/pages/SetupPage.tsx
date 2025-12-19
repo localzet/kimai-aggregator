@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import SetupWizard from '../components/SetupWizard'
+import SetupWizard from '@/components/SetupWizard'
 import { useSettings } from '@/shared/hooks/useSettings'
 import { useNavigate } from 'react-router-dom'
 

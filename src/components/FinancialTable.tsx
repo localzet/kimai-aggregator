@@ -8,7 +8,7 @@ import {
 import { IconCurrencyDollar } from '@tabler/icons-react'
 import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
 import dayjs from 'dayjs'
-import { DataTableShared } from '../shared/ui/table'
+import { DataTableShared } from '@/shared/ui/table'
 import { WeekData } from '@/shared/api/kimaiApi'
 import { Settings } from '@/shared/hooks/useSettings'
 

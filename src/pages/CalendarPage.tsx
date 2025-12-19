@@ -21,8 +21,8 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Timesheet } from '@/shared/api/kimaiApi'
 import { formatDuration } from '@/shared/utils'
-import { LoadingScreen } from '../shared/ui/loading-screen'
-import { Page } from '../shared/ui/page'
+import { LoadingScreen } from '@/shared/ui/loading-screen'
+import { Page } from '@/shared/ui/page'
 
 dayjs.extend(isoWeek)
 

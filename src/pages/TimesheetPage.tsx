@@ -1,4 +1,4 @@
-import TimesheetTable from '../components/TimesheetTable'
+import TimesheetTable from '@/components/TimesheetTable'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Button, Group, Stack } from '@mantine/core'
 import { motion } from 'motion/react'

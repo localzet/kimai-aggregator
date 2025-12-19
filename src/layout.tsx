@@ -16,8 +16,7 @@ import {
 import { HiCurrencyDollar } from 'react-icons/hi'
 
 import { useSettings } from "@/shared/hooks/useSettings"
-import { NotificationsButton } from "@/components/NotificationsButton"
-import { HeaderStatusIndicator } from "@/components/HeaderStatusIndicator"
+import { NotificationsButton, HeaderStatusIndicator } from "@/widgets/header"
 import { useMixIdStatus } from "@localzet/data-connector/hooks"
 import { useUnifiedSync } from "@/shared/hooks/useUnifiedSync"
 import { notifications } from '@mantine/notifications'

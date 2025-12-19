@@ -119,18 +119,57 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'mantine-core': [
-            '@mantine/core',
-            '@mantine/hooks',
-            '@mantine/modals',
-            '@mantine/notifications',
-            '@mantine/nprogress',
-            '@mantine/dates',
-          ],
-          charts: ['@mantine/charts', 'recharts'],
-          tables: ['mantine-react-table', '@tanstack/react-table', 'mantine-datatable'],
-          icons: ['@tabler/icons-react', 'react-icons'],
+        manualChunks: (id) => {
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            // Mantine core
+            if (id.includes('@mantine/core') || id.includes('@mantine/hooks') || 
+                id.includes('@mantine/modals') || id.includes('@mantine/notifications') ||
+                id.includes('@mantine/nprogress') || id.includes('@mantine/dates')) {
+              return 'mantine-core'
+            }
+            // Charts
+            if (id.includes('@mantine/charts') || id.includes('recharts')) {
+              return 'charts'
+            }
+            // Tables
+            if (id.includes('mantine-react-table') || id.includes('@tanstack/react-table') ||
+                id.includes('mantine-datatable')) {
+              return 'tables'
+            }
+            // Icons
+            if (id.includes('@tabler/icons-react') || id.includes('react-icons')) {
+              return 'icons'
+            }
+            // Motion
+            if (id.includes('motion')) {
+              return 'motion'
+            }
+            // Router
+            if (id.includes('react-router')) {
+              return 'router'
+            }
+            // Dayjs
+            if (id.includes('dayjs')) {
+              return 'dayjs'
+            }
+            // Data connector
+            if (id.includes('@localzet/data-connector')) {
+              return 'data-connector'
+            }
+            // Other vendor code
+            return 'vendor'
+          }
+          // App chunks
+          if (id.includes('/src/app/')) {
+            return 'app'
+          }
+          if (id.includes('/src/widgets/')) {
+            return 'widgets'
+          }
+          if (id.includes('/src/shared/')) {
+            return 'shared'
+          }
         },
       },
     },

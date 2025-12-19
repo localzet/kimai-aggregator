@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react'
 import { useSettings } from '@/shared/hooks/useSettings'
-import { MenuItem } from '../layout/types'
+import { MenuItem } from '@/widgets/layout/types'
 import { PiCpu, PiListChecks, PiStarDuotone } from 'react-icons/pi'
 import {
   TbDeviceAnalytics,

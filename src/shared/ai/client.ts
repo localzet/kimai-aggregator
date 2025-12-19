@@ -10,7 +10,7 @@ dayjs.extend(isoWeek)
 
 const ML_API_URL = (import.meta.env.VITE_ML_API_URL as string) || 'https://kimai-ml.zorin.cloud'
 
-class PythonMLService {
+class MLService {
   constructor(private baseUrl: string) {}
 
   private async request<T>(endpoint: string, data: MLInputData): Promise<T> {
@@ -46,10 +46,10 @@ class PythonMLService {
 }
 
 export class MLClient {
-  private service: PythonMLService | null = null
+  private service: MLService | null = null
 
   constructor() {
-    this.service = new PythonMLService(ML_API_URL)
+    this.service = new MLService(ML_API_URL)
   }
 
   /**

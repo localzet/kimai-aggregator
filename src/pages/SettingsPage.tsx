@@ -1,4 +1,4 @@
-import SettingsForm from '../components/SettingsForm'
+import SettingsForm from '@/components/SettingsForm'
 import { useSettings } from '@/shared/hooks'
 
 function SettingsPage() {

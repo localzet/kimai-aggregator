@@ -1,12 +1,12 @@
-import WeekProgress from '../components/WeekProgress'
-import DashboardMetrics from '../components/DashboardMetrics'
+import WeekProgress from '@/components/WeekProgress'
+import DashboardMetrics from '@/components/DashboardMetrics'
 import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
 import { Container, Loader, Alert, Stack, Button, Group } from '@mantine/core'
 import { motion } from 'motion/react'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { LoadingScreen } from '../shared/ui/loading-screen'
-import { Page } from '../shared/ui/page'
+import { LoadingScreen } from '@/shared/ui/loading-screen'
+import { Page } from '@/shared/ui/page'
 
 dayjs.extend(isoWeek)
 
