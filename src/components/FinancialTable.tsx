@@ -175,8 +175,6 @@ const FinancialTable = memo(function FinancialTable({ weeks, settings }: Financi
       </DataTableShared.Content>
     </DataTableShared.Container>
   )
-}
-
 })
 
 export default FinancialTable
