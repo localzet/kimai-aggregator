@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSettings } from '@/shared/hooks/useSettings'
 import { useMixIdStatus } from '@localzet/data-connector/hooks'
 import { notifications } from '@mantine/notifications'
+import { BackendApi } from '@/shared/api/backendApi'
 
 export function LogoutButton() {
   const navigate = useNavigate()
@@ -18,17 +19,28 @@ export function LogoutButton() {
   const mixIdStatus = useMixIdStatus()
 
   const handleLogout = () => {
-    // Очищаем токены
+    // Call backend logout to invalidate sessions server-side if possible
+    try {
+      const backendUrl = settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || ''
+      if (backendUrl) {
+        const api = new BackendApi(backendUrl, settings.backendToken || '')
+        api.logout().catch((e) => console.warn('Backend logout failed:', e))
+      }
+    } catch (e) {
+      console.warn('Error calling backend logout:', e)
+    }
+
+    // Очищаем токены локально
     const clearedSettings = {
       ...settings,
       backendToken: '',
     }
     updateSettings(clearedSettings)
-    
-    // Очищаем токены из localStorage
+
     try {
       localStorage.removeItem('mixid_access_token')
       localStorage.removeItem('mixid_token')
+      localStorage.removeItem('backend_refresh_token')
       const saved = localStorage.getItem('kimai-settings')
       if (saved) {
         const parsed = JSON.parse(saved)
@@ -47,7 +59,6 @@ export function LogoutButton() {
       color: 'blue',
     })
 
-    // Редиректим на страницу авторизации
     navigate('/auth', { replace: true })
   }
 

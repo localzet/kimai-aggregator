@@ -1,9 +1,19 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" dir="ltr">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="robots" content="noindex, nofollow" />
+
+  <meta name="viewport"
+    content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark only" />
+  <meta name="theme-color" content="#161B23" />
+  <meta name="apple-mobile-web-app-title" content="Kimai Aggregator" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-touch-fullscreen" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <link rel="apple-touch-icon" href="/vite.svg" />
@@ -11,6 +21,9 @@
 
   <link rel="preconnect" crossorigin="anonymous" href="https://fonts.googleapis.com" />
   <link rel="preconnect" crossorigin="anonymous" href="https://fonts.gstatic.com" />
+
+  <meta name="description" content="Kimai Aggregator" />
+  <title>Kimai Aggregator</title>
 
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Unbounded:wght@200..900&display=swap"
@@ -20,12 +33,6 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap" rel="stylesheet" />
 
-  <meta name="color-scheme" content="dark only" />
-  <meta name="theme-color" content="#161B23" />
-
-  <meta name="viewport"
-    content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no, viewport-fit=cover" />
-  <title>Kimai Aggregator</title>
 </head>
 
 <body>
@@ -34,6 +41,11 @@
   <script>
     window.global = window
   </script>
+  <!-- <script type="module">
+    import { Buffer } from 'buffer'
+
+    window.Buffer = Buffer
+  </script> -->
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

@@ -1,4 +1,4 @@
-import { Center, Card, Stack, Title, Text } from '@mantine/core'
+import { Center, Card, Stack, Title, Text, Container } from '@mantine/core'
 import { MixIdConnection } from '@localzet/data-connector/components'
 import { notifications } from '@mantine/notifications'
 import { useNavigate } from 'react-router-dom'
@@ -6,46 +6,87 @@ import { useMixIdStatus } from '@localzet/data-connector/hooks'
 import { mixIdApi } from '@localzet/data-connector/api'
 import { useSettings } from '@/shared/hooks/useSettings'
 import { BackendApi } from '@/shared/api/backendApi'
+import { useEffect, useState } from 'react'
+import { Page } from '@/shared/ui'
 
 function AuthPage() {
   const navigate = useNavigate()
-  const mixIdStatus = useMixIdStatus()
   const { settings, updateSettings } = useSettings()
 
-  const handleConnected = async () => {
-    try {
-      // Пытаемся получить токен MIX ID из localStorage (его сохраняет data-connector)
-      let mixIdToken: string | null = null
-      try {
-        mixIdToken =
-          localStorage.getItem('mixid_access_token') ||
-          localStorage.getItem('mixid_token') ||
-          // fallback для возможных кастомных интеграций
-          (window as any).mixidToken
-      } catch (e) {
-        console.warn('Could not get MIX ID token on AuthPage:', e)
-      }
+  const { isConnected, syncStatus, hasConfig } = useMixIdStatus()
+  const [loading, setLoading] = useState(true)
+  const [syncStatusData, setSyncStatusData] = useState<{
+    syncSettings: boolean
+    syncData: boolean
+    lastSyncAt: string | null
+  } | null>(null)
+  const [syncSettings, setSyncSettings] = useState(false)
+  const [syncData, setSyncData] = useState(false)
 
-      if (!mixIdToken) {
-        // Если по какой‑то причине токена нет, просто идём дальше — MIX ID всё равно подключён
-        navigate('/settings', { replace: true })
+  useEffect(() => {
+    checkConnection()
+  }, [])
+
+  const checkConnection = async () => {
+    try {
+      const config = mixIdApi.getConfig()
+      if (!config || !config.accessToken) {
+        setSyncStatusData(null)
         return
       }
 
-      // 1) Авторизуемся в бэкенде через MIX ID и получаем токен
+      const status = await mixIdApi.getSyncStatus()
+      setSyncStatusData(status)
+      setSyncSettings(status.syncSettings)
+      setSyncData(status.syncData)
+    } catch (error) {
+      setSyncStatusData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
+  const handleConnected = async (authCode?: string) => {
+    try {
+      // 1) Авторизуемся в бэкенде через MIX ID и получаем токен.
+      // Prefer server-side exchange when we received an auth code.
       const defaultBackendUrl =
         (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
       const backendUrl = settings.backendUrl || defaultBackendUrl
 
       let backendToken: string | null = null
       let backendApi: BackendApi | null = null
-      
+
       if (backendUrl) {
         try {
           backendApi = new BackendApi(backendUrl.trim())
-          const authResponse = await backendApi.login(mixIdToken)
-          backendToken = authResponse.token
+          let authResponse
+          if (authCode) {
+            const redirectUri = typeof window !== 'undefined' ? window.location.origin + '/mixid-callback' : undefined
+            authResponse = await backendApi.exchangeMixIdCode(authCode, redirectUri)
+          } else {
+            // Fallback: try previous flow where frontend already has a MIX ID token
+            const mixIdToken =
+              localStorage.getItem('mixid_access_token') ||
+              localStorage.getItem('mixid_token') ||
+              (window as any).mixidToken
+            if (mixIdToken) {
+              authResponse = await backendApi.login(mixIdToken)
+            } else {
+              authResponse = null
+            }
+          }
+          backendToken = authResponse?.token || null
           backendApi.setToken(backendToken)
+          // Persist refresh token (temporary local storage; consider httpOnly cookie)
+          if (authResponse?.refresh_token) {
+            try {
+              localStorage.setItem('backend_refresh_token', authResponse.refresh_token)
+            } catch (e) {
+              console.warn('Could not save backend refresh token:', e)
+            }
+          }
         } catch (e) {
           console.warn('Backend auth via MIX ID failed on AuthPage:', e)
         }
@@ -132,15 +173,15 @@ function AuthPage() {
 
       notifications.show({
         title: 'MIX ID подключён',
-        message: backendToken 
+        message: backendToken
           ? 'Бэкенд авторизован. Настройки синхронизированы с MIX ID и бэкендом.'
           : 'MIX ID подключён. Настройки загружены из MIX ID.',
         color: 'green',
       })
 
       // Проверяем наличие настроек и редиректим соответственно
-      const hasSettings = (effectiveSettings || backendSettings)?.apiUrl && 
-                         (effectiveSettings || backendSettings)?.apiKey
+      const hasSettings = (effectiveSettings || backendSettings)?.apiUrl &&
+        (effectiveSettings || backendSettings)?.apiKey
       if (hasSettings) {
         navigate('/dashboard', { replace: true })
       } else {
@@ -161,27 +202,34 @@ function AuthPage() {
   }
 
   return (
-    <Center h="100%">
-      <Card shadow="md" padding="xl" radius="md" maw={480} w="100%">
-        <Stack gap="md">
-          <Title order={2}>Вход в Kimai Aggregator</Title>
-          <Text c="dimmed" size="sm">
-            Аутентификация и управление аккаунтом выполняются через MIX ID. Здесь вы можете
-            войти, выйти, восстановить доступ и управлять сессиями.
-          </Text>
+    <Page>
+      <Container
+        h="100vh"
+        maw={1200}
+        px={{ base: 'md', sm: 'lg', md: 'xl' }}
+        py="xl"
+        style={{ position: 'relative', zIndex: 1 }}
+      >
 
-          <MixIdConnection
-            onConnected={handleConnected}
-            onDisconnected={() => {
-              navigate('/auth', { replace: true })
-            }}
-            showSyncSettings={false}
-            showSyncData={false}
-            notifications={notifications}
-          />
-        </Stack>
-      </Card>
-    </Center>
+        <Center h="100%">
+          <Card shadow="md" padding="xl" radius="md" maw={480} w="100%">
+            <Stack gap="md">
+              <Title order={2}>Вход в Kimai Aggregator</Title>
+
+              <MixIdConnection
+                onConnected={handleConnected}
+                onDisconnected={() => {
+                  navigate('/auth', { replace: true })
+                }}
+                showSyncSettings={false}
+                showSyncData={false}
+                notifications={notifications}
+              />
+            </Stack>
+          </Card>
+        </Center>
+      </Container>
+    </Page>
   )
 }
 

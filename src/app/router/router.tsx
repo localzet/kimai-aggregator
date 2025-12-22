@@ -11,6 +11,7 @@ import { Outlet } from 'react-router-dom'
 import { FC, lazy } from 'react'
 import { AuthGuard, SetupGuard } from './guards'
 import { InitialRedirect, ErrorPage } from './components'
+import { RootLayout } from "../layouts/root/root.layout"
 
 // Lazy load pages for code splitting
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"))
@@ -44,103 +45,74 @@ export const ErrorBoundaryHoc: FC<ErrorBoundaryProps> = (props) => {
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route element={<ErrorBoundaryHoc fallback={<ErrorPage />} />}>
-            <Route
-                element={<AuthPage />}
-                path='/auth'
-            />
-            <Route
-                element={<SetupPage />}
-                path='/setup'
-            />
-            <Route
-                element={<MixIdCallbackPage />}
-                path='/mixid-callback'
-            />
-            <Route
-                element={<OAuthCallbackPage />}
-                path='/oauth/callback'
-            />
-            <Route element={<AuthGuard><MainLayout /></AuthGuard>} path='/'>
-                <Route element={<InitialRedirect />} index path='/' />
-                <Route
-                    element={<SettingsPage />}
-                    path='/settings'
-                />
-                <Route
-                    element={
-                        <SetupGuard>
-                            <DashboardPage />
-                        </SetupGuard>
-                    }
-                    path='/dashboard'
-                />
+            <Route element={<RootLayout />}>
 
                 <Route
-                    element={
-                        <SetupGuard>
-                            <TimesheetPage />
-                        </SetupGuard>
-                    }
-                    path='/timesheet'
+                    element={<AuthPage />}
+                    path='/auth'
                 />
-
                 <Route
-                    element={
-                        <SetupGuard>
-                            <FinancialPage />
-                        </SetupGuard>
-                    }
-                    path='/financial'
+                    element={<SetupPage />}
+                    path='/setup'
                 />
-
                 <Route
-                    element={
-                        <SetupGuard>
-                            <PaymentHistoryPage />
-                        </SetupGuard>
-                    }
-                    path='/payment-history'
+                    element={<MixIdCallbackPage />}
+                    path='/mixid-callback'
                 />
-
                 <Route
-                    element={
-                        <SetupGuard>
-                            <StatisticsPage />
-                        </SetupGuard>
-                    }
-                    path='/statistics'
+                    element={<OAuthCallbackPage />}
+                    path='/oauth/callback'
                 />
+                <Route element={<AuthGuard />}>
+                    <Route element={<MainLayout />} path='/'>
+                        <Route element={<Navigate replace to='/dashboard' />} index />
+                        <Route
+                            element={<SettingsPage />}
+                            path='/settings'
+                        />
+                        <Route
+                            element={<DashboardPage />}
+                            path='/dashboard'
+                        />
 
-                <Route
-                    element={
-                        <SetupGuard>
-                            <CalendarPage />
-                        </SetupGuard>
-                    }
-                    path='/calendar'
-                />
+                        <Route
+                            element={<TimesheetPage />}
+                            path='/timesheet'
+                        />
 
-                <Route
-                    element={
-                        <SetupGuard>
-                            <TimeAnalysisPage />
-                        </SetupGuard>
-                    }
-                    path='/time-analysis'
-                />
+                        <Route
+                            element={<FinancialPage />}
+                            path='/financial'
+                        />
 
-                <Route
-                    element={
-                        <SetupGuard>
-                            <MLInsightsPage />
-                        </SetupGuard>
-                    }
-                    path='/ml-insights'
-                />
+                        <Route
+                            element={<PaymentHistoryPage />}
+                            path='/payment-history'
+                        />
 
+                        <Route
+                            element={<StatisticsPage />}
+                            path='/statistics'
+                        />
+
+                        <Route
+                            element={<CalendarPage />}
+                            path='/calendar'
+                        />
+
+                        <Route
+                            element={<TimeAnalysisPage />}
+                            path='/time-analysis'
+                        />
+
+                        <Route
+                            element={<MLInsightsPage />}
+                            path='/ml-insights'
+                        />
+                    </Route>
+                </Route>
+                <Route path="*" element={<Navigate replace to="/" />} />
             </Route>
-            {/* Catch-all route for unknown URLs (file:// protocol paths, etc) */}
-            <Route path="*" element={<Navigate replace to="/" />} />
         </Route>
     )
 )

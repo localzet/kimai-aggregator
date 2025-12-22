@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react-swc'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
+import removeConsole from 'vite-plugin-remove-console'
+import webfontDownload from 'vite-plugin-webfont-dl'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,6 +12,8 @@ export default defineConfig({
   plugins: [
     react(),
     tsconfigPaths(),
+    removeConsole(),
+    webfontDownload(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'vite.svg'],
@@ -107,25 +111,29 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['html-parse-stringify']
+  },
   css: {
     modules: {
       localsConvention: 'camelCase'
     }
   },
   build: {
+    target: 'esNext',
     outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 1000000,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
           // Vendor chunks
           if (id.includes('node_modules')) {
             // Mantine core
-            if (id.includes('@mantine/core') || id.includes('@mantine/hooks') || 
-                id.includes('@mantine/modals') || id.includes('@mantine/notifications') ||
-                id.includes('@mantine/nprogress') || id.includes('@mantine/dates')) {
+            if (id.includes('@mantine/core') || id.includes('@mantine/hooks') ||
+              id.includes('@mantine/modals') || id.includes('@mantine/notifications') ||
+              id.includes('@mantine/nprogress') || id.includes('@mantine/dates')) {
               return 'mantine-core'
             }
             // Charts
@@ -134,7 +142,7 @@ export default defineConfig({
             }
             // Tables
             if (id.includes('mantine-react-table') || id.includes('@tanstack/react-table') ||
-                id.includes('mantine-datatable')) {
+              id.includes('mantine-datatable')) {
               return 'tables'
             }
             // Icons
@@ -176,7 +184,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@app': fileURLToPath(new URL('./src/app', import.meta.url)),
+      '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
+      '@entities': fileURLToPath(new URL('./src/entities', import.meta.url)),
+      '@pages': fileURLToPath(new URL('./src/pages', import.meta.url)),
+      '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+      '@widgets': fileURLToPath(new URL('./src/widgets', import.meta.url)),
     },
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json']
   },

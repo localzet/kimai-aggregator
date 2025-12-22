@@ -1,13 +1,15 @@
 {
   "name": "Kimai Aggregator",
   "short_name": "Kimai",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#161B23",
+  "lang": "en",
+  "id": "/",
+  "orientation": "any",
+  "scope": "/",
   "description": "Web application for aggregating and analyzing data from Kimai time tracking system",
   "theme_color": "#161B23",
-  "background_color": "#161B23",
-  "display": "standalone",
-  "orientation": "portrait",
-  "scope": "./",
-  "start_url": "./",
   "icons": [
     {
       "src": "/vite.svg",
@@ -16,4 +18,3 @@
     }
   ]
 }
-

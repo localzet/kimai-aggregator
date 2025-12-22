@@ -5,6 +5,9 @@ export interface BackendAuthResponse {
   token: string
   user_id: string
 }
+export interface BackendAuthWithRefreshResponse extends BackendAuthResponse {
+  refresh_token?: string
+}
 
 export interface BackendTimesheetListResponse {
   timesheets: Timesheet[]
@@ -64,6 +67,26 @@ export class BackendApi {
     return this.request<BackendAuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ mix_id_token: mixIdToken }),
+    })
+  }
+
+  async exchangeMixIdCode(code: string, redirectUri?: string): Promise<BackendAuthResponse> {
+    return this.request<BackendAuthWithRefreshResponse>('/api/auth/mixid/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code, redirect_uri: redirectUri }),
+    })
+  }
+
+  async refreshSession(refreshToken: string): Promise<BackendAuthWithRefreshResponse> {
+    return this.request<BackendAuthWithRefreshResponse>('/api/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+  }
+
+  async logout(): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>('/api/auth/logout', {
+      method: 'POST',
     })
   }
 
