@@ -77,3 +77,5 @@ export function App() {
       </DirectionProvider>
   )
 }
+
+export default App
