@@ -16,9 +16,9 @@ import {
   Badge,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug, IconDeviceDesktop, IconCloudComputing } from '@tabler/icons-react'
-import { KimaiApi, Project } from '@/shared/api/kimaiApi'
+import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug } from '@tabler/icons-react'
 import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
+import type { Project } from '@/shared/api/kimaiApi'
 import { BackendApi } from '@/shared/api/backendApi'
 import { mixIdApi } from '@/shared/mixIdStub'
 
@@ -34,16 +34,14 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const defaultBackendUrl = (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
   const [backendUrl, setBackendUrl] = useState(defaultBackendUrl)
   const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | 'sync' | null>(null)
-  
-  // Для ручного ввода
+  const [backendToken, setBackendToken] = useState('')
+  // Для ручного ввода Kimai (frontend будет передавать их бэкенду для проверки)
   const [apiUrl, setApiUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const [useProxy, setUseProxy] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [connectionError, setConnectionError] = useState<string | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
-  
+
   // Для импорта
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -52,42 +50,24 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
   const [syncSuccess, setSyncSuccess] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
 
-  const testConnection = async () => {
-    if (!apiUrl.trim() || !apiKey.trim()) {
-      setConnectionError('Заполните все поля')
-      setConnectionStatus('error')
-      return
+  const isElectron = typeof window !== 'undefined' && (
+    (window as any).electron?.isElectron ||
+    (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron')) ||
+    window.location.protocol === 'file:'
+  )
+
+  useEffect(() => {
+    setAppMode(isElectron ? 'standalone' : 'normal')
+    // In Electron builds backend is still used but we treat app as offline-capable cache.
+    // For Electron we hide backend inputs (they are preconfigured via env/build).
+    if (isElectron && import.meta.env.VITE_BACKEND_URL) {
+      setBackendUrl(import.meta.env.VITE_BACKEND_URL as string)
     }
+  }, [])
 
-    try {
-      setTestingConnection(true)
-      setConnectionError(null)
-      setConnectionStatus('idle')
-
-      const api = new KimaiApi(apiUrl.trim(), apiKey.trim(), useProxy)
-      const projectsData = await api.getProjects()
-      
-      setProjects(projectsData)
-      setConnectionStatus('success')
-      notifications.show({
-        title: 'Подключение успешно',
-        message: `Найдено проектов: ${projectsData.length}`,
-        color: 'green',
-      })
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-      setConnectionError(errorMessage)
-      setConnectionStatus('error')
-      notifications.show({
-        title: 'Ошибка подключения',
-        message: errorMessage,
-        color: 'red',
-      })
-    } finally {
-      setTestingConnection(false)
-    }
-  }
+  // Note: direct Kimai/API calls removed — frontend talks only to backend.
 
   const handleImport = async (file: File | null) => {
     if (!file) return
@@ -99,35 +79,26 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     reader.onload = async (e) => {
       try {
         const imported = JSON.parse(e.target?.result as string) as Settings
-        
-        if (!imported.apiUrl || !imported.apiKey) {
-          throw new Error('В файле отсутствуют обязательные поля: apiUrl или apiKey')
+
+        if (!imported.backendUrl) {
+          throw new Error('В файле отсутствует обязательное поле: backendUrl')
         }
 
-        // Проверяем подключение
-        try {
-          const api = new KimaiApi(imported.apiUrl.trim(), imported.apiKey.trim(), imported.useProxy || false)
-          const projectsData = await api.getProjects()
-          
-          setProjects(projectsData)
-          
-          // Сохраняем настройки
-          updateSettings(imported)
-          
-          notifications.show({
-            title: 'Импорт успешен',
-            message: `Настройки импортированы. Найдено проектов: ${projectsData.length}`,
-            color: 'green',
-          })
-          
-          // Переходим к завершению
-          setTimeout(() => {
-            setActive(2)
-          }, 500)
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-          throw new Error(`Ошибка подключения к API: ${errorMessage}`)
-        }
+        // Сохраняем настройки, бэкенд будет управлять остальными интеграциями
+        updateSettings({
+          ...imported,
+          appMode: appMode || (isElectron ? 'standalone' : 'normal'),
+        })
+
+        notifications.show({
+          title: 'Импорт успешен',
+          message: `Настройки импортированы.`,
+          color: 'green',
+        })
+
+        setTimeout(() => {
+          setActive(2)
+        }, 500)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
         setImportError(errorMessage)
@@ -143,94 +114,68 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     reader.readAsText(file)
   }
 
+  const testConnection = async () => {
+    if (!apiUrl.trim() || !apiKey.trim()) {
+      setConnectionError('Заполните все поля')
+      setConnectionStatus('error')
+      return
+    }
+
+    try {
+      setTestingConnection(true)
+      setConnectionError(null)
+      setConnectionStatus('idle')
+
+      const base = backendUrl.trim() || defaultBackendUrl
+      const backendApi = new BackendApi(base)
+      // Update settings on backend (backend should validate Kimai credentials)
+      const saved = await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() })
+
+      setConnectionStatus('success')
+      notifications.show({
+        title: 'Подключение успешно',
+        message: 'Креденшелы сохранены на бэкенде',
+        color: 'green',
+      })
+
+      // Optionally clear or set projects later when backend syncs
+      setProjects([])
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
+      setConnectionError(errorMessage)
+      setConnectionStatus('error')
+      notifications.show({
+        title: 'Ошибка подключения',
+        message: errorMessage,
+        color: 'red',
+      })
+    } finally {
+      setTestingConnection(false)
+    }
+  }
+
   const handleComplete = async () => {
-    if (setupMethod === 'manual' && connectionStatus === 'success') {
-      // Сохраняем настройки
+    if (setupMethod === 'manual') {
       const newSettings: Settings = {
-        apiUrl: apiUrl.trim(),
-        apiKey: apiKey.trim(),
+        apiUrl: '',
+        apiKey: '',
         ratePerMinute: 0,
-        useProxy: useProxy,
+        useProxy: false,
         syncUrl: '',
         projectSettings: {},
         excludedTags: [],
         appMode: appMode || 'normal',
-        backendUrl: appMode === 'normal' ? backendUrl.trim() : '',
-        backendToken: '',
+        backendUrl: backendUrl.trim(),
+        backendToken: backendToken.trim(),
       }
-      updateSettings(newSettings)
 
-      // Если обычный режим, авторизуемся в бэкенде через MIX ID
-      if (appMode === 'normal' && backendUrl.trim()) {
-        try {
-          // Получаем токен MIX ID из localStorage или из mixIdApi
-          let mixIdToken: string | null = null
-          
-          // Пытаемся получить токен из mixIdApi
-          try {
-            // Проверяем, есть ли токен в localStorage (mixIdApi хранит его там)
-            const storedToken = localStorage.getItem('mixid_access_token') || 
-                               localStorage.getItem('mixid_token') ||
-                               (window as any).mixidToken
-            mixIdToken = storedToken
-          } catch (e) {
-            console.warn('Could not get MIX ID token:', e)
-          }
-          
-          // Если токена нет, пытаемся получить его из localStorage
-          // (токен мог быть сохранен при предыдущей авторизации или при синхронизации)
-          if (!mixIdToken) {
-            try {
-              const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
-              const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
-              const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
-              
-              if (clientId && clientSecret) {
-                mixIdApi.setConfig({ apiBase, clientId, clientSecret })
-                // Проверяем localStorage снова после настройки mixIdApi
-                mixIdToken = localStorage.getItem('mixid_access_token') || 
-                             localStorage.getItem('mixid_token')
-              }
-            } catch (e) {
-              console.warn('Could not retrieve MIX ID token:', e)
-            }
-          }
-          
-          // При локальной регистрации ожидаем, что пользователь сначала
-          // зарегистрируется/выполнит вход и получит `backendToken` в настройках.
-          const storedBackendToken = localStorage.getItem('backend_token') || ''
-          if (!storedBackendToken) {
-            notifications.show({
-              title: 'Требуется регистрация/вход',
-              message: 'Пожалуйста, зарегистрируйтесь или войдите в бэкенд и укажите ключи в Настройках после завершения мастера.',
-              color: 'yellow',
-            })
-          } else {
-            newSettings.backendToken = storedBackendToken
-            updateSettings(newSettings)
-            notifications.show({
-              title: 'Авторизация успешна',
-              message: 'Подключение к бэкенду установлено',
-              color: 'green',
-            })
-          }
-        } catch (error) {
-          console.error('Backend auth error:', error)
-          notifications.show({
-            title: 'Ошибка авторизации в бэкенде',
-            message: error instanceof Error ? error.message : 'Не удалось авторизоваться в бэкенде. Вы можете авторизоваться позже в настройках.',
-            color: 'orange',
-          })
-          // Не блокируем завершение настройки, пользователь может авторизоваться позже
-        }
-      }
+      updateSettings(newSettings)
     } else if (setupMethod === 'sync' && syncSuccess) {
-      // Settings already loaded from sync, но обновляем режим
       const currentSettings = JSON.parse(localStorage.getItem('kimai-settings') || '{}') as Settings
       updateSettings({
         ...currentSettings,
         appMode: appMode || 'normal',
-        backendUrl: appMode === 'normal' ? backendUrl.trim() : currentSettings.backendUrl || '',
+        backendUrl: backendUrl.trim() || currentSettings.backendUrl || '',
       })
     }
 
@@ -247,10 +192,9 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     }, 1000)
   }
 
-  const canProceedFromStep0 = appMode !== null && (appMode === 'standalone' || (appMode === 'normal' && backendUrl.trim() !== ''))
-  const canProceedFromStep1 = setupMethod !== null
-  const canProceedFromStep2 = setupMethod === 'import' 
-    ? true 
+  const canProceedFromStep0 = setupMethod !== null
+  const canProceedFromStep1 = setupMethod === 'import'
+    ? true
     : setupMethod === 'sync'
     ? syncSuccess
     : connectionStatus === 'success'
@@ -265,82 +209,10 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
         <Stepper active={active} onStepClick={setActive}>
           <Stepper.Step 
-            label="Режим работы" 
-            description="Выберите режим работы приложения"
-            icon={<IconDeviceDesktop size={18} />}
-            allowStepSelect={active > 0}
-          >
-            <Stack gap="md" mt="xl">
-              <Text>В каком режиме будет работать приложение?</Text>
-              
-              <Group grow>
-                <Card
-                  p="md"
-                  withBorder
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setAppMode('standalone')}
-                  bg={appMode === 'standalone' ? 'var(--mantine-color-blue-9)' : undefined}
-                >
-                  <Stack align="center" gap="xs">
-                    <IconDeviceDesktop size={48} />
-                    <Text fw={500}>Автономный режим</Text>
-                    <Text size="sm" c="dimmed" ta="center">
-                      Данные хранятся локально. Опциональная синхронизация с MIX ID.
-                    </Text>
-                  </Stack>
-                </Card>
-
-                <Card
-                  p="md"
-                  withBorder
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setAppMode('normal')}
-                  bg={appMode === 'normal' ? 'var(--mantine-color-blue-9)' : undefined}
-                >
-                  <Stack align="center" gap="xs">
-                    <IconCloudComputing size={48} />
-                    <Text fw={500}>Обычный режим</Text>
-                    <Text size="sm" c="dimmed" ta="center">
-                      Данные синхронизируются с бэкендом. Требуется MIX ID и подключение к серверу.
-                    </Text>
-                  </Stack>
-                </Card>
-              </Group>
-
-              {appMode === 'normal' && (
-                <Stack gap="md" mt="md">
-                  <TextInput
-                    label="URL бэкенда"
-                    placeholder="https://backend.example.com"
-                    value={backendUrl}
-                    onChange={(e) => setBackendUrl(e.currentTarget.value)}
-                    description="Адрес сервера бэкенда для синхронизации данных"
-                  />
-                  <Alert color="blue">
-                    <Text size="sm">
-                      В обычном режиме требуется авторизация через MIX ID. 
-                      Данные старше месяца будут автоматически удаляться с устройства для экономии места.
-                    </Text>
-                  </Alert>
-                </Stack>
-              )}
-
-              {appMode === 'standalone' && (
-                <Alert color="blue" mt="md">
-                  <Text size="sm">
-                    В автономном режиме все данные хранятся на вашем устройстве. 
-                    Вы можете опционально подключить MIX ID для синхронизации между устройствами.
-                  </Text>
-                </Alert>
-              )}
-            </Stack>
-          </Stepper.Step>
-
-          <Stepper.Step 
-            label="Способ настройки" 
-            description="Выберите способ настройки"
+            label="Настройка" 
+            // description="Выберите способ настройки"
             icon={<IconKey size={18} />}
-            allowStepSelect={active > 1}
+            allowStepSelect={active > 0}
           >
             <Stack gap="md" mt="xl">
               <Text>Как вы хотите настроить приложение?</Text>
@@ -419,18 +291,17 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               )}
             </Stack>
           </Stepper.Step>
-
           <Stepper.Step
             label="Подключение"
-            description={
-              setupMethod === 'import' 
-                ? 'Проверка импортированных данных' 
-                : setupMethod === 'sync'
-                ? 'Подключение к MIX ID'
-                : 'Введите данные API'
-            }
+            // description={
+            //   setupMethod === 'import' 
+            //     ? 'Проверка импортированных данных' 
+            //     : setupMethod === 'sync'
+            //     ? 'Подключение к MIX ID'
+            //     : 'Введите адрес бэкенда и токен'
+            // }
             icon={setupMethod === 'sync' ? <IconCloud size={18} /> : <IconServer size={18} />}
-            allowStepSelect={active > 2}
+            allowStepSelect={active > 1}
           >
             <Stack gap="md" mt="xl">
               {setupMethod === 'sync' ? (
@@ -579,16 +450,6 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                     disabled={testingConnection}
                   />
 
-                  {import.meta.env.DEV && (
-                    <Button
-                      variant="light"
-                      onClick={() => setUseProxy(!useProxy)}
-                      disabled={testingConnection}
-                    >
-                      {useProxy ? '✓' : ''} Использовать прокси (dev режим)
-                    </Button>
-                  )}
-
                   <Button
                     onClick={testConnection}
                     loading={testingConnection}
@@ -601,7 +462,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
                   {connectionStatus === 'success' && (
                     <Alert color="green" title="Подключение успешно" icon={<IconCheck size={16} />}>
-                      <Text>Найдено проектов: <strong>{projects.length}</strong></Text>
+                      <Text>Креденшелы приняты бэкендом</Text>
                     </Alert>
                   )}
 
@@ -615,13 +476,9 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 <Stack gap="md">
                   {importing ? (
                     <Loader size="lg" />
-                  ) : projects.length > 0 ? (
-                    <Alert color="green" title="Импорт успешен" icon={<IconCheck size={16} />}>
-                      <Text>Найдено проектов: <strong>{projects.length}</strong></Text>
-                    </Alert>
                   ) : (
                     <Alert color="blue" title="Ожидание">
-                      Загрузите файл настроек на предыдущем шаге
+                      Загрузите файл настроек на предыдущем шаге или подключитесь к MIX ID
                     </Alert>
                   )}
                 </Stack>
@@ -630,10 +487,10 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
           </Stepper.Step>
 
           <Stepper.Step
-            label="Завершение"
-            description="Готово к работе"
+            label="Готово"
+            // description="Готово к работе"
             icon={<IconCheck size={18} />}
-            allowStepSelect={active === 3}
+            allowStepSelect={active === 2}
           >
             <Stack gap="md" mt="xl">
               <Alert color="green" title="Настройка завершена!">
@@ -665,20 +522,19 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             </Button>
           )}
           
-          {active < 3 && (
+          {active < 2 && (
             <Button
               onClick={() => setActive(active + 1)}
               disabled={
                 (active === 0 && !canProceedFromStep0) ||
-                (active === 1 && !canProceedFromStep1) ||
-                (active === 2 && !canProceedFromStep2)
+                (active === 1 && !canProceedFromStep1)
               }
             >
               Далее
             </Button>
           )}
           
-          {active === 3 && (
+          {active === 2 && (
             <Button onClick={handleComplete}>
               Завершить настройку
             </Button>

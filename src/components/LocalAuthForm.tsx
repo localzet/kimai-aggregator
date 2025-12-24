@@ -46,9 +46,8 @@ export default function LocalAuthForm() {
   }
 
   return (
-    <Card withBorder p="md">
       <Stack>
-        <Title order={4}>{mode === 'register' ? 'Регистрация' : 'Вход (email)'} </Title>
+        <Title order={2}>{mode === 'register' ? 'Регистрация' : 'Вход'} </Title>
         <TextInput label="Email" value={email} onChange={(e) => setEmail(e.currentTarget.value)} />
         <PasswordInput label="Пароль" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -56,6 +55,5 @@ export default function LocalAuthForm() {
           <Button onClick={submit} loading={loading}>{mode === 'login' ? 'Войти' : 'Зарегистрироваться'}</Button>
         </div>
       </Stack>
-    </Card>
   )
 }

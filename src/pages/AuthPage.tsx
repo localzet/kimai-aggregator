@@ -225,9 +225,8 @@ function AuthPage() {
         <Center h="100%">
           <Card shadow="md" padding="xl" radius="md" maw={480} w="100%">
             <Stack gap="md">
-              <Title order={2}>Вход в Kimai Aggregator</Title>
 
-              <MixIdConnection
+              {/* <MixIdConnection
                 onConnected={handleConnected}
                 onDisconnected={() => {
                   navigate('/auth', { replace: true })
@@ -235,7 +234,7 @@ function AuthPage() {
                 showSyncSettings={false}
                 showSyncData={false}
                 notifications={notifications}
-              />
+              /> */}
 
                 {/* Local email/password auth */}
                 <LocalAuthForm />
