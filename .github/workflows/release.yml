@@ -10,7 +10,9 @@ on:
 
 jobs:
   build-web:
+    name: Build web
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,11 +31,11 @@ jobs:
       - name: Build web
         run: npm run build
         env:
+          VITE_ML_API_URL: ${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
           VITE_MIX_ID_API_BASE: ${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
           VITE_MIX_ID_CLIENT_ID: ${{ secrets.VITE_MIX_ID_CLIENT_ID }}
           VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
-          VITE_ML_API_URL: ${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
-          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
@@ -69,7 +71,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -128,7 +130,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -215,7 +217,8 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -223,12 +226,12 @@ jobs:
           context: .
           file: ./Dockerfile
           build-args: |
+            VITE_ML_API_URL=${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
+            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
             VITE_MIX_ID_API_BASE=${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
             VITE_MIX_ID_CLIENT_ID=${{ secrets.VITE_MIX_ID_CLIENT_ID }}
             VITE_MIX_ID_CLIENT_SECRET=${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
-            VITE_ML_API_URL=${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
-            VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
