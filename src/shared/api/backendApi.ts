@@ -70,6 +70,20 @@ export class BackendApi {
     })
   }
 
+  async loginLocal(email: string, password: string): Promise<BackendAuthResponse> {
+    return this.request<BackendAuthResponse>('/api/auth/login/local', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  }
+
+  async registerLocal(email: string, password: string): Promise<BackendAuthResponse> {
+    return this.request<BackendAuthResponse>('/api/auth/register/local', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  }
+
   async exchangeMixIdCode(code: string, redirectUri?: string): Promise<BackendAuthResponse> {
     return this.request<BackendAuthWithRefreshResponse>('/api/auth/mixid/exchange', {
       method: 'POST',

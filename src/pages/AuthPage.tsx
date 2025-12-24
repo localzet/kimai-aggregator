@@ -9,6 +9,7 @@ import { BackendApi } from '@/shared/api/backendApi'
 import { useEffect, useState } from 'react'
 import { Page } from '@/shared/ui'
 import { Button } from '@mantine/core'
+import LocalAuthForm from '@/components/LocalAuthForm'
 
 function AuthPage() {
   const navigate = useNavigate()
@@ -235,6 +236,9 @@ function AuthPage() {
                 showSyncData={false}
                 notifications={notifications}
               />
+
+                {/* Local email/password auth */}
+                <LocalAuthForm />
               {/* If MIX ID is connected but backend token is missing, allow completing backend login */}
               {isConnected && !settings.backendToken && (
                 <Button
