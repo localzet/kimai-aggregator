@@ -86,7 +86,11 @@ export class BackendApi {
       let errMsg = response.statusText || `API Error: ${response.status}`;
       if (errorBody) {
         if (typeof errorBody === "object") {
-          errMsg = (errorBody as any).message || (errorBody as any).error || (errorBody as any).detail || JSON.stringify(errorBody);
+          errMsg =
+            (errorBody as any).message ||
+            (errorBody as any).error ||
+            (errorBody as any).detail ||
+            JSON.stringify(errorBody);
         } else {
           errMsg = String(errorBody);
         }
