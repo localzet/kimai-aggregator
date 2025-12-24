@@ -12,7 +12,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import RouterLink from '@/shared/ui/RouterLink'
 import { PiArrowRight } from "react-icons/pi"
 import { useSettings } from "@/shared/hooks/useSettings"
-import { useMixIdStatus } from "@localzet/data-connector/hooks"
+import { useMixIdStatus } from '@/shared/useMixIdStub'
 import { useUnifiedSync } from "@/shared/hooks/useUnifiedSync"
 import clsx from 'clsx'
 import { HeaderStatusIndicator, NotificationsButton, LogoutButton } from '@/widgets/header'

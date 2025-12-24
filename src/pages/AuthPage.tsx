@@ -8,6 +8,7 @@ import { useSettings } from '@/shared/hooks/useSettings'
 import { BackendApi } from '@/shared/api/backendApi'
 import { useEffect, useState } from 'react'
 import { Page } from '@/shared/ui'
+import { Button } from '@mantine/core'
 
 function AuthPage() {
   const navigate = useNavigate()
@@ -49,6 +50,7 @@ function AuthPage() {
 
   const handleConnected = async (authCode?: string) => {
     try {
+      console.debug('AuthPage.handleConnected authCode=', authCode)
       // 1) Авторизуемся в бэкенде через MIX ID и получаем токен.
       // Prefer server-side exchange when we received an auth code.
       const defaultBackendUrl =
@@ -180,11 +182,19 @@ function AuthPage() {
       })
 
       // Проверяем наличие настроек и редиректим соответственно
+      // Only consider the user fully logged into the app if backend issued a token.
       const hasSettings = (effectiveSettings || backendSettings)?.apiUrl &&
         (effectiveSettings || backendSettings)?.apiKey
-      if (hasSettings) {
+      if (hasSettings && backendToken) {
         navigate('/dashboard', { replace: true })
       } else {
+        if (!backendToken) {
+          notifications.show({
+            title: 'MIX ID авторизация завершена',
+            message: 'Вы вошли в MIX ID, но не в приложение. Пожалуйста, завершите вход в бэкенд.',
+            color: 'yellow',
+          })
+        }
         navigate('/settings', { replace: true })
       }
     } catch (error) {
@@ -225,6 +235,57 @@ function AuthPage() {
                 showSyncData={false}
                 notifications={notifications}
               />
+              {/* If MIX ID is connected but backend token is missing, allow completing backend login */}
+              {isConnected && !settings.backendToken && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      const redirectUri = typeof window !== 'undefined' ? window.location.origin + '/mixid-callback' : undefined
+                      const { authorizationUrl, code: precode } = await mixIdApi.initiateOAuth(redirectUri as string)
+
+                      const width = 600
+                      const height = 700
+                      const left = window.screenX + (window.outerWidth - width) / 2
+                      const top = window.screenY + (window.outerHeight - height) / 2
+                      const oauthWindow = window.open(authorizationUrl, 'MIX ID Authorization', `width=${width},height=${height},left=${left},top=${top}`)
+
+                      const handler = async (event: MessageEvent) => {
+                        if (event.origin !== window.location.origin) return
+                        if (event.data.type === 'mixid-oauth-callback') {
+                          window.removeEventListener('message', handler)
+                          oauthWindow?.close()
+                          const callbackCode = event.data.code || precode
+                          try {
+                            const defaultBackendUrl = (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
+                            const backendUrl = settings.backendUrl || defaultBackendUrl
+                            const backendApi = new BackendApi(backendUrl.trim())
+                            const authResponse = await backendApi.exchangeMixIdCode(callbackCode, redirectUri)
+                            const backendToken = authResponse?.token || null
+                            backendApi.setToken(backendToken)
+                            if (authResponse?.refresh_token) {
+                              try { localStorage.setItem('backend_refresh_token', authResponse.refresh_token) } catch (e) { console.warn(e) }
+                            }
+                            // update settings with backend token
+                            updateSettings({ ...settings, backendToken: backendToken || '' })
+                            notifications.show({ title: 'Успешно', message: 'Вход в бэкенд завершён', color: 'green' })
+                            navigate('/dashboard', { replace: true })
+                          } catch (e) {
+                            console.warn('Backend exchange failed:', e)
+                            notifications.show({ title: 'Ошибка', message: 'Не удалось завершить вход в бэкенд', color: 'red' })
+                          }
+                        }
+                      }
+
+                      window.addEventListener('message', handler)
+                    } catch (e) {
+                      console.warn('Could not initiate backend auth:', e)
+                      notifications.show({ title: 'Ошибка', message: 'Не удалось инициировать вход в бэкенд', color: 'red' })
+                    }
+                  }}
+                >
+                  Завершить вход в бэкенд
+                </Button>
+              )}
             </Stack>
           </Card>
         </Center>

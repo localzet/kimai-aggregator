@@ -10,7 +10,7 @@ import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugCo
 import { motion } from 'motion/react'
 import { useMemo, useCallback } from 'react'
 import { useSettings, useSyncStatus } from '@/shared/hooks'
-import { useMixIdStatus } from '@localzet/data-connector/hooks'
+import { useMixIdStatus } from '@/shared/useMixIdStub'
 import { useDataFreshness } from '@/shared/hooks/useDataFreshness'
 import { useDashboardData } from '@/shared/hooks/useDashboardData'
 import { BackendApi } from '@/shared/api/backendApi'

@@ -19,7 +19,6 @@ import { notifications } from '@mantine/notifications'
 import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug, IconDeviceDesktop, IconCloudComputing } from '@tabler/icons-react'
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
-import { mixIdApi } from '@localzet/data-connector/api'
 import { BackendApi } from '@/shared/api/backendApi'
 
 interface SetupWizardProps {
@@ -196,22 +195,18 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             }
           }
           
-          if (!mixIdToken) {
+          // При локальной регистрации ожидаем, что пользователь сначала
+          // зарегистрируется/выполнит вход и получит `backendToken` в настройках.
+          const storedBackendToken = localStorage.getItem('backend_token') || ''
+          if (!storedBackendToken) {
             notifications.show({
-              title: 'Требуется авторизация MIX ID',
-              message: 'Для работы в обычном режиме необходимо авторизоваться через MIX ID. Используйте синхронизацию MIX ID на шаге 2.',
+              title: 'Требуется регистрация/вход',
+              message: 'Пожалуйста, зарегистрируйтесь или войдите в бэкенд и укажите ключи в Настройках после завершения мастера.',
               color: 'yellow',
             })
-            // Не блокируем завершение, но предупреждаем
           } else {
-            // Авторизуемся в бэкенде
-            const backendApi = new BackendApi(backendUrl.trim())
-            const authResponse = await backendApi.login(mixIdToken)
-            
-            // Сохраняем токен бэкенда
-            newSettings.backendToken = authResponse.token
+            newSettings.backendToken = storedBackendToken
             updateSettings(newSettings)
-            
             notifications.show({
               title: 'Авторизация успешна',
               message: 'Подключение к бэкенду установлено',

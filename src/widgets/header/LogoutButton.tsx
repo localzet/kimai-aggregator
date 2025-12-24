@@ -9,7 +9,7 @@ import { Button } from '@mantine/core'
 import { TbLogout } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '@/shared/hooks/useSettings'
-import { useMixIdStatus } from '@localzet/data-connector/hooks'
+import { useMixIdStatus } from '@/shared/useMixIdStub'
 import { notifications } from '@mantine/notifications'
 import { BackendApi } from '@/shared/api/backendApi'
 
