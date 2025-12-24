@@ -54,10 +54,12 @@ export class BackendApi {
     options: RequestInit = {},
   ): Promise<T> {
     // Protect against accidental unauthenticated requests to protected endpoints
-    const publicPrefixes = ['/api/auth/', '/health', '/api/public/'];
+    const publicPrefixes = ["/api/auth/", "/health", "/api/public/"];
     const isPublic = publicPrefixes.some((p) => endpoint.startsWith(p));
     if (!this.token && !isPublic) {
-      const msg = 'BackendApi: missing backend token; aborting call to protected endpoint ' + endpoint;
+      const msg =
+        "BackendApi: missing backend token; aborting call to protected endpoint " +
+        endpoint;
       console.error(msg);
       throw new Error(msg);
     }
