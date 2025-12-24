@@ -29,7 +29,9 @@ export function InitialRedirect() {
     }
 
     // Normal (многопользовательский): prefer backend token as auth indicator
-    const hasBackendToken = !!(settings.backendToken && settings.backendToken.length > 0);
+    const hasBackendToken = !!(
+      settings.backendToken && settings.backendToken.length > 0
+    );
 
     if (hasBackendToken) {
       // If logged into backend, send to settings or dashboard depending on presence of Kimai settings

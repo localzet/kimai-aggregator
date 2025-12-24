@@ -29,7 +29,9 @@ export function SetupGuard({ children }: SetupGuardProps) {
       }
     } else {
       // In normal mode, require backend login to access setup
-      const hasBackendToken = !!(settings.backendToken && settings.backendToken.length > 0);
+      const hasBackendToken = !!(
+        settings.backendToken && settings.backendToken.length > 0
+      );
       if (!hasBackendToken) {
         navigate("/auth", { replace: true });
       }
@@ -46,7 +48,10 @@ export function SetupGuard({ children }: SetupGuardProps) {
   }
 
   // Normal mode: block if not logged into backend
-  if (appMode === "normal" && (!settings.backendToken || settings.backendToken.length === 0)) {
+  if (
+    appMode === "normal" &&
+    (!settings.backendToken || settings.backendToken.length === 0)
+  ) {
     return null;
   }
 
