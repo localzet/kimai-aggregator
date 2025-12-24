@@ -1,11 +1,12 @@
-# Git hooks for kimai-aggregator
+# Git hooks for kimai-aggregator (deprecated)
 
-These hooks run frontend formatters automatically before a commit and stage any changes. They also trigger `cargo fmt` for the backend if available.
+Auto-formatting is now performed by GitHub Actions (`.github/workflows/auto-format.yml`).
 
-To enable the hooks in this repository, run from the repository root:
+If you have previously enabled local hooks for this repo, you can remove or ignore the `.githooks` folder.
+
+To disable local hooks for this repository, run from the repository root:
 
 ```
-git config core.hooksPath .githooks
+git config --unset core.hooksPath
 ```
 
-After that, commits will run the hooks defined in this folder. Make sure to run `npm install` once so `prettier` is available locally.

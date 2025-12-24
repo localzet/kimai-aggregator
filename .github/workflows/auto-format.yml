@@ -1,0 +1,51 @@
+name: Auto Format
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: "auto-format-${{ github.ref }}"
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prettier and ESLint fixes
+        run: |
+          npm run format || npx prettier --write "src/**/*.{ts,tsx,css,js,jsx,json,md}"
+          npm run lint -- --fix || true
+
+      - name: Commit and push if changed
+        run: |
+          BRANCH="$GITHUB_HEAD_REF"
+          if [ -z "$BRANCH" ]; then BRANCH=${GITHUB_REF#refs/heads/}; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: apply formatting and lint fixes via GitHub Actions"
+            git push origin HEAD:$BRANCH
+          else
+            echo "No formatting changes"
+          fi
