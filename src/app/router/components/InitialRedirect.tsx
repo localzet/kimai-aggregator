@@ -28,19 +28,27 @@ export function InitialRedirect() {
       return;
     }
 
-    // Normal (многопользовательский): проверяем MIX ID и настройки
+    // Normal (многопользовательский): prefer backend token as auth indicator
+    const hasBackendToken = !!(settings.backendToken && settings.backendToken.length > 0);
+
+    if (hasBackendToken) {
+      // If logged into backend, send to settings or dashboard depending on presence of Kimai settings
+      if (!settings.apiUrl || !settings.apiKey) {
+        navigate("/settings", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+      return;
+    }
+
+    // No backend token: fall back to MIX ID connection state
     if (!mixIdStatus.isConnected) {
       navigate("/auth", { replace: true });
       return;
     }
 
-    // Если подключен к MIX ID, проверяем наличие настроек
-    // Если настроек нет (нет apiUrl или apiKey), редиректим на страницу настроек
-    if (!settings.apiUrl || !settings.apiKey) {
-      navigate("/settings", { replace: true });
-    } else {
-      navigate("/dashboard", { replace: true });
-    }
+    // If connected to MIX ID but no backend token yet, send user to /auth to complete backend login
+    navigate("/auth", { replace: true });
   }, [settings, mixIdStatus.isConnected, navigate]);
 
   return null;

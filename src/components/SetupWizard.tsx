@@ -169,6 +169,15 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
         apiUrl: apiUrl.trim(),
         apiKey: apiKey.trim(),
       });
+      // Persist settings locally (and propagate to backend/MIX ID via useSettings)
+      await updateSettings({
+        ...settings,
+        apiUrl: apiUrl.trim(),
+        apiKey: apiKey.trim(),
+        backendUrl: base,
+        backendToken: tokenToUse,
+        appMode: appMode || settings.appMode,
+      });
 
       setConnectionStatus("success");
       notifications.show({
@@ -196,20 +205,17 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
   const handleComplete = async () => {
     if (setupMethod === "manual") {
+      // Preserve already-validated settings from state
       const newSettings: Settings = {
-        apiUrl: "",
-        apiKey: "",
-        ratePerMinute: 0,
-        useProxy: false,
-        syncUrl: "",
-        projectSettings: {},
-        excludedTags: [],
-        appMode: appMode || "normal",
-        backendUrl: backendUrl.trim(),
-        backendToken: backendToken.trim(),
+        ...settings,
+        apiUrl: settings.apiUrl || apiUrl.trim(),
+        apiKey: settings.apiKey || apiKey.trim(),
+        backendUrl: backendUrl.trim() || settings.backendUrl,
+        backendToken: backendToken.trim() || settings.backendToken,
+        appMode: appMode || settings.appMode || "normal",
       };
 
-      updateSettings(newSettings);
+      await updateSettings(newSettings);
     } else if (setupMethod === "sync" && syncSuccess) {
       const currentSettings = JSON.parse(
         localStorage.getItem("kimai-settings") || "{}",

@@ -27,6 +27,12 @@ export function SetupGuard({ children }: SetupGuardProps) {
       if (!settings.apiUrl || !settings.apiKey) {
         navigate("/setup", { replace: true });
       }
+    } else {
+      // In normal mode, require backend login to access setup
+      const hasBackendToken = !!(settings.backendToken && settings.backendToken.length > 0);
+      if (!hasBackendToken) {
+        navigate("/auth", { replace: true });
+      }
     }
     // В normal‑режиме здесь НЕ редиректим, чтобы избежать петель;
     // вход/выход через MIX ID обрабатывается InitialRedirect и AuthPage.
@@ -36,6 +42,11 @@ export function SetupGuard({ children }: SetupGuardProps) {
 
   // Standalone: блокируем без настроек Kimai
   if (appMode === "standalone" && (!settings.apiUrl || !settings.apiKey)) {
+    return null;
+  }
+
+  // Normal mode: block if not logged into backend
+  if (appMode === "normal" && (!settings.backendToken || settings.backendToken.length === 0)) {
     return null;
   }
 

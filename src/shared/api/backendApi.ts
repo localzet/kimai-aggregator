@@ -82,10 +82,16 @@ export class BackendApi {
       if (response.status === 401) {
         throw new Error("Неверный токен авторизации");
       }
-      const error = await response
-        .json()
-        .catch(() => ({ message: response.statusText }));
-      throw new Error(error.message || `API Error: ${response.status}`);
+      const errorBody = await response.json().catch(() => null);
+      let errMsg = response.statusText || `API Error: ${response.status}`;
+      if (errorBody) {
+        if (typeof errorBody === "object") {
+          errMsg = (errorBody as any).message || (errorBody as any).error || (errorBody as any).detail || JSON.stringify(errorBody);
+        } else {
+          errMsg = String(errorBody);
+        }
+      }
+      throw new Error(errMsg);
     }
 
     return response.json();
