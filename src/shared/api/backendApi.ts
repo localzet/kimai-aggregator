@@ -27,7 +27,17 @@ export class BackendApi {
   private token: string | null = null;
 
   constructor(baseUrl: string, token?: string) {
-    this.baseUrl = baseUrl.replace(/\/$/, "");
+    let base = (baseUrl || "").trim();
+    // If no protocol/host provided, assume same origin in browser
+    if (typeof window !== 'undefined' && base === '') {
+      base = window.location.origin;
+    }
+    // Prepend http:// if a bare hostname was provided accidentally
+    if (!/^https?:\/\//i.test(base) && base.length > 0 && typeof window !== 'undefined') {
+      // If running in browser and base is like 'example.com', add origin protocol
+      base = (window.location.protocol || 'https:') + '//' + base;
+    }
+    this.baseUrl = base.replace(/\/$/, "");
     this.token = token || null;
   }
 
@@ -41,6 +51,7 @@ export class BackendApi {
   ): Promise<T> {
     const headers = new Headers({
       "Content-Type": "application/json",
+      "Accept": "application/json",
       ...(options.headers ?? {}),
     });
 
