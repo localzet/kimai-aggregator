@@ -127,9 +127,28 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       setConnectionStatus('idle')
 
       const base = backendUrl.trim() || defaultBackendUrl
+      // Проверяем, что на базовом URL есть ожидаемый endpoint
+      try {
+        const healthRes = await fetch(`${base.replace(/\/$/, '')}/api/settings`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        })
+
+        if (!healthRes.ok) {
+          // Понятное сообщение для 404/401/5xx
+          throw new Error(`Бэкенд недоступен: ${healthRes.status} ${healthRes.statusText}`)
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Не удалось связаться с бэкендом'
+        setConnectionError(errorMessage)
+        setConnectionStatus('error')
+        notifications.show({ title: 'Ошибка подключения', message: errorMessage, color: 'red' })
+        return
+      }
+
       const backendApi = new BackendApi(base)
       // Update settings on backend (backend should validate Kimai credentials)
-      const saved = await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() })
+      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() })
 
       setConnectionStatus('success')
       notifications.show({

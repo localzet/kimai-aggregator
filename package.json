@@ -6,6 +6,7 @@
     "main": "electron/main.js",
     "scripts": {
         "dev": "vite",
+        "format": "prettier --write \"src/**/*.{ts,tsx,css,js,jsx,json,md}\" && git add -A",
         "build": "tsc && vite build",
         "electron:dev": "vite build && electron .",
         "electron:build": "vite build && electron-builder",
@@ -55,7 +56,8 @@
         "vite-plugin-pwa": "^1.2.0",
         "vite-plugin-remove-console": "^2.2.0",
         "vite-plugin-webfont-dl": "^3.11.1",
-        "vite-tsconfig-paths": "^5.1.4"
+        "vite-tsconfig-paths": "^5.1.4",
+        "prettier": "^3.0.0"
     },
     "description": "Web application and Electron desktop application for aggregating and analyzing data from Kimai time tracking system",
     "author": {

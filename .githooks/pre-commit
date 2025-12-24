@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+TOPLEVEL=$(git rev-parse --show-toplevel)
+
+echo "[githooks] Running frontend formatters..."
+if command -v npm >/dev/null 2>&1; then
+  cd "$TOPLEVEL/kimai-aggregator" || exit 0
+  npm run format || npx prettier --write "src/**/*.{ts,tsx,css,js,jsx,json,md}"
+  npm run lint -- --fix || true
+  git add -A
+fi
+
+echo "[githooks] Running backend formatter..."
+if command -v cargo >/dev/null 2>&1; then
+  cd "$TOPLEVEL/kimai-backend" || exit 0
+  cargo fmt --all
+  git add -A
+fi
+
+exit 0
