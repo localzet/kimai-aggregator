@@ -38,7 +38,7 @@ jobs:
           VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
 
       - name: Upload web build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: web
           path: dist
@@ -99,7 +99,7 @@ jobs:
           }
 
       - name: Upload Windows build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-build
           path: dist/*.exe
@@ -165,7 +165,7 @@ jobs:
           fi
 
       - name: Upload Linux build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-build
           path: |
