@@ -2,26 +2,38 @@
   "compilerOptions": {
     "removeComments": true,
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": [
       "ESNext",
       "DOM",
-      "DOM.Iterable"
+      "DOM.Iterable",
     ],
     "module": "ESNext",
     "skipLibCheck": true,
+    /* ------------------------------------------------------------ */
+    /* Bundler mode */
+    /* ------------------------------------------------------------ */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    /* ------------------------------------------------------------ */
+    /*     "useDefineForClassFields": true, 
+    /*     "esModuleInterop": false,
+    /* "allowSyntheticDefaultImports": true,
+        "allowJs": false,
+
+    /* ------------------------------------------------------------ */
     "strict": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedParameters": false, // TURN THIS
     "noFallthroughCasesInSwitch": true,
     "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": false,
+    /* ------------------------------------------------------------ */
+    /* Paths */
+    /* ------------------------------------------------------------ */
     "baseUrl": ".",
     "paths": {
       "@/*": [
