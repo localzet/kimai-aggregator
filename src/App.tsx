@@ -32,7 +32,7 @@ import { Notifications } from '@mantine/notifications'
 import { NavigationProgress } from '@mantine/nprogress'
 import { theme } from './theme'
 
-function App() {
+export default function App() {
   const mq = useMediaQuery('(min-width: 40em)')
 
   useEffect(() => {
@@ -77,9 +77,3 @@ function App() {
       </DirectionProvider>
   )
 }
-
-export default App
-
-// Export types for external use
-export type { MenuItem } from '@/widgets/layout/types'
-
