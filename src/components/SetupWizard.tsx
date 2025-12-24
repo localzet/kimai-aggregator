@@ -36,17 +36,21 @@ interface SetupWizardProps {
 
 export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const navigate = useNavigate();
-  const { updateSettings } = useSettings();
+  const { updateSettings, settings } = useSettings();
   const [active, setActive] = useState(0);
   const [appMode, setAppMode] = useState<AppMode | null>(null);
   const defaultBackendUrl =
     (import.meta.env.VITE_BACKEND_URL as string) ||
     "https://kimai-api.zorin.cloud";
-  const [backendUrl, setBackendUrl] = useState(defaultBackendUrl);
+  const [backendUrl, setBackendUrl] = useState(
+    (settings && settings.backendUrl) || defaultBackendUrl,
+  );
   const [setupMethod, setSetupMethod] = useState<
     "manual" | "import" | "sync" | null
   >(null);
-  const [backendToken, setBackendToken] = useState("");
+  const [backendToken, setBackendToken] = useState(
+    (settings && settings.backendToken) || "",
+  );
   // Для ручного ввода Kimai (frontend будет передавать их бэкенду для проверки)
   const [apiUrl, setApiUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -143,43 +147,21 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       setConnectionStatus("idle");
 
       const base = backendUrl.trim() || defaultBackendUrl;
-      // Проверяем, что на базовом URL есть ожидаемый endpoint
-      try {
-        const healthRes = await fetch(
-          `${base.replace(/\/$/, "")}/api/settings`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          },
-        );
-
-        if (!healthRes.ok) {
-          // Понятное сообщение для 404/401/5xx
-          throw new Error(
-            `Бэкенд недоступен: ${healthRes.status} ${healthRes.statusText}`,
-          );
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Не удалось связаться с бэкендом";
-        setConnectionError(errorMessage);
+      // Проверяем, что у нас есть токен для вызовов к бэкенду (Authorization header)
+      const tokenToUse = (settings && settings.backendToken) || backendToken;
+      if (!tokenToUse) {
+        const msg =
+          "Требуется токен бэкенда. Пожалуйста, выполните вход или регистрацию перед продолжением.";
+        setConnectionError(msg);
         setConnectionStatus("error");
-        notifications.show({
-          title: "Ошибка подключения",
-          message: errorMessage,
-          color: "red",
-        });
+        notifications.show({ title: "Ошибка подключения", message: msg, color: "red" });
         return;
       }
 
-      const backendApi = new BackendApi(base);
+      // Use BackendApi with token so Authorization header is sent
+      const backendApi = new BackendApi(base, tokenToUse);
       // Update settings on backend (backend should validate Kimai credentials)
-      await backendApi.updateSettings({
-        apiUrl: apiUrl.trim(),
-        apiKey: apiKey.trim(),
-      });
+      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() });
 
       setConnectionStatus("success");
       notifications.show({
