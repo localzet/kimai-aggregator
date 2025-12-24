@@ -154,14 +154,21 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
           "Требуется токен бэкенда. Пожалуйста, выполните вход или регистрацию перед продолжением.";
         setConnectionError(msg);
         setConnectionStatus("error");
-        notifications.show({ title: "Ошибка подключения", message: msg, color: "red" });
+        notifications.show({
+          title: "Ошибка подключения",
+          message: msg,
+          color: "red",
+        });
         return;
       }
 
       // Use BackendApi with token so Authorization header is sent
       const backendApi = new BackendApi(base, tokenToUse);
       // Update settings on backend (backend should validate Kimai credentials)
-      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() });
+      await backendApi.updateSettings({
+        apiUrl: apiUrl.trim(),
+        apiKey: apiKey.trim(),
+      });
 
       setConnectionStatus("success");
       notifications.show({
