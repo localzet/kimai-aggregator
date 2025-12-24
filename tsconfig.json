@@ -2,6 +2,7 @@
   "compilerOptions": {
     "removeComments": true,
     "target": "ES2020",
+    "useDefineForClassFields": true,
     "lib": [
       "ESNext",
       "DOM",

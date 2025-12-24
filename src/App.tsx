@@ -32,7 +32,7 @@ import { Notifications } from '@mantine/notifications'
 import { NavigationProgress } from '@mantine/nprogress'
 import { theme } from './theme'
 
-export default function App() {
+export function App() {
   const mq = useMediaQuery('(min-width: 40em)')
 
   useEffect(() => {
