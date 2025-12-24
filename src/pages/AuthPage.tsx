@@ -245,7 +245,7 @@ function AuthPage() {
                   onClick={async () => {
                     try {
                       const redirectUri = typeof window !== 'undefined' ? window.location.origin + '/mixid-callback' : undefined
-                      const { authorizationUrl, code: precode } = await mixIdApi.initiateOAuth(redirectUri as string)
+                      const { authorizationUrl, code: precode } = await mixIdApi.initiateOAuth(redirectUri ?? '')
 
                       const width = 600
                       const height = 700

@@ -31,8 +31,8 @@ export class BackendApi {
     this.token = token || null
   }
 
-  setToken(token: string) {
-    this.token = token
+  setToken(token: string | null) {
+    this.token = token || null
   }
 
   private async request<T>(
