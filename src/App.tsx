@@ -15,7 +15,6 @@ import '@mantine/nprogress/styles.css'
 
 // Third-party styles
 import 'mantine-react-table/styles.css'
-import 'mantine-datatable/styles.layer.css'
 import '@gfazioli/mantine-list-view-table/styles.css'
 import '@gfazioli/mantine-split-pane/styles.css'
 import '@gfazioli/mantine-spinner/styles.css'
