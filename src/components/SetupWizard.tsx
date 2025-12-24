@@ -20,6 +20,7 @@ import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug,
 import { KimaiApi, Project } from '@/shared/api/kimaiApi'
 import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
 import { BackendApi } from '@/shared/api/backendApi'
+import { mixIdApi } from '@/shared/mixIdStub'
 
 interface SetupWizardProps {
   onComplete: () => void

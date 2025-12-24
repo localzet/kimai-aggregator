@@ -51,10 +51,10 @@ export default function LocalAuthForm() {
         <Title order={4}>{mode === 'register' ? 'Регистрация' : 'Вход (email)'} </Title>
         <TextInput label="Email" value={email} onChange={(e) => setEmail(e.currentTarget.value)} />
         <PasswordInput label="Пароль" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
-        <Group position="apart">
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button variant="subtle" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Регистрация' : 'Вход'}</Button>
           <Button onClick={submit} loading={loading}>{mode === 'login' ? 'Войти' : 'Зарегистрироваться'}</Button>
-        </Group>
+        </div>
       </Stack>
     </Card>
   )

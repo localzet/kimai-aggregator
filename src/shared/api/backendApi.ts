@@ -4,6 +4,7 @@ import { Timesheet, WeekData } from './kimaiApi'
 export interface BackendAuthResponse {
   token: string
   user_id: string
+  refresh_token?: string
 }
 export interface BackendAuthWithRefreshResponse extends BackendAuthResponse {
   refresh_token?: string

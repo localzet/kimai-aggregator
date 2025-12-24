@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'motion/react'
 
 interface PageProps extends BoxProps {
     children: ReactNode
+    title?: string
 }
 
 export const Page = forwardRef<HTMLDivElement, PageProps>(({ children, ...other }, ref) => {

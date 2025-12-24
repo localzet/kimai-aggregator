@@ -1,1 +1,1 @@
-export { useMixIdStatus, type MixIdSyncStatus, type UseMixIdStatusReturn } from '@localzet/data-connector/hooks'
+export { useMixIdStatus, type MixIdSyncStatus, type UseMixIdStatusReturn } from '@/shared/useMixIdStub'

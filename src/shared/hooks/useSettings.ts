@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ProjectSettings } from '@/shared/api/kimaiApi'
 import { BackendApi } from '@/shared/api/backendApi'
-import { mixIdApi } from '@localzet/data-connector/api'
+import { mixIdApi } from '@/shared/mixIdStub'
 
 export interface CalendarSyncSettings {
   enabled: boolean
