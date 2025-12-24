@@ -1,1 +1,4 @@
-export { useNotifications, type Notification } from '@localzet/data-connector/hooks'
+export {
+  useNotifications,
+  type Notification,
+} from "@localzet/data-connector/hooks";

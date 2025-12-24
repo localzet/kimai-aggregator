@@ -1,23 +1,26 @@
-import TimesheetTable from '@/components/TimesheetTable'
-import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
-import { Container, Loader, Alert, Button, Group, Stack } from '@mantine/core'
-import { motion } from 'motion/react'
+import TimesheetTable from "@/components/TimesheetTable";
+import { useSettings, useDashboardData, useSyncStatus } from "@/shared/hooks";
+import { Container, Loader, Alert, Button, Group, Stack } from "@mantine/core";
+import { motion } from "motion/react";
 
-const MotionStack = motion(Stack)
+const MotionStack = motion(Stack);
 
 function TimesheetPage() {
-  const { settings } = useSettings()
-  const syncStatus = useSyncStatus(settings)
-  const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
-  
-  const currentStatus = syncing ? 'updating' : syncStatus.status
+  const { settings } = useSettings();
+  const syncStatus = useSyncStatus(settings);
+  const { weeks, loading, error, reload, syncing } = useDashboardData(
+    settings,
+    syncStatus,
+  );
+
+  const currentStatus = syncing ? "updating" : syncStatus.status;
 
   if (loading) {
     return (
       <Container>
         <Loader size="lg" />
       </Container>
-    )
+    );
   }
 
   if (error) {
@@ -27,7 +30,7 @@ function TimesheetPage() {
           {error}
         </Alert>
       </Container>
-    )
+    );
   }
 
   return (
@@ -39,8 +42,7 @@ function TimesheetPage() {
     >
       <TimesheetTable weeks={weeks} />
     </MotionStack>
-  )
+  );
 }
 
-export default TimesheetPage
-
+export default TimesheetPage;

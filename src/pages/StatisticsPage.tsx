@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from "react";
 import {
   Container,
   Loader,
@@ -18,30 +18,48 @@ import {
   MultiSelect,
   Checkbox,
   Box,
-} from '@mantine/core'
-import { LineChart, BarChart } from '@mantine/charts'
-import { IconDownload, IconChartBar, IconListNumbers } from '@tabler/icons-react'
-import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
-import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
-import { DataTableShared } from '@/shared/ui/table'
-import { formatCurrency } from '@/shared/utils'
-import dayjs from 'dayjs'
+} from "@mantine/core";
+import { LineChart, BarChart } from "@mantine/charts";
+import {
+  IconDownload,
+  IconChartBar,
+  IconListNumbers,
+} from "@tabler/icons-react";
+import {
+  MantineReactTable,
+  useMantineReactTable,
+  MRT_ColumnDef,
+} from "mantine-react-table";
+import { useSettings, useDashboardData, useSyncStatus } from "@/shared/hooks";
+import { DataTableShared } from "@/shared/ui/table";
+import { formatCurrency } from "@/shared/utils";
+import dayjs from "dayjs";
 
 function StatisticsPage() {
-  const { settings } = useSettings()
-  const syncStatus = useSyncStatus(settings)
-  const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
-  const [showAllProjects, setShowAllProjects] = useState(true)
+  const { settings } = useSettings();
+  const syncStatus = useSyncStatus(settings);
+  const { weeks, loading, error, reload, syncing } = useDashboardData(
+    settings,
+    syncStatus,
+  );
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [showAllProjects, setShowAllProjects] = useState(true);
 
   // Общая статистика
   const totalStats = useMemo(() => {
-    const totalMinutes = weeks.reduce((sum, week) => sum + week.totalMinutes, 0)
-    const totalAmount = weeks.reduce((sum, week) => sum + (week.totalAmount || 0), 0)
-    const weeksCount = weeks.length
-    const avgHoursPerWeek = weeksCount > 0 ? (totalMinutes / 60) / weeksCount : 0
-    const avgAmountPerWeek = weeksCount > 0 ? totalAmount / weeksCount : 0
-    const effectiveRatePerHour = totalMinutes > 0 ? totalAmount / (totalMinutes / 60) : 0
+    const totalMinutes = weeks.reduce(
+      (sum, week) => sum + week.totalMinutes,
+      0,
+    );
+    const totalAmount = weeks.reduce(
+      (sum, week) => sum + (week.totalAmount || 0),
+      0,
+    );
+    const weeksCount = weeks.length;
+    const avgHoursPerWeek = weeksCount > 0 ? totalMinutes / 60 / weeksCount : 0;
+    const avgAmountPerWeek = weeksCount > 0 ? totalAmount / weeksCount : 0;
+    const effectiveRatePerHour =
+      totalMinutes > 0 ? totalAmount / (totalMinutes / 60) : 0;
 
     return {
       totalMinutes,
@@ -51,22 +69,25 @@ function StatisticsPage() {
       avgHoursPerWeek,
       avgAmountPerWeek,
       effectiveRatePerHour,
-    }
-  }, [weeks])
+    };
+  }, [weeks]);
 
   // Статистика по проектам
   const projectStats = useMemo(() => {
-    const stats: Record<number, {
-      id: number | null
-      name: string
-      totalMinutes: number
-      totalHours: number
-      totalAmount: number
-      weeksCount: number
-    }> = {}
-    
-    weeks.forEach(week => {
-      week.projectStats?.forEach(project => {
+    const stats: Record<
+      number,
+      {
+        id: number | null;
+        name: string;
+        totalMinutes: number;
+        totalHours: number;
+        totalAmount: number;
+        weeksCount: number;
+      }
+    > = {};
+
+    weeks.forEach((week) => {
+      week.projectStats?.forEach((project) => {
         if (project.id && !stats[project.id]) {
           stats[project.id] = {
             id: project.id,
@@ -75,40 +96,44 @@ function StatisticsPage() {
             totalHours: 0,
             totalAmount: 0,
             weeksCount: 0,
-          }
+          };
         }
         if (project.id) {
-          stats[project.id].totalMinutes += project.minutes
-          stats[project.id].totalHours += project.hours
-          stats[project.id].totalAmount += project.amount
-          stats[project.id].weeksCount += 1
+          stats[project.id].totalMinutes += project.minutes;
+          stats[project.id].totalHours += project.hours;
+          stats[project.id].totalAmount += project.amount;
+          stats[project.id].weeksCount += 1;
         }
-      })
-    })
+      });
+    });
 
-    return Object.values(stats).map(project => ({
+    return Object.values(stats).map((project) => ({
       ...project,
-      avgHoursPerWeek: project.weeksCount > 0 ? project.totalHours / project.weeksCount : 0,
-    }))
-  }, [weeks])
+      avgHoursPerWeek:
+        project.weeksCount > 0 ? project.totalHours / project.weeksCount : 0,
+    }));
+  }, [weeks]);
 
   // Статистика по периодам
   const periodStats = useMemo(() => {
-    const stats: Record<string, {
-      projectId: number
-      projectName: string
-      periodNumber: number
-      year: number
-      totalHours: number
-      totalAmount: number
-      goalHours: number | null
-      weeksCount: number
-    }> = {}
-    
-    weeks.forEach(week => {
+    const stats: Record<
+      string,
+      {
+        projectId: number;
+        projectName: string;
+        periodNumber: number;
+        year: number;
+        totalHours: number;
+        totalAmount: number;
+        goalHours: number | null;
+        weeksCount: number;
+      }
+    > = {};
+
+    weeks.forEach((week) => {
       if (week.projectPeriodInfo) {
-        week.projectPeriodInfo.forEach(info => {
-          const key = `${info.projectId}-${week.year}-period-${info.periodNumber}`
+        week.projectPeriodInfo.forEach((info) => {
+          const key = `${info.projectId}-${week.year}-period-${info.periodNumber}`;
           if (!stats[key]) {
             stats[key] = {
               projectId: info.projectId,
@@ -119,118 +144,123 @@ function StatisticsPage() {
               totalAmount: 0,
               goalHours: null,
               weeksCount: 0,
-            }
+            };
           }
-          stats[key].totalHours += info.hours
-          stats[key].totalAmount += info.weeklyAmount
+          stats[key].totalHours += info.hours;
+          stats[key].totalAmount += info.weeklyAmount;
           if (info.goalHours !== null) {
             if (stats[key].goalHours === null) {
-              stats[key].goalHours = 0
+              stats[key].goalHours = 0;
             }
-            stats[key].goalHours += info.goalHours
+            stats[key].goalHours += info.goalHours;
           }
-          stats[key].weeksCount += 1
-        })
+          stats[key].weeksCount += 1;
+        });
       }
-    })
+    });
 
-    return Object.values(stats)
-  }, [weeks, settings.projectSettings])
+    return Object.values(stats);
+  }, [weeks, settings.projectSettings]);
 
   // Данные для графиков
   const chartData = useMemo(() => {
     return weeks
       .sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year
-        return a.week - b.week
+        if (a.year !== b.year) return a.year - b.year;
+        return a.week - b.week;
       })
-      .map(week => ({
+      .map((week) => ({
         week: `Неделя ${week.week}`,
         weekKey: `${week.year}-W${week.week}`,
         weekLabel: `Неделя ${week.week}, ${week.year}`,
         hours: week.totalHours || 0,
         amount: week.totalAmount || 0,
-        date: week.startDate ? dayjs(week.startDate).format('DD.MM') : '',
-      }))
-  }, [weeks])
+        date: week.startDate ? dayjs(week.startDate).format("DD.MM") : "",
+      }));
+  }, [weeks]);
 
   // Данные по проектам для графика
   const projectChartData = useMemo(() => {
-    return projectStats.slice(0, 10).map(project => ({
-      name: project.name.length > 20 ? project.name.substring(0, 20) + '...' : project.name,
+    return projectStats.slice(0, 10).map((project) => ({
+      name:
+        project.name.length > 20
+          ? project.name.substring(0, 20) + "..."
+          : project.name,
       hours: project.totalHours,
       amount: project.totalAmount,
-    }))
-  }, [projectStats])
+    }));
+  }, [projectStats]);
 
   // Данные для графика часов по проектам за неделю
   const weeklyProjectHoursData = useMemo(() => {
-    const projectMap = new Map<number, string>()
-    projectStats.forEach(p => {
-      if (p.id) projectMap.set(p.id, p.name)
-    })
+    const projectMap = new Map<number, string>();
+    projectStats.forEach((p) => {
+      if (p.id) projectMap.set(p.id, p.name);
+    });
 
     const weekData: Array<{
-      week: string
-      weekKey: string
-      [key: string]: string | number
-    }> = []
+      week: string;
+      weekKey: string;
+      [key: string]: string | number;
+    }> = [];
 
-    weeks.forEach(week => {
-      const weekKey = `${week.year}-W${String(week.week).padStart(2, '0')}`
-      const weekLabel = `Неделя ${week.week}, ${week.year}`
-      
+    weeks.forEach((week) => {
+      const weekKey = `${week.year}-W${String(week.week).padStart(2, "0")}`;
+      const weekLabel = `Неделя ${week.week}, ${week.year}`;
+
       const data: Record<string, string | number> = {
         week: weekLabel,
         weekKey,
-      }
+      };
 
-      week.projectStats?.forEach(project => {
+      week.projectStats?.forEach((project) => {
         if (project.id) {
-          const projectName = projectMap.get(project.id) || `Проект ${project.id}`
-          data[projectName] = (data[projectName] as number || 0) + project.hours
+          const projectName =
+            projectMap.get(project.id) || `Проект ${project.id}`;
+          data[projectName] =
+            ((data[projectName] as number) || 0) + project.hours;
         }
-      })
+      });
 
-      weekData.push(data as typeof weekData[0])
-    })
+      weekData.push(data as (typeof weekData)[0]);
+    });
 
     // Сортируем по неделям
-    weekData.sort((a, b) => a.weekKey.localeCompare(b.weekKey))
+    weekData.sort((a, b) => a.weekKey.localeCompare(b.weekKey));
 
-    return weekData
-  }, [weeks, projectStats])
+    return weekData;
+  }, [weeks, projectStats]);
 
   // Получаем список всех проектов для фильтра
   const allProjectNames = useMemo(() => {
-    return projectStats.map(p => p.name).filter(Boolean)
-  }, [projectStats])
+    return projectStats.map((p) => p.name).filter(Boolean);
+  }, [projectStats]);
 
   // Фильтруем данные для графика
   const filteredWeeklyProjectHoursData = useMemo(() => {
     if (showAllProjects) {
-      return weeklyProjectHoursData
+      return weeklyProjectHoursData;
     }
 
     if (selectedProjects.length === 0) {
-      return weeklyProjectHoursData
+      return weeklyProjectHoursData;
     }
 
-    return weeklyProjectHoursData.map(week => {
+    return weeklyProjectHoursData.map((week) => {
       const filtered: Record<string, string | number> = {
         week: week.week,
         weekKey: week.weekKey,
-      }
+      };
 
-      selectedProjects.forEach(projectName => {
+      selectedProjects.forEach((projectName) => {
         if (week[projectName] !== undefined) {
-          filtered[projectName] = week[projectName]
+          filtered[projectName] = week[projectName];
         }
-      })
+      });
 
-      return filtered as typeof weeklyProjectHoursData[0]
-    })
-  }, [weeklyProjectHoursData, selectedProjects, showAllProjects])
+      return filtered as (typeof weeklyProjectHoursData)[0];
+    });
+  }, [weeklyProjectHoursData, selectedProjects, showAllProjects]);
 
   // Получаем серии для графика (только выбранные проекты или все)
   const weeklyProjectSeries = useMemo(() => {
@@ -239,145 +269,163 @@ function StatisticsPage() {
       const topProjects = projectStats
         .sort((a, b) => b.totalHours - a.totalHours)
         .slice(0, 10)
-        .map(p => p.name)
-      
+        .map((p) => p.name);
+
       return topProjects.map((name, idx) => ({
         name,
-        label: name.length > 20 ? name.substring(0, 20) + '...' : name,
+        label: name.length > 20 ? name.substring(0, 20) + "..." : name,
         color: `cyan.${Math.min(6 + idx, 9)}`,
-      }))
+      }));
     } else {
       return selectedProjects.map((name, idx) => ({
         name,
-        label: name.length > 20 ? name.substring(0, 20) + '...' : name,
+        label: name.length > 20 ? name.substring(0, 20) + "..." : name,
         color: `cyan.${Math.min(6 + idx, 9)}`,
-      }))
+      }));
     }
-  }, [projectStats, selectedProjects, showAllProjects])
+  }, [projectStats, selectedProjects, showAllProjects]);
 
   const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
-    if (data.length === 0) return
+    if (data.length === 0) return;
 
-    const headers = Object.keys(data[0])
+    const headers = Object.keys(data[0]);
     const csvContent = [
-      headers.join(','),
-      ...data.map(row =>
-        headers.map(header => {
-          const value = row[header]
-          if (value === null || value === undefined) return ''
-          if (typeof value === 'string' && value.includes(',')) {
-            return `"${value.replace(/"/g, '""')}"`
-          }
-          return value
-        }).join(',')
-      )
-    ].join('\n')
+      headers.join(","),
+      ...data.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header];
+            if (value === null || value === undefined) return "";
+            if (typeof value === "string" && value.includes(",")) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          })
+          .join(","),
+      ),
+    ].join("\n");
 
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(link.href)
-  }
+    const blob = new Blob(["\ufeff" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   const handleExportProjects = () => {
-    const data = projectStats.map(p => ({
-      'Проект': p.name,
-      'Недель': p.weeksCount,
-      'Всего часов': p.totalHours.toFixed(2),
-      'Среднее в неделю': p.avgHoursPerWeek.toFixed(2),
-      'Общая сумма': p.totalAmount.toFixed(2),
-      '% от общей суммы': totalStats.totalAmount > 0
-        ? ((p.totalAmount / totalStats.totalAmount) * 100).toFixed(2)
-        : '0',
-    }))
-    exportToCSV(data, `statistics-projects-${dayjs().format('YYYY-MM-DD')}.csv`)
-  }
+    const data = projectStats.map((p) => ({
+      Проект: p.name,
+      Недель: p.weeksCount,
+      "Всего часов": p.totalHours.toFixed(2),
+      "Среднее в неделю": p.avgHoursPerWeek.toFixed(2),
+      "Общая сумма": p.totalAmount.toFixed(2),
+      "% от общей суммы":
+        totalStats.totalAmount > 0
+          ? ((p.totalAmount / totalStats.totalAmount) * 100).toFixed(2)
+          : "0",
+    }));
+    exportToCSV(
+      data,
+      `statistics-projects-${dayjs().format("YYYY-MM-DD")}.csv`,
+    );
+  };
 
   const handleExportPeriods = () => {
-    const data = periodStats.map(p => ({
-      'Проект': p.projectName,
-      'Период': `Период ${p.periodNumber + 1} (${p.year})`,
-      'Недель': p.weeksCount,
-      'Отработано (ч)': p.totalHours.toFixed(2),
-      'Цель (ч)': p.goalHours && p.goalHours > 0 ? p.goalHours.toFixed(2) : '',
-      'Выполнение (%)': p.goalHours && p.goalHours > 0
-        ? ((p.totalHours / p.goalHours) * 100).toFixed(2)
-        : '',
-      'Сумма': p.totalAmount.toFixed(2),
-    }))
-    exportToCSV(data, `statistics-periods-${dayjs().format('YYYY-MM-DD')}.csv`)
-  }
+    const data = periodStats.map((p) => ({
+      Проект: p.projectName,
+      Период: `Период ${p.periodNumber + 1} (${p.year})`,
+      Недель: p.weeksCount,
+      "Отработано (ч)": p.totalHours.toFixed(2),
+      "Цель (ч)": p.goalHours && p.goalHours > 0 ? p.goalHours.toFixed(2) : "",
+      "Выполнение (%)":
+        p.goalHours && p.goalHours > 0
+          ? ((p.totalHours / p.goalHours) * 100).toFixed(2)
+          : "",
+      Сумма: p.totalAmount.toFixed(2),
+    }));
+    exportToCSV(data, `statistics-periods-${dayjs().format("YYYY-MM-DD")}.csv`);
+  };
 
   // Определяем актуальный статус с учетом syncing
-  const currentStatus = syncing ? 'updating' : syncStatus.status
-
+  const currentStatus = syncing ? "updating" : syncStatus.status;
 
   // Таблица проектов
   interface ProjectStatsRow {
-    id: number | null
-    name: string
-    weeksCount: number
-    totalHours: number
-    avgHoursPerWeek: number
-    totalAmount: number
-    percentageAmount: number
+    id: number | null;
+    name: string;
+    weeksCount: number;
+    totalHours: number;
+    avgHoursPerWeek: number;
+    totalAmount: number;
+    percentageAmount: number;
   }
 
   const projectTableData = useMemo<ProjectStatsRow[]>(() => {
-    return projectStats.map(p => ({
+    return projectStats.map((p) => ({
       id: p.id,
       name: p.name,
       weeksCount: p.weeksCount,
       totalHours: p.totalHours,
       avgHoursPerWeek: p.avgHoursPerWeek,
       totalAmount: p.totalAmount,
-      percentageAmount: totalStats.totalAmount > 0 ? (p.totalAmount / totalStats.totalAmount) * 100 : 0,
-    }))
-  }, [projectStats, totalStats.totalAmount])
+      percentageAmount:
+        totalStats.totalAmount > 0
+          ? (p.totalAmount / totalStats.totalAmount) * 100
+          : 0,
+    }));
+  }, [projectStats, totalStats.totalAmount]);
 
-  const projectColumns = useMemo<MRT_ColumnDef<ProjectStatsRow>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Проект',
-    },
-    {
-      accessorKey: 'weeksCount',
-      header: 'Недель',
-      Cell: ({ cell }) => <Text>{String(cell.getValue())}</Text>,
-    },
-    {
-      accessorKey: 'totalHours',
-      header: 'Всего часов',
-      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
-    },
-    {
-      accessorKey: 'avgHoursPerWeek',
-      header: 'Среднее в неделю',
-      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
-    },
-    {
-      accessorKey: 'totalAmount',
-      header: 'Общая сумма',
-      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
-    },
-    {
-      accessorKey: 'percentageAmount',
-      header: '% от общей суммы',
-      Cell: ({ cell }) => {
-        const percentage = cell.getValue() as number
-        return (
-          <Group gap="xs" wrap="nowrap">
-            <Progress value={percentage} size="sm" style={{ flex: 1, minWidth: 100 }} />
-            <Text size="sm" style={{ minWidth: 50 }}>
-              {percentage.toFixed(1)}%
-            </Text>
-          </Group>
-        )
+  const projectColumns = useMemo<MRT_ColumnDef<ProjectStatsRow>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Проект",
       },
-    },
-  ], [])
+      {
+        accessorKey: "weeksCount",
+        header: "Недель",
+        Cell: ({ cell }) => <Text>{String(cell.getValue())}</Text>,
+      },
+      {
+        accessorKey: "totalHours",
+        header: "Всего часов",
+        Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+      },
+      {
+        accessorKey: "avgHoursPerWeek",
+        header: "Среднее в неделю",
+        Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+      },
+      {
+        accessorKey: "totalAmount",
+        header: "Общая сумма",
+        Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+      },
+      {
+        accessorKey: "percentageAmount",
+        header: "% от общей суммы",
+        Cell: ({ cell }) => {
+          const percentage = cell.getValue() as number;
+          return (
+            <Group gap="xs" wrap="nowrap">
+              <Progress
+                value={percentage}
+                size="sm"
+                style={{ flex: 1, minWidth: 100 }}
+              />
+              <Text size="sm" style={{ minWidth: 50 }}>
+                {percentage.toFixed(1)}%
+              </Text>
+            </Group>
+          );
+        },
+      },
+    ],
+    [],
+  );
 
   const projectTable = useMantineReactTable({
     columns: projectColumns,
@@ -391,28 +439,30 @@ function StatisticsPage() {
     enableFullScreenToggle: true,
     initialState: {
       pagination: { pageIndex: 0, pageSize: 25 },
-      density: 'xs',
+      density: "xs",
     },
     mantinePaperProps: {
-      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      style: {
+        "--paper-radius": "var(--mantine-radius-xs)",
+      } as React.CSSProperties,
       withBorder: false,
     },
     mantineTableProps: {
       striped: true,
       highlightOnHover: true,
     },
-  })
+  });
 
   // Таблица периодов
   interface PeriodStatsRow {
-    id: string
-    projectName: string
-    periodLabel: string
-    weeksCount: number
-    totalHours: number
-    goalHours: number | null
-    completion: number | null
-    totalAmount: number
+    id: string;
+    projectName: string;
+    periodLabel: string;
+    weeksCount: number;
+    totalHours: number;
+    goalHours: number | null;
+    completion: number | null;
+    totalAmount: number;
   }
 
   const periodTableData = useMemo<PeriodStatsRow[]>(() => {
@@ -423,60 +473,78 @@ function StatisticsPage() {
       weeksCount: p.weeksCount,
       totalHours: p.totalHours,
       goalHours: p.goalHours,
-      completion: p.goalHours && p.goalHours > 0 ? (p.totalHours / p.goalHours) * 100 : null,
+      completion:
+        p.goalHours && p.goalHours > 0
+          ? (p.totalHours / p.goalHours) * 100
+          : null,
       totalAmount: p.totalAmount,
-    }))
-  }, [periodStats])
+    }));
+  }, [periodStats]);
 
-  const periodColumns = useMemo<MRT_ColumnDef<PeriodStatsRow>[]>(() => [
-    {
-      accessorKey: 'projectName',
-      header: 'Проект',
-    },
-    {
-      accessorKey: 'periodLabel',
-      header: 'Период',
-    },
-    {
-      accessorKey: 'weeksCount',
-      header: 'Недель',
-    },
-    {
-      accessorKey: 'totalHours',
-      header: 'Отработано',
-      Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
-    },
-    {
-      accessorKey: 'goalHours',
-      header: 'Цель',
-      Cell: ({ cell }) => {
-        const goal = cell.getValue() as number | null
-        return goal !== null ? `${goal.toFixed(2)} ч` : <Text c="dimmed">—</Text>
+  const periodColumns = useMemo<MRT_ColumnDef<PeriodStatsRow>[]>(
+    () => [
+      {
+        accessorKey: "projectName",
+        header: "Проект",
       },
-    },
-    {
-      accessorKey: 'completion',
-      header: 'Выполнение',
-      Cell: ({ row }) => {
-        const completion = row.original.completion
-        if (completion === null) return <Text c="dimmed">—</Text>
-        return (
-          <Group gap="xs" wrap="nowrap">
-            <Progress value={Math.min(100, completion)} size="sm" style={{ flex: 1, minWidth: 100 }} />
-            <Text size="sm" style={{ minWidth: 50 }}>
-              {completion.toFixed(0)}%
-            </Text>
-            {completion >= 100 && <Badge color="green" size="sm">✓</Badge>}
-          </Group>
-        )
+      {
+        accessorKey: "periodLabel",
+        header: "Период",
       },
-    },
-    {
-      accessorKey: 'totalAmount',
-      header: 'Сумма',
-      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
-    },
-  ], [])
+      {
+        accessorKey: "weeksCount",
+        header: "Недель",
+      },
+      {
+        accessorKey: "totalHours",
+        header: "Отработано",
+        Cell: ({ cell }) => `${(cell.getValue() as number).toFixed(2)} ч`,
+      },
+      {
+        accessorKey: "goalHours",
+        header: "Цель",
+        Cell: ({ cell }) => {
+          const goal = cell.getValue() as number | null;
+          return goal !== null ? (
+            `${goal.toFixed(2)} ч`
+          ) : (
+            <Text c="dimmed">—</Text>
+          );
+        },
+      },
+      {
+        accessorKey: "completion",
+        header: "Выполнение",
+        Cell: ({ row }) => {
+          const completion = row.original.completion;
+          if (completion === null) return <Text c="dimmed">—</Text>;
+          return (
+            <Group gap="xs" wrap="nowrap">
+              <Progress
+                value={Math.min(100, completion)}
+                size="sm"
+                style={{ flex: 1, minWidth: 100 }}
+              />
+              <Text size="sm" style={{ minWidth: 50 }}>
+                {completion.toFixed(0)}%
+              </Text>
+              {completion >= 100 && (
+                <Badge color="green" size="sm">
+                  ✓
+                </Badge>
+              )}
+            </Group>
+          );
+        },
+      },
+      {
+        accessorKey: "totalAmount",
+        header: "Сумма",
+        Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+      },
+    ],
+    [],
+  );
 
   const periodTable = useMantineReactTable({
     columns: periodColumns,
@@ -490,24 +558,26 @@ function StatisticsPage() {
     enableFullScreenToggle: true,
     initialState: {
       pagination: { pageIndex: 0, pageSize: 25 },
-      density: 'xs',
+      density: "xs",
     },
     mantinePaperProps: {
-      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      style: {
+        "--paper-radius": "var(--mantine-radius-xs)",
+      } as React.CSSProperties,
       withBorder: false,
     },
     mantineTableProps: {
       striped: true,
       highlightOnHover: true,
     },
-  })
+  });
 
   if (loading) {
     return (
       <Container>
         <Loader size="lg" />
       </Container>
-    )
+    );
   }
 
   if (error) {
@@ -517,7 +587,7 @@ function StatisticsPage() {
           {error}
         </Alert>
       </Container>
-    )
+    );
   }
 
   return (
@@ -527,13 +597,20 @@ function StatisticsPage() {
         <Group>
           <Menu>
             <Menu.Target>
-              <Button leftSection={<IconDownload size="1rem" />} variant="light">
+              <Button
+                leftSection={<IconDownload size="1rem" />}
+                variant="light"
+              >
                 Экспорт
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item onClick={handleExportProjects}>Экспорт по проектам (CSV)</Menu.Item>
-              <Menu.Item onClick={handleExportPeriods}>Экспорт по периодам (CSV)</Menu.Item>
+              <Menu.Item onClick={handleExportProjects}>
+                Экспорт по проектам (CSV)
+              </Menu.Item>
+              <Menu.Item onClick={handleExportPeriods}>
+                Экспорт по периодам (CSV)
+              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         </Group>
@@ -543,16 +620,23 @@ function StatisticsPage() {
       <Grid>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
-            <Text size="sm" c="dimmed" mb="xs">Всего часов</Text>
-            <Text size="xl" fw={700}>{totalStats.totalHours.toFixed(2)}</Text>
+            <Text size="sm" c="dimmed" mb="xs">
+              Всего часов
+            </Text>
+            <Text size="xl" fw={700}>
+              {totalStats.totalHours.toFixed(2)}
+            </Text>
             <Text size="sm" c="dimmed" mt="xs">
-              {Math.floor(totalStats.totalMinutes / 60)}ч {Math.round(totalStats.totalMinutes % 60)}м
+              {Math.floor(totalStats.totalMinutes / 60)}ч{" "}
+              {Math.round(totalStats.totalMinutes % 60)}м
             </Text>
           </Card>
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
-            <Text size="sm" c="dimmed" mb="xs">Общая сумма</Text>
+            <Text size="sm" c="dimmed" mb="xs">
+              Общая сумма
+            </Text>
             <Text size="xl" fw={700} c="green">
               {formatCurrency(totalStats.totalAmount)}
             </Text>
@@ -560,8 +644,12 @@ function StatisticsPage() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
-            <Text size="sm" c="dimmed" mb="xs">Среднее в неделю</Text>
-            <Text size="xl" fw={700}>{totalStats.avgHoursPerWeek.toFixed(2)} ч</Text>
+            <Text size="sm" c="dimmed" mb="xs">
+              Среднее в неделю
+            </Text>
+            <Text size="xl" fw={700}>
+              {totalStats.avgHoursPerWeek.toFixed(2)} ч
+            </Text>
             <Text size="sm" c="dimmed" mt="xs">
               {formatCurrency(totalStats.avgAmountPerWeek)}
             </Text>
@@ -569,14 +657,22 @@ function StatisticsPage() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
-            <Text size="sm" c="dimmed" mb="xs">Ставка за час</Text>
-            <Text size="xl" fw={700}>{formatCurrency(settings.ratePerMinute * 60)}</Text>
+            <Text size="sm" c="dimmed" mb="xs">
+              Ставка за час
+            </Text>
+            <Text size="xl" fw={700}>
+              {formatCurrency(settings.ratePerMinute * 60)}
+            </Text>
           </Card>
         </Grid.Col>
         <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
           <Card withBorder p="md">
-            <Text size="sm" c="dimmed" mb="xs">Период анализа</Text>
-            <Text size="xl" fw={700}>{totalStats.weeksCount} недель</Text>
+            <Text size="sm" c="dimmed" mb="xs">
+              Период анализа
+            </Text>
+            <Text size="xl" fw={700}>
+              {totalStats.weeksCount} недель
+            </Text>
           </Card>
         </Grid.Col>
       </Grid>
@@ -593,14 +689,14 @@ function StatisticsPage() {
           <Grid>
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Paper p="md" withBorder>
-                <Title order={4} mb="md">Часы по неделям</Title>
+                <Title order={4} mb="md">
+                  Часы по неделям
+                </Title>
                 <LineChart
                   h={300}
                   data={chartData}
                   dataKey="weekKey"
-                  series={[
-                    { name: 'hours', label: 'Часы', color: 'cyan.6' },
-                  ]}
+                  series={[{ name: "hours", label: "Часы", color: "cyan.6" }]}
                   curveType="natural"
                   tickLine="xy"
                   gridAxis="xy"
@@ -609,13 +705,15 @@ function StatisticsPage() {
             </Grid.Col>
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Paper p="md" withBorder>
-                <Title order={4} mb="md">Сумма по неделям</Title>
+                <Title order={4} mb="md">
+                  Сумма по неделям
+                </Title>
                 <LineChart
                   h={300}
                   data={chartData}
                   dataKey="weekKey"
                   series={[
-                    { name: 'amount', label: 'Сумма (₽)', color: 'cyan.5' },
+                    { name: "amount", label: "Сумма (₽)", color: "cyan.5" },
                   ]}
                   curveType="natural"
                   tickLine="xy"
@@ -631,14 +729,14 @@ function StatisticsPage() {
           <Grid>
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Paper p="md" withBorder>
-                <Title order={4} mb="md">Топ проектов по часам</Title>
+                <Title order={4} mb="md">
+                  Топ проектов по часам
+                </Title>
                 <BarChart
                   h={300}
                   data={projectChartData}
                   dataKey="name"
-                  series={[
-                    { name: 'hours', label: 'Часы', color: 'cyan.6' },
-                  ]}
+                  series={[{ name: "hours", label: "Часы", color: "cyan.6" }]}
                   tickLine="y"
                   gridAxis="y"
                 />
@@ -646,13 +744,15 @@ function StatisticsPage() {
             </Grid.Col>
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Paper p="md" withBorder>
-                <Title order={4} mb="md">Топ проектов по сумме</Title>
+                <Title order={4} mb="md">
+                  Топ проектов по сумме
+                </Title>
                 <BarChart
                   h={300}
                   data={projectChartData}
                   dataKey="name"
                   series={[
-                    { name: 'amount', label: 'Сумма (₽)', color: 'cyan.5' },
+                    { name: "amount", label: "Сумма (₽)", color: "cyan.5" },
                   ]}
                   tickLine="y"
                   gridAxis="y"
@@ -673,9 +773,9 @@ function StatisticsPage() {
                     label="Показать все проекты"
                     checked={showAllProjects}
                     onChange={(e) => {
-                      setShowAllProjects(e.currentTarget.checked)
+                      setShowAllProjects(e.currentTarget.checked);
                       if (e.currentTarget.checked) {
-                        setSelectedProjects([])
+                        setSelectedProjects([]);
                       }
                     }}
                   />
@@ -734,8 +834,7 @@ function StatisticsPage() {
         </DataTableShared.Container>
       )}
     </Stack>
-  )
+  );
 }
 
-export default StatisticsPage
-
+export default StatisticsPage;

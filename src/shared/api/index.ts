@@ -1,2 +1,2 @@
-export * from './kimaiApi'
-export * from './db'
+export * from "./kimaiApi";
+export * from "./db";

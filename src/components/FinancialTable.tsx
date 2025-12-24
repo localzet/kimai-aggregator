@@ -1,61 +1,66 @@
-import React, { useState, useMemo, memo } from 'react'
-import { formatCurrency, formatDuration } from '@/shared/utils'
+import React, { useState, useMemo, memo } from "react";
+import { formatCurrency, formatDuration } from "@/shared/utils";
+import { Select, Text, Badge, Group } from "@mantine/core";
+import { IconCurrencyDollar } from "@tabler/icons-react";
 import {
-  Select,
-  Text,
-  Badge,
-  Group,
-} from '@mantine/core'
-import { IconCurrencyDollar } from '@tabler/icons-react'
-import { MantineReactTable, useMantineReactTable, MRT_ColumnDef } from 'mantine-react-table'
-import dayjs from 'dayjs'
-import { DataTableShared } from '@/shared/ui/table'
-import { WeekData } from '@/shared/api/kimaiApi'
-import { Settings } from '@/shared/hooks/useSettings'
+  MantineReactTable,
+  useMantineReactTable,
+  MRT_ColumnDef,
+} from "mantine-react-table";
+import dayjs from "dayjs";
+import { DataTableShared } from "@/shared/ui/table";
+import { WeekData } from "@/shared/api/kimaiApi";
+import { Settings } from "@/shared/hooks/useSettings";
 
 interface FinancialTableProps {
-  weeks: WeekData[]
-  settings: Settings
+  weeks: WeekData[];
+  settings: Settings;
 }
 
 interface ProjectPeriod {
-  projectId: number
-  projectName: string
-  periodNumber: number
-  year: number
-  weeks: WeekData[]
-  totalHours: number
-  totalAmount: number
-  goalHours: number | null
-  id: string
+  projectId: number;
+  projectName: string;
+  periodNumber: number;
+  year: number;
+  weeks: WeekData[];
+  totalHours: number;
+  totalAmount: number;
+  goalHours: number | null;
+  id: string;
 }
 
-const FinancialTable = memo(function FinancialTable({ weeks, settings }: FinancialTableProps) {
-  const [selectedWeek, setSelectedWeek] = useState<string | null>(null)
+const FinancialTable = memo(function FinancialTable({
+  weeks,
+  settings,
+}: FinancialTableProps) {
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
 
-  const weekOptions = weeks.map(week => {
-    const startDate = dayjs.isDayjs(week.startDate) ? week.startDate : dayjs(week.startDate)
-    const endDate = dayjs.isDayjs(week.endDate) ? week.endDate : dayjs(week.endDate)
+  const weekOptions = weeks.map((week) => {
+    const startDate = dayjs.isDayjs(week.startDate)
+      ? week.startDate
+      : dayjs(week.startDate);
+    const endDate = dayjs.isDayjs(week.endDate)
+      ? week.endDate
+      : dayjs(week.endDate);
     return {
       value: week.weekKey,
-      label: `Неделя ${week.week}, ${week.year} (${startDate.format('DD.MM')} - ${endDate.format('DD.MM')})`,
-    }
-  })
+      label: `Неделя ${week.week}, ${week.year} (${startDate.format("DD.MM")} - ${endDate.format("DD.MM")})`,
+    };
+  });
 
   const selectedWeekData = selectedWeek
-    ? weeks.find(w => w.weekKey === selectedWeek)
-    : weeks[0]
-
+    ? weeks.find((w) => w.weekKey === selectedWeek)
+    : weeks[0];
 
   // Агрегация периодов для всех проектов с настройками
   const projectPeriods = useMemo(() => {
-    const periods: Record<string, ProjectPeriod> = {}
+    const periods: Record<string, ProjectPeriod> = {};
 
-    weeks.forEach(week => {
+    weeks.forEach((week) => {
       if (week.projectPeriodInfo) {
-        week.projectPeriodInfo.forEach(projectInfo => {
-          const { projectId, projectName, periodNumber } = projectInfo
-          const periodKey = `${projectId}-${week.year}-period-${periodNumber}`
+        week.projectPeriodInfo.forEach((projectInfo) => {
+          const { projectId, projectName, periodNumber } = projectInfo;
+          const periodKey = `${projectId}-${week.year}-period-${periodNumber}`;
 
           if (!periods[periodKey]) {
             periods[periodKey] = {
@@ -68,55 +73,61 @@ const FinancialTable = memo(function FinancialTable({ weeks, settings }: Financi
               totalAmount: 0,
               goalHours: null,
               id: periodKey,
-            }
+            };
           }
 
-          periods[periodKey].weeks.push(week)
-          periods[periodKey].totalHours += projectInfo.hours
-          periods[periodKey].totalAmount += projectInfo.weeklyAmount
+          periods[periodKey].weeks.push(week);
+          periods[periodKey].totalHours += projectInfo.hours;
+          periods[periodKey].totalAmount += projectInfo.weeklyAmount;
           if (projectInfo.goalHours !== null) {
-            periods[periodKey].goalHours = (periods[periodKey].goalHours || 0) + projectInfo.goalHours
+            periods[periodKey].goalHours =
+              (periods[periodKey].goalHours || 0) + projectInfo.goalHours;
           }
-        })
+        });
       }
-    })
+    });
 
-    return periods
-  }, [weeks])
+    return periods;
+  }, [weeks]);
 
   // Колонки для таблицы финансов по неделям
-  const weeklyColumns = useMemo<MRT_ColumnDef<typeof weeklyTableData[0]>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Проект',
-    },
-    {
-      accessorKey: 'hours',
-      header: 'Часы',
-      Cell: ({ cell }) => Number(cell.getValue()).toFixed(2),
-      sortingFn: 'basic',
-    },
-    {
-      accessorKey: 'minutes',
-      id: 'duration',
-      header: 'Время',
-      Cell: ({ cell }) => formatDuration(cell.getValue() as number),
-    },
-    {
-      accessorKey: 'amount',
-      header: 'Сумма',
-      Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
-      sortingFn: 'basic',
-    },
-  ], [])
+  const weeklyColumns = useMemo<MRT_ColumnDef<(typeof weeklyTableData)[0]>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Проект",
+      },
+      {
+        accessorKey: "hours",
+        header: "Часы",
+        Cell: ({ cell }) => Number(cell.getValue()).toFixed(2),
+        sortingFn: "basic",
+      },
+      {
+        accessorKey: "minutes",
+        id: "duration",
+        header: "Время",
+        Cell: ({ cell }) => formatDuration(cell.getValue() as number),
+      },
+      {
+        accessorKey: "amount",
+        header: "Сумма",
+        Cell: ({ cell }) => formatCurrency(cell.getValue() as number),
+        sortingFn: "basic",
+      },
+    ],
+    [],
+  );
 
   const weeklyTableData = useMemo(() => {
-    if (!selectedWeekData) return []
-    return selectedWeekData.projectStats?.map((project, idx) => ({
-      ...project,
-      id: project.id?.toString() || idx.toString(),
-    })) || []
-  }, [selectedWeekData])
+    if (!selectedWeekData) return [];
+    return (
+      selectedWeekData.projectStats?.map((project, idx) => ({
+        ...project,
+        id: project.id?.toString() || idx.toString(),
+      })) || []
+    );
+  }, [selectedWeekData]);
 
   const weeklyTable = useMantineReactTable({
     columns: weeklyColumns,
@@ -130,17 +141,19 @@ const FinancialTable = memo(function FinancialTable({ weeks, settings }: Financi
     enableFullScreenToggle: true,
     initialState: {
       pagination: { pageIndex: 0, pageSize: 25 },
-      density: 'xs',
+      density: "xs",
     },
     mantinePaperProps: {
-      style: { '--paper-radius': 'var(--mantine-radius-xs)' } as React.CSSProperties,
+      style: {
+        "--paper-radius": "var(--mantine-radius-xs)",
+      } as React.CSSProperties,
       withBorder: false,
     },
     mantineTableProps: {
       striped: true,
       highlightOnHover: true,
     },
-  })
+  });
 
   return (
     <DataTableShared.Container>
@@ -151,7 +164,10 @@ const FinancialTable = memo(function FinancialTable({ weeks, settings }: Financi
           <Group gap="md">
             {selectedWeekData && (
               <Text size="sm" c="dimmed">
-                Всего за неделю: <strong>{formatCurrency(selectedWeekData.totalAmount || 0)}</strong>
+                Всего за неделю:{" "}
+                <strong>
+                  {formatCurrency(selectedWeekData.totalAmount || 0)}
+                </strong>
               </Text>
             )}
             <Select
@@ -174,8 +190,7 @@ const FinancialTable = memo(function FinancialTable({ weeks, settings }: Financi
         )}
       </DataTableShared.Content>
     </DataTableShared.Container>
-  )
-})
+  );
+});
 
-export default FinancialTable
-
+export default FinancialTable;

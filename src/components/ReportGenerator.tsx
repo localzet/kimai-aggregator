@@ -1,69 +1,91 @@
-import { Button, Group, Modal, Stack, TextInput, NumberInput, Select, Paper, Text, Badge } from '@mantine/core'
-import { IconFileTypePdf } from '@tabler/icons-react'
-import { useState, useRef } from 'react'
-import { formatCurrency, formatDuration } from '@/shared/utils'
-import dayjs from 'dayjs'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { WeekData } from '@/shared/api/kimaiApi'
-import { Settings } from '@/shared/hooks/useSettings'
+import {
+  Button,
+  Group,
+  Modal,
+  Stack,
+  TextInput,
+  NumberInput,
+  Select,
+  Paper,
+  Text,
+  Badge,
+} from "@mantine/core";
+import { IconFileTypePdf } from "@tabler/icons-react";
+import { useState, useRef } from "react";
+import { formatCurrency, formatDuration } from "@/shared/utils";
+import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+import { WeekData } from "@/shared/api/kimaiApi";
+import { Settings } from "@/shared/hooks/useSettings";
 
-dayjs.extend(isoWeek)
+dayjs.extend(isoWeek);
 
 interface ReportGeneratorProps {
-  weeks: WeekData[]
-  settings: Settings
+  weeks: WeekData[];
+  settings: Settings;
 }
 
 function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
   const [reportConfig, setReportConfig] = useState({
-    startWeek: weeks.length > 0 ? weeks[weeks.length - 1].weekKey : '',
-    endWeek: weeks.length > 0 ? weeks[0].weekKey : '',
+    startWeek: weeks.length > 0 ? weeks[weeks.length - 1].weekKey : "",
+    endWeek: weeks.length > 0 ? weeks[0].weekKey : "",
     companyName: 'ООО "Компания"',
-    reportTitle: 'Отчет о выполненных работах',
+    reportTitle: "Отчет о выполненных работах",
     includeProjects: true,
     includeActivities: true,
-  })
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-
+  });
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const getSelectedWeeks = () => {
-    const startIdx = weeks.findIndex(w => w.weekKey === reportConfig.startWeek)
-    const endIdx = weeks.findIndex(w => w.weekKey === reportConfig.endWeek)
-    
-    if (startIdx === -1 || endIdx === -1) return []
-    
-    const [min, max] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx]
-    return weeks.slice(min, max + 1)
-  }
+    const startIdx = weeks.findIndex(
+      (w) => w.weekKey === reportConfig.startWeek,
+    );
+    const endIdx = weeks.findIndex((w) => w.weekKey === reportConfig.endWeek);
+
+    if (startIdx === -1 || endIdx === -1) return [];
+
+    const [min, max] =
+      startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+    return weeks.slice(min, max + 1);
+  };
 
   const generatePDF = () => {
-    const selectedWeeks = getSelectedWeeks()
+    const selectedWeeks = getSelectedWeeks();
     if (selectedWeeks.length === 0) {
-      alert('Пожалуйста, выберите период')
-      return
+      alert("Пожалуйста, выберите период");
+      return;
     }
 
-    const totalMinutes = selectedWeeks.reduce((sum, w) => sum + w.totalMinutes, 0)
-    const totalAmount = selectedWeeks.reduce((sum, w) => sum + (w.totalAmount || 0), 0)
+    const totalMinutes = selectedWeeks.reduce(
+      (sum, w) => sum + w.totalMinutes,
+      0,
+    );
+    const totalAmount = selectedWeeks.reduce(
+      (sum, w) => sum + (w.totalAmount || 0),
+      0,
+    );
 
-    const projectStats = new Map<string, { name: string; minutes: number; amount: number }>()
-    selectedWeeks.forEach(week => {
-      week.projectStats?.forEach(stat => {
-        const key = stat.name
-        const existing = projectStats.get(key)
+    const projectStats = new Map<
+      string,
+      { name: string; minutes: number; amount: number }
+    >();
+    selectedWeeks.forEach((week) => {
+      week.projectStats?.forEach((stat) => {
+        const key = stat.name;
+        const existing = projectStats.get(key);
         if (existing) {
-          existing.minutes += stat.minutes
-          existing.amount += stat.amount
+          existing.minutes += stat.minutes;
+          existing.amount += stat.amount;
         } else {
           projectStats.set(key, {
             name: stat.name,
             minutes: stat.minutes,
             amount: stat.amount,
-          })
+          });
         }
-      })
-    })
+      });
+    });
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -203,15 +225,15 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
         <div class="header">
             <div class="logo-section">
                 <div class="company-name">${reportConfig.companyName}</div>
-                <div class="report-number">Отчет №${dayjs().format('YYYY-MM-DD-HHmm')}</div>
+                <div class="report-number">Отчет №${dayjs().format("YYYY-MM-DD-HHmm")}</div>
             </div>
         </div>
 
         <div class="title">${reportConfig.reportTitle}</div>
 
         <div class="metadata">
-            <span>Период: ${(dayjs.isDayjs(selectedWeeks[selectedWeeks.length - 1].startDate) ? selectedWeeks[selectedWeeks.length - 1].startDate : dayjs(selectedWeeks[selectedWeeks.length - 1].startDate)).format('DD.MM.YYYY')} - ${(dayjs.isDayjs(selectedWeeks[0].endDate) ? selectedWeeks[0].endDate : dayjs(selectedWeeks[0].endDate)).format('DD.MM.YYYY')}</span>
-            <span>Дата подготовки: ${dayjs().format('DD.MM.YYYY HH:mm')}</span>
+            <span>Период: ${(dayjs.isDayjs(selectedWeeks[selectedWeeks.length - 1].startDate) ? selectedWeeks[selectedWeeks.length - 1].startDate : dayjs(selectedWeeks[selectedWeeks.length - 1].startDate)).format("DD.MM.YYYY")} - ${(dayjs.isDayjs(selectedWeeks[0].endDate) ? selectedWeeks[0].endDate : dayjs(selectedWeeks[0].endDate)).format("DD.MM.YYYY")}</span>
+            <span>Дата подготовки: ${dayjs().format("DD.MM.YYYY HH:mm")}</span>
         </div>
 
         <table class="table">
@@ -225,19 +247,25 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
                 </tr>
             </thead>
             <tbody>
-                ${selectedWeeks.map(week => {
-                  const startDate = dayjs.isDayjs(week.startDate) ? week.startDate : dayjs(week.startDate)
-                  const endDate = dayjs.isDayjs(week.endDate) ? week.endDate : dayjs(week.endDate)
-                  return `
+                ${selectedWeeks
+                  .map((week) => {
+                    const startDate = dayjs.isDayjs(week.startDate)
+                      ? week.startDate
+                      : dayjs(week.startDate);
+                    const endDate = dayjs.isDayjs(week.endDate)
+                      ? week.endDate
+                      : dayjs(week.endDate);
+                    return `
                 <tr>
                     <td>W${week.week}</td>
-                    <td>${startDate.format('DD.MM')}</td>
-                    <td>${endDate.format('DD.MM')}</td>
+                    <td>${startDate.format("DD.MM")}</td>
+                    <td>${endDate.format("DD.MM")}</td>
                     <td style="text-align: right;">${(week.totalHours || 0).toFixed(2)}</td>
                     <td style="text-align: right;">${formatCurrency(week.totalAmount || 0)}</td>
                 </tr>
-                `
-                }).join('')}
+                `;
+                  })
+                  .join("")}
                 <tr class="total-row">
                     <td colspan="3">ИТОГО</td>
                     <td style="text-align: right;">${(totalMinutes / 60).toFixed(2)}</td>
@@ -246,7 +274,9 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
             </tbody>
         </table>
 
-        ${reportConfig.includeProjects && projectStats.size > 0 ? `
+        ${
+          reportConfig.includeProjects && projectStats.size > 0
+            ? `
         <h3 style="font-size: 12pt; margin-top: 10mm; margin-bottom: 5mm;">Распределение по проектам</h3>
         <table class="table">
             <thead>
@@ -260,17 +290,22 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
             <tbody>
                 ${Array.from(projectStats.values())
                   .sort((a, b) => b.amount - a.amount)
-                  .map(stat => `
+                  .map(
+                    (stat) => `
                 <tr>
                     <td>${stat.name}</td>
                     <td style="text-align: right;">${(stat.minutes / 60).toFixed(2)}</td>
                     <td style="text-align: right;">${formatCurrency(stat.amount)}</td>
                     <td style="text-align: right;">${((stat.amount / totalAmount) * 100).toFixed(1)}%</td>
                 </tr>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
             </tbody>
         </table>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div class="summary">
             <h3 style="font-size: 11pt; margin-bottom: 5mm;">Сводка</h3>
@@ -305,24 +340,26 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
     </div>
 </body>
 </html>
-    `
+    `;
 
     if (iframeRef.current) {
-      iframeRef.current.srcdoc = htmlContent
+      iframeRef.current.srcdoc = htmlContent;
       setTimeout(() => {
-        iframeRef.current?.contentWindow?.print()
-      }, 500)
+        iframeRef.current?.contentWindow?.print();
+      }, 500);
     }
-  }
+  };
 
-  const weekOptions = weeks.map(w => {
-    const startDate = dayjs.isDayjs(w.startDate) ? w.startDate : dayjs(w.startDate)
-    const endDate = dayjs.isDayjs(w.endDate) ? w.endDate : dayjs(w.endDate)
+  const weekOptions = weeks.map((w) => {
+    const startDate = dayjs.isDayjs(w.startDate)
+      ? w.startDate
+      : dayjs(w.startDate);
+    const endDate = dayjs.isDayjs(w.endDate) ? w.endDate : dayjs(w.endDate);
     return {
       value: w.weekKey,
-      label: `W${w.week} ${w.year} (${startDate.format('DD.MM')}-${endDate.format('DD.MM')})`,
-    }
-  })
+      label: `W${w.week} ${w.year} (${startDate.format("DD.MM")}-${endDate.format("DD.MM")})`,
+    };
+  });
 
   return (
     <>
@@ -334,24 +371,41 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
         Генерировать отчет
       </Button>
 
-      <Modal opened={isOpen} onClose={() => setIsOpen(false)} title="Генерация PDF отчета" size="lg">
+      <Modal
+        opened={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Генерация PDF отчета"
+        size="lg"
+      >
         <Stack gap="md">
           <TextInput
             label="Название компании"
             value={reportConfig.companyName}
-            onChange={(e) => setReportConfig({ ...reportConfig, companyName: e.currentTarget.value })}
+            onChange={(e) =>
+              setReportConfig({
+                ...reportConfig,
+                companyName: e.currentTarget.value,
+              })
+            }
           />
 
           <TextInput
             label="Заголовок отчета"
             value={reportConfig.reportTitle}
-            onChange={(e) => setReportConfig({ ...reportConfig, reportTitle: e.currentTarget.value })}
+            onChange={(e) =>
+              setReportConfig({
+                ...reportConfig,
+                reportTitle: e.currentTarget.value,
+              })
+            }
           />
 
           <Select
             label="Начало периода"
             value={reportConfig.startWeek}
-            onChange={(value) => setReportConfig({ ...reportConfig, startWeek: value || '' })}
+            onChange={(value) =>
+              setReportConfig({ ...reportConfig, startWeek: value || "" })
+            }
             data={weekOptions}
             searchable
           />
@@ -359,31 +413,34 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
           <Select
             label="Конец периода"
             value={reportConfig.endWeek}
-            onChange={(value) => setReportConfig({ ...reportConfig, endWeek: value || '' })}
+            onChange={(value) =>
+              setReportConfig({ ...reportConfig, endWeek: value || "" })
+            }
             data={weekOptions}
             searchable
           />
 
           <Group>
-            <Badge size="lg" color={reportConfig.includeProjects ? 'green' : 'gray'}>
-              Проекты: {reportConfig.includeProjects ? 'Да' : 'Нет'}
+            <Badge
+              size="lg"
+              color={reportConfig.includeProjects ? "green" : "gray"}
+            >
+              Проекты: {reportConfig.includeProjects ? "Да" : "Нет"}
             </Badge>
           </Group>
 
           <Group justify="flex-end">
-            <Button variant="light" onClick={() => setIsOpen(false)}>Отмена</Button>
+            <Button variant="light" onClick={() => setIsOpen(false)}>
+              Отмена
+            </Button>
             <Button onClick={generatePDF}>Генерировать PDF</Button>
           </Group>
         </Stack>
       </Modal>
 
-      <iframe
-        ref={iframeRef}
-        style={{ display: 'none' }}
-        title="PDF Preview"
-      />
+      <iframe ref={iframeRef} style={{ display: "none" }} title="PDF Preview" />
     </>
-  )
+  );
 }
 
-export default ReportGenerator
+export default ReportGenerator;

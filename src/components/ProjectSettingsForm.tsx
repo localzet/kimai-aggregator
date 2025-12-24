@@ -8,23 +8,27 @@ import {
   Button,
   Group,
   ActionIcon,
-} from '@mantine/core'
-import { DateInput } from '@mantine/dates'
-import { IconTrash, IconPlus } from '@tabler/icons-react'
-import dayjs from 'dayjs'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { Project } from '@/shared/api/kimaiApi'
-import { Settings } from '@/shared/hooks/useSettings'
+} from "@mantine/core";
+import { DateInput } from "@mantine/dates";
+import { IconTrash, IconPlus } from "@tabler/icons-react";
+import dayjs from "dayjs";
+import isoWeek from "dayjs/plugin/isoWeek";
+import { Project } from "@/shared/api/kimaiApi";
+import { Settings } from "@/shared/hooks/useSettings";
 
-dayjs.extend(isoWeek)
+dayjs.extend(isoWeek);
 
 interface ProjectSettingsFormProps {
-  project: Project
-  settings: Settings
-  onUpdate: (settings: Settings) => void
+  project: Project;
+  settings: Settings;
+  onUpdate: (settings: Settings) => void;
 }
 
-export default function ProjectSettingsForm({ project, settings, onUpdate }: ProjectSettingsFormProps) {
+export default function ProjectSettingsForm({
+  project,
+  settings,
+  onUpdate,
+}: ProjectSettingsFormProps) {
   const projectSettings = settings.projectSettings?.[project.id] || {
     enabled: false,
     hasWeeklyGoal: false,
@@ -35,69 +39,76 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
     startYear: new Date().getFullYear(),
     hasStages: false,
     stages: [],
-  }
+  };
 
   const updateSetting = (field: string, value: unknown) => {
-    const currentSettings = { ...settings }
+    const currentSettings = { ...settings };
     if (!currentSettings.projectSettings) {
-      currentSettings.projectSettings = {}
+      currentSettings.projectSettings = {};
     }
     if (!currentSettings.projectSettings[project.id]) {
-      currentSettings.projectSettings[project.id] = { ...projectSettings }
+      currentSettings.projectSettings[project.id] = { ...projectSettings };
     }
     currentSettings.projectSettings[project.id] = {
       ...currentSettings.projectSettings[project.id],
       [field]: value,
-    }
-    onUpdate(currentSettings)
-  }
+    };
+    onUpdate(currentSettings);
+  };
 
   const addStage = () => {
-    const newStages = [...(projectSettings.stages || []), {
-      name: '',
-      plannedHours: 0,
-      startDate: dayjs().format('YYYY-MM-DD'),
-      endDate: dayjs().add(1, 'month').format('YYYY-MM-DD'),
-    }]
-    updateSetting('stages', newStages)
-  }
+    const newStages = [
+      ...(projectSettings.stages || []),
+      {
+        name: "",
+        plannedHours: 0,
+        startDate: dayjs().format("YYYY-MM-DD"),
+        endDate: dayjs().add(1, "month").format("YYYY-MM-DD"),
+      },
+    ];
+    updateSetting("stages", newStages);
+  };
 
   const removeStage = (index: number) => {
-    const newStages = (projectSettings.stages || []).filter((_, i) => i !== index)
-    updateSetting('stages', newStages)
-  }
+    const newStages = (projectSettings.stages || []).filter(
+      (_, i) => i !== index,
+    );
+    updateSetting("stages", newStages);
+  };
 
   const updateStage = (index: number, field: string, value: unknown) => {
-    const newStages = [...(projectSettings.stages || [])]
-    newStages[index] = { ...newStages[index], [field]: value }
-    updateSetting('stages', newStages)
-  }
+    const newStages = [...(projectSettings.stages || [])];
+    newStages[index] = { ...newStages[index], [field]: value };
+    updateSetting("stages", newStages);
+  };
 
   const getCurrentWeekNumber = () => {
-    return dayjs().isoWeek()
-  }
+    return dayjs().isoWeek();
+  };
 
   const getCurrentYear = () => {
-    return dayjs().year()
-  }
+    return dayjs().year();
+  };
 
   return (
     <Stack gap="md" mt="md">
       <Switch
         label="Включить отслеживание проекта"
         checked={projectSettings.enabled}
-        onChange={(e) => updateSetting('enabled', e.currentTarget.checked)}
+        onChange={(e) => updateSetting("enabled", e.currentTarget.checked)}
       />
 
       {projectSettings.enabled && (
         <>
           <Divider />
           <Title order={5}>Цель по часам</Title>
-          
+
           <Switch
             label="Есть цель по часам в неделю"
             checked={projectSettings.hasWeeklyGoal}
-            onChange={(e) => updateSetting('hasWeeklyGoal', e.currentTarget.checked)}
+            onChange={(e) =>
+              updateSetting("hasWeeklyGoal", e.currentTarget.checked)
+            }
           />
 
           {projectSettings.hasWeeklyGoal && (
@@ -107,17 +118,21 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
               min={0}
               step={0.5}
               value={projectSettings.weeklyGoalHours || 20}
-              onChange={(value) => updateSetting('weeklyGoalHours', Number(value) || 0)}
+              onChange={(value) =>
+                updateSetting("weeklyGoalHours", Number(value) || 0)
+              }
             />
           )}
 
           <Divider />
           <Title order={5}>Периоды оплаты</Title>
-          
+
           <Switch
             label="Есть периоды оплаты"
             checked={projectSettings.hasPaymentPeriods}
-            onChange={(e) => updateSetting('hasPaymentPeriods', e.currentTarget.checked)}
+            onChange={(e) =>
+              updateSetting("hasPaymentPeriods", e.currentTarget.checked)
+            }
           />
 
           {projectSettings.hasPaymentPeriods && (
@@ -127,7 +142,9 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
                 description="Количество недель в периоде оплаты"
                 min={1}
                 value={projectSettings.paymentPeriodWeeks || 2}
-                onChange={(value) => updateSetting('paymentPeriodWeeks', Number(value) || 1)}
+                onChange={(value) =>
+                  updateSetting("paymentPeriodWeeks", Number(value) || 1)
+                }
               />
 
               <NumberInput
@@ -135,8 +152,12 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
                 description={`Текущая неделя: ${getCurrentWeekNumber()}`}
                 min={1}
                 max={53}
-                value={projectSettings.startWeekNumber || getCurrentWeekNumber()}
-                onChange={(value) => updateSetting('startWeekNumber', Number(value) || 1)}
+                value={
+                  projectSettings.startWeekNumber || getCurrentWeekNumber()
+                }
+                onChange={(value) =>
+                  updateSetting("startWeekNumber", Number(value) || 1)
+                }
               />
 
               <NumberInput
@@ -145,18 +166,22 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
                 min={2020}
                 max={2100}
                 value={projectSettings.startYear || getCurrentYear()}
-                onChange={(value) => updateSetting('startYear', Number(value) || getCurrentYear())}
+                onChange={(value) =>
+                  updateSetting("startYear", Number(value) || getCurrentYear())
+                }
               />
             </>
           )}
 
           <Divider />
           <Title order={5}>Этапы проекта</Title>
-          
+
           <Switch
             label="Есть этапы проекта"
             checked={projectSettings.hasStages}
-            onChange={(e) => updateSetting('hasStages', e.currentTarget.checked)}
+            onChange={(e) =>
+              updateSetting("hasStages", e.currentTarget.checked)
+            }
           />
 
           {projectSettings.hasStages && (
@@ -167,25 +192,47 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
                     <TextInput
                       label="Название этапа"
                       value={stage.name}
-                      onChange={(e) => updateStage(index, 'name', e.target.value)}
+                      onChange={(e) =>
+                        updateStage(index, "name", e.target.value)
+                      }
                     />
                     <NumberInput
                       label="Плановые часы"
                       min={0}
                       step={0.5}
                       value={stage.plannedHours}
-                      onChange={(value) => updateStage(index, 'plannedHours', Number(value) || 0)}
+                      onChange={(value) =>
+                        updateStage(index, "plannedHours", Number(value) || 0)
+                      }
                     />
                     <Group grow>
                       <DateInput
                         label="Дата начала"
-                        value={stage.startDate ? dayjs(stage.startDate).toDate() : null}
-                        onChange={(date) => updateStage(index, 'startDate', date ? dayjs(date).format('YYYY-MM-DD') : '')}
+                        value={
+                          stage.startDate
+                            ? dayjs(stage.startDate).toDate()
+                            : null
+                        }
+                        onChange={(date) =>
+                          updateStage(
+                            index,
+                            "startDate",
+                            date ? dayjs(date).format("YYYY-MM-DD") : "",
+                          )
+                        }
                       />
                       <DateInput
                         label="Дата окончания"
-                        value={stage.endDate ? dayjs(stage.endDate).toDate() : null}
-                        onChange={(date) => updateStage(index, 'endDate', date ? dayjs(date).format('YYYY-MM-DD') : '')}
+                        value={
+                          stage.endDate ? dayjs(stage.endDate).toDate() : null
+                        }
+                        onChange={(date) =>
+                          updateStage(
+                            index,
+                            "endDate",
+                            date ? dayjs(date).format("YYYY-MM-DD") : "",
+                          )
+                        }
                       />
                     </Group>
                   </Stack>
@@ -211,6 +258,5 @@ export default function ProjectSettingsForm({ project, settings, onUpdate }: Pro
         </>
       )}
     </Stack>
-  )
+  );
 }
-

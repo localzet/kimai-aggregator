@@ -1,83 +1,93 @@
-import { SimpleGrid, Group, Stack, Box, Loader } from '@mantine/core'
-import { IconCurrencyDollar, IconClock, IconTrendingUp, IconCalendar } from '@tabler/icons-react'
-import { motion } from 'motion/react'
-import { memo } from 'react'
-import { MetricCard } from '@/shared/ui/metrics'
-import { WeekData } from '@/shared/api/kimaiApi'
-import { formatCurrency } from '@/shared/utils'
+import { SimpleGrid, Group, Stack, Box, Loader } from "@mantine/core";
+import {
+  IconCurrencyDollar,
+  IconClock,
+  IconTrendingUp,
+  IconCalendar,
+} from "@tabler/icons-react";
+import { motion } from "motion/react";
+import { memo } from "react";
+import { MetricCard } from "@/shared/ui/metrics";
+import { WeekData } from "@/shared/api/kimaiApi";
+import { formatCurrency } from "@/shared/utils";
 
 interface FinancialMetricsProps {
-  weeks: WeekData[]
-  isLoading?: boolean
+  weeks: WeekData[];
+  isLoading?: boolean;
 }
 
-const MotionMetricCard = motion(MetricCard.Root)
+const MotionMetricCard = motion(MetricCard.Root);
 
 function formatInt(value: number) {
-  return new Intl.NumberFormat('ru-RU').format(value)
+  return new Intl.NumberFormat("ru-RU").format(value);
 }
 
-export const FinancialMetrics = memo(function FinancialMetrics({ weeks, isLoading }: FinancialMetricsProps) {
-  const totalAmount = weeks.reduce((sum, week) => sum + (week.totalAmount || 0), 0)
-  const totalHours = weeks.reduce((sum, week) => sum + (week.totalHours || 0), 0)
-  const avgAmountPerWeek = weeks.length > 0 ? totalAmount / weeks.length : 0
-  const weeksCount = weeks.length
+export const FinancialMetrics = memo(function FinancialMetrics({
+  weeks,
+  isLoading,
+}: FinancialMetricsProps) {
+  const totalAmount = weeks.reduce(
+    (sum, week) => sum + (week.totalAmount || 0),
+    0,
+  );
+  const totalHours = weeks.reduce(
+    (sum, week) => sum + (week.totalHours || 0),
+    0,
+  );
+  const avgAmountPerWeek = weeks.length > 0 ? totalAmount / weeks.length : 0;
+  const weeksCount = weeks.length;
 
   const cards = [
     {
       icon: IconCurrencyDollar,
-      title: 'Общая сумма',
+      title: "Общая сумма",
       value: formatCurrency(totalAmount),
-      color: 'green'
+      color: "green",
     },
     {
       icon: IconClock,
-      title: 'Всего часов',
+      title: "Всего часов",
       value: totalHours.toFixed(2),
-      color: 'blue'
+      color: "blue",
     },
     {
       icon: IconTrendingUp,
-      title: 'Среднее в неделю',
+      title: "Среднее в неделю",
       value: formatCurrency(avgAmountPerWeek),
-      color: 'cyan'
+      color: "cyan",
     },
     {
       icon: IconCalendar,
-      title: 'Недель',
+      title: "Недель",
       value: formatInt(weeksCount),
-      color: 'orange'
-    }
-  ]
+      color: "orange",
+    },
+  ];
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
-  }
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3 }
-    }
-  }
+      transition: { duration: 0.3 },
+    },
+  };
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="visible">
       <SimpleGrid cols={{ base: 1, sm: 2, xl: 4 }}>
         {cards.map((card) => {
-          const Icon = card.icon
+          const Icon = card.icon;
           return (
             <MotionMetricCard key={card.title} variants={cardVariants}>
               <Group wrap="nowrap">
@@ -98,10 +108,9 @@ export const FinancialMetrics = memo(function FinancialMetrics({ weeks, isLoadin
                 </Stack>
               </Group>
             </MotionMetricCard>
-          )
+          );
         })}
       </SimpleGrid>
     </motion.div>
-  )
-})
-
+  );
+});

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Stepper,
   Button,
@@ -14,235 +14,278 @@ import {
   Alert,
   Card,
   Badge,
-} from '@mantine/core'
-import { notifications } from '@mantine/notifications'
-import { IconCheck, IconX, IconUpload, IconKey, IconServer, IconCloud, IconPlug } from '@tabler/icons-react'
-import { Settings, useSettings, AppMode } from '@/shared/hooks/useSettings'
-import type { Project } from '@/shared/api/kimaiApi'
-import { BackendApi } from '@/shared/api/backendApi'
-import { mixIdApi } from '@/shared/mixIdStub'
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import {
+  IconCheck,
+  IconX,
+  IconUpload,
+  IconKey,
+  IconServer,
+  IconCloud,
+  IconPlug,
+} from "@tabler/icons-react";
+import { Settings, useSettings, AppMode } from "@/shared/hooks/useSettings";
+import type { Project } from "@/shared/api/kimaiApi";
+import { BackendApi } from "@/shared/api/backendApi";
+import { mixIdApi } from "@/shared/mixIdStub";
 
 interface SetupWizardProps {
-  onComplete: () => void
+  onComplete: () => void;
 }
 
 export default function SetupWizard({ onComplete }: SetupWizardProps) {
-  const navigate = useNavigate()
-  const { updateSettings } = useSettings()
-  const [active, setActive] = useState(0)
-  const [appMode, setAppMode] = useState<AppMode | null>(null)
-  const defaultBackendUrl = (import.meta.env.VITE_BACKEND_URL as string) || 'https://kimai-api.zorin.cloud'
-  const [backendUrl, setBackendUrl] = useState(defaultBackendUrl)
-  const [setupMethod, setSetupMethod] = useState<'manual' | 'import' | 'sync' | null>(null)
-  const [backendToken, setBackendToken] = useState('')
+  const navigate = useNavigate();
+  const { updateSettings } = useSettings();
+  const [active, setActive] = useState(0);
+  const [appMode, setAppMode] = useState<AppMode | null>(null);
+  const defaultBackendUrl =
+    (import.meta.env.VITE_BACKEND_URL as string) ||
+    "https://kimai-api.zorin.cloud";
+  const [backendUrl, setBackendUrl] = useState(defaultBackendUrl);
+  const [setupMethod, setSetupMethod] = useState<
+    "manual" | "import" | "sync" | null
+  >(null);
+  const [backendToken, setBackendToken] = useState("");
   // Для ручного ввода Kimai (frontend будет передавать их бэкенду для проверки)
-  const [apiUrl, setApiUrl] = useState('')
-  const [apiKey, setApiKey] = useState('')
-  const [testingConnection, setTestingConnection] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [apiUrl, setApiUrl] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Для импорта
-  const [importing, setImporting] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
-  
-  // Для синхронизации
-  const [syncing, setSyncing] = useState(false)
-  const [syncError, setSyncError] = useState<string | null>(null)
-  const [syncSuccess, setSyncSuccess] = useState(false)
-  const [projects, setProjects] = useState<Project[]>([])
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
-  const isElectron = typeof window !== 'undefined' && (
-    (window as any).electron?.isElectron ||
-    (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron')) ||
-    window.location.protocol === 'file:'
-  )
+  // Для синхронизации
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncSuccess, setSyncSuccess] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  const isElectron =
+    typeof window !== "undefined" &&
+    ((window as any).electron?.isElectron ||
+      (typeof navigator !== "undefined" &&
+        navigator.userAgent.includes("Electron")) ||
+      window.location.protocol === "file:");
 
   useEffect(() => {
-    setAppMode(isElectron ? 'standalone' : 'normal')
+    setAppMode(isElectron ? "standalone" : "normal");
     // In Electron builds backend is still used but we treat app as offline-capable cache.
     // For Electron we hide backend inputs (they are preconfigured via env/build).
     if (isElectron && import.meta.env.VITE_BACKEND_URL) {
-      setBackendUrl(import.meta.env.VITE_BACKEND_URL as string)
+      setBackendUrl(import.meta.env.VITE_BACKEND_URL as string);
     }
-  }, [])
+  }, []);
 
   // Note: direct Kimai/API calls removed — frontend talks only to backend.
 
   const handleImport = async (file: File | null) => {
-    if (!file) return
+    if (!file) return;
 
-    setImporting(true)
-    setImportError(null)
+    setImporting(true);
+    setImportError(null);
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const imported = JSON.parse(e.target?.result as string) as Settings
+        const imported = JSON.parse(e.target?.result as string) as Settings;
 
         if (!imported.backendUrl) {
-          throw new Error('В файле отсутствует обязательное поле: backendUrl')
+          throw new Error("В файле отсутствует обязательное поле: backendUrl");
         }
 
         // Сохраняем настройки, бэкенд будет управлять остальными интеграциями
         updateSettings({
           ...imported,
-          appMode: appMode || (isElectron ? 'standalone' : 'normal'),
-        })
+          appMode: appMode || (isElectron ? "standalone" : "normal"),
+        });
 
         notifications.show({
-          title: 'Импорт успешен',
+          title: "Импорт успешен",
           message: `Настройки импортированы.`,
-          color: 'green',
-        })
+          color: "green",
+        });
 
         setTimeout(() => {
-          setActive(2)
-        }, 500)
+          setActive(2);
+        }, 500);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-        setImportError(errorMessage)
+        const errorMessage =
+          err instanceof Error ? err.message : "Неизвестная ошибка";
+        setImportError(errorMessage);
         notifications.show({
-          title: 'Ошибка импорта',
+          title: "Ошибка импорта",
           message: errorMessage,
-          color: 'red',
-        })
+          color: "red",
+        });
       } finally {
-        setImporting(false)
+        setImporting(false);
       }
-    }
-    reader.readAsText(file)
-  }
+    };
+    reader.readAsText(file);
+  };
 
   const testConnection = async () => {
     if (!apiUrl.trim() || !apiKey.trim()) {
-      setConnectionError('Заполните все поля')
-      setConnectionStatus('error')
-      return
+      setConnectionError("Заполните все поля");
+      setConnectionStatus("error");
+      return;
     }
 
     try {
-      setTestingConnection(true)
-      setConnectionError(null)
-      setConnectionStatus('idle')
+      setTestingConnection(true);
+      setConnectionError(null);
+      setConnectionStatus("idle");
 
-      const base = backendUrl.trim() || defaultBackendUrl
+      const base = backendUrl.trim() || defaultBackendUrl;
       // Проверяем, что на базовом URL есть ожидаемый endpoint
       try {
-        const healthRes = await fetch(`${base.replace(/\/$/, '')}/api/settings`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        })
+        const healthRes = await fetch(
+          `${base.replace(/\/$/, "")}/api/settings`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
 
         if (!healthRes.ok) {
           // Понятное сообщение для 404/401/5xx
-          throw new Error(`Бэкенд недоступен: ${healthRes.status} ${healthRes.statusText}`)
+          throw new Error(
+            `Бэкенд недоступен: ${healthRes.status} ${healthRes.statusText}`,
+          );
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Не удалось связаться с бэкендом'
-        setConnectionError(errorMessage)
-        setConnectionStatus('error')
-        notifications.show({ title: 'Ошибка подключения', message: errorMessage, color: 'red' })
-        return
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Не удалось связаться с бэкендом";
+        setConnectionError(errorMessage);
+        setConnectionStatus("error");
+        notifications.show({
+          title: "Ошибка подключения",
+          message: errorMessage,
+          color: "red",
+        });
+        return;
       }
 
-      const backendApi = new BackendApi(base)
+      const backendApi = new BackendApi(base);
       // Update settings on backend (backend should validate Kimai credentials)
-      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() })
+      await backendApi.updateSettings({
+        apiUrl: apiUrl.trim(),
+        apiKey: apiKey.trim(),
+      });
 
-      setConnectionStatus('success')
+      setConnectionStatus("success");
       notifications.show({
-        title: 'Подключение успешно',
-        message: 'Креденшелы сохранены на бэкенде',
-        color: 'green',
-      })
+        title: "Подключение успешно",
+        message: "Креденшелы сохранены на бэкенде",
+        color: "green",
+      });
 
       // Optionally clear or set projects later when backend syncs
-      setProjects([])
+      setProjects([]);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-      setConnectionError(errorMessage)
-      setConnectionStatus('error')
+      const errorMessage =
+        err instanceof Error ? err.message : "Неизвестная ошибка";
+      setConnectionError(errorMessage);
+      setConnectionStatus("error");
       notifications.show({
-        title: 'Ошибка подключения',
+        title: "Ошибка подключения",
         message: errorMessage,
-        color: 'red',
-      })
+        color: "red",
+      });
     } finally {
-      setTestingConnection(false)
+      setTestingConnection(false);
     }
-  }
+  };
 
   const handleComplete = async () => {
-    if (setupMethod === 'manual') {
+    if (setupMethod === "manual") {
       const newSettings: Settings = {
-        apiUrl: '',
-        apiKey: '',
+        apiUrl: "",
+        apiKey: "",
         ratePerMinute: 0,
         useProxy: false,
-        syncUrl: '',
+        syncUrl: "",
         projectSettings: {},
         excludedTags: [],
-        appMode: appMode || 'normal',
+        appMode: appMode || "normal",
         backendUrl: backendUrl.trim(),
         backendToken: backendToken.trim(),
-      }
+      };
 
-      updateSettings(newSettings)
-    } else if (setupMethod === 'sync' && syncSuccess) {
-      const currentSettings = JSON.parse(localStorage.getItem('kimai-settings') || '{}') as Settings
+      updateSettings(newSettings);
+    } else if (setupMethod === "sync" && syncSuccess) {
+      const currentSettings = JSON.parse(
+        localStorage.getItem("kimai-settings") || "{}",
+      ) as Settings;
       updateSettings({
         ...currentSettings,
-        appMode: appMode || 'normal',
-        backendUrl: backendUrl.trim() || currentSettings.backendUrl || '',
-      })
+        appMode: appMode || "normal",
+        backendUrl: backendUrl.trim() || currentSettings.backendUrl || "",
+      });
     }
 
     notifications.show({
-      title: 'Настройка завершена',
-      message: 'Добро пожаловать! Перенаправление на главную страницу...',
-      color: 'green',
-    })
+      title: "Настройка завершена",
+      message: "Добро пожаловать! Перенаправление на главную страницу...",
+      color: "green",
+    });
 
     // Используем window.location для полной перезагрузки, чтобы меню обновилось
     setTimeout(() => {
-      onComplete()
-      window.location.href = '/dashboard'
-    }, 1000)
-  }
+      onComplete();
+      window.location.href = "/dashboard";
+    }, 1000);
+  };
 
-  const canProceedFromStep0 = setupMethod !== null
-  const canProceedFromStep1 = setupMethod === 'import'
-    ? true
-    : setupMethod === 'sync'
-    ? syncSuccess
-    : connectionStatus === 'success'
+  const canProceedFromStep0 = setupMethod !== null;
+  const canProceedFromStep1 =
+    setupMethod === "import"
+      ? true
+      : setupMethod === "sync"
+        ? syncSuccess
+        : connectionStatus === "success";
 
   return (
     <Paper p="xl" maw={800} mx="auto" mt="xl">
       <Stack gap="xl">
         <div>
-          <Title order={2} mb="xs">Добро пожаловать в Kimai Aggregator!</Title>
-          <Text c="dimmed">Давайте настроим приложение для работы с вашим Kimai</Text>
+          <Title order={2} mb="xs">
+            Добро пожаловать в Kimai Aggregator!
+          </Title>
+          <Text c="dimmed">
+            Давайте настроим приложение для работы с вашим Kimai
+          </Text>
         </div>
 
         <Stepper active={active} onStepClick={setActive}>
-          <Stepper.Step 
-            label="Настройка" 
+          <Stepper.Step
+            label="Настройка"
             // description="Выберите способ настройки"
             icon={<IconKey size={18} />}
             allowStepSelect={active > 0}
           >
             <Stack gap="md" mt="xl">
               <Text>Как вы хотите настроить приложение?</Text>
-              
+
               <Group grow>
                 <Card
                   p="md"
                   withBorder
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setSetupMethod('manual')}
-                  bg={setupMethod === 'manual' ? 'var(--mantine-color-blue-9)' : undefined}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSetupMethod("manual")}
+                  bg={
+                    setupMethod === "manual"
+                      ? "var(--mantine-color-blue-9)"
+                      : undefined
+                  }
                 >
                   <Stack align="center" gap="xs">
                     <IconServer size={48} />
@@ -256,9 +299,13 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 <Card
                   p="md"
                   withBorder
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setSetupMethod('import')}
-                  bg={setupMethod === 'import' ? 'var(--mantine-color-blue-9)' : undefined}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSetupMethod("import")}
+                  bg={
+                    setupMethod === "import"
+                      ? "var(--mantine-color-blue-9)"
+                      : undefined
+                  }
                 >
                   <Stack align="center" gap="xs">
                     <IconUpload size={48} />
@@ -272,9 +319,13 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 <Card
                   p="md"
                   withBorder
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setSetupMethod('sync')}
-                  bg={setupMethod === 'sync' ? 'var(--mantine-color-blue-9)' : undefined}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSetupMethod("sync")}
+                  bg={
+                    setupMethod === "sync"
+                      ? "var(--mantine-color-blue-9)"
+                      : undefined
+                  }
                 >
                   <Stack align="center" gap="xs">
                     <IconCloud size={48} />
@@ -286,21 +337,21 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 </Card>
               </Group>
 
-              {setupMethod === 'import' && (
+              {setupMethod === "import" && (
                 <Stack gap="md" mt="md">
                   <FileButton onChange={handleImport} accept="application/json">
                     {(props) => (
-                      <Button 
-                        {...props} 
+                      <Button
+                        {...props}
                         leftSection={<IconUpload size={16} />}
                         loading={importing}
                         fullWidth
                       >
-                        {importing ? 'Импорт...' : 'Выбрать файл настроек'}
+                        {importing ? "Импорт..." : "Выбрать файл настроек"}
                       </Button>
                     )}
                   </FileButton>
-                  
+
                   {importError && (
                     <Alert color="red" title="Ошибка импорта">
                       {importError}
@@ -313,143 +364,204 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
           <Stepper.Step
             label="Подключение"
             // description={
-            //   setupMethod === 'import' 
-            //     ? 'Проверка импортированных данных' 
+            //   setupMethod === 'import'
+            //     ? 'Проверка импортированных данных'
             //     : setupMethod === 'sync'
             //     ? 'Подключение к MIX ID'
             //     : 'Введите адрес бэкенда и токен'
             // }
-            icon={setupMethod === 'sync' ? <IconCloud size={18} /> : <IconServer size={18} />}
+            icon={
+              setupMethod === "sync" ? (
+                <IconCloud size={18} />
+              ) : (
+                <IconServer size={18} />
+              )
+            }
             allowStepSelect={active > 1}
           >
             <Stack gap="md" mt="xl">
-              {setupMethod === 'sync' ? (
+              {setupMethod === "sync" ? (
                 <>
                   <Alert>
                     <Text size="sm">
-                      Подключите MIX ID для синхронизации настроек из облака. Если у вас уже есть аккаунт MIX ID,
-                      ваши настройки будут автоматически загружены.
+                      Подключите MIX ID для синхронизации настроек из облака.
+                      Если у вас уже есть аккаунт MIX ID, ваши настройки будут
+                      автоматически загружены.
                     </Text>
                   </Alert>
-                  
+
                   <Button
                     onClick={async () => {
                       try {
-                        setSyncing(true)
-                        setSyncError(null)
-                        
-                        const apiBase = import.meta.env.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api'
-                        const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || ''
-                        const clientSecret = import.meta.env.VITE_MIX_ID_CLIENT_SECRET || ''
-                        
+                        setSyncing(true);
+                        setSyncError(null);
+
+                        const apiBase =
+                          import.meta.env.VITE_MIX_ID_API_BASE ||
+                          "https://data-center.zorin.cloud/api";
+                        const clientId =
+                          import.meta.env.VITE_MIX_ID_CLIENT_ID || "";
+                        const clientSecret =
+                          import.meta.env.VITE_MIX_ID_CLIENT_SECRET || "";
+
                         if (!clientId || !clientSecret) {
-                          throw new Error('MIX ID не настроен. Обратитесь к администратору.')
+                          throw new Error(
+                            "MIX ID не настроен. Обратитесь к администратору.",
+                          );
                         }
-                        
-                        mixIdApi.setConfig({ apiBase, clientId, clientSecret })
-                        
+
+                        mixIdApi.setConfig({ apiBase, clientId, clientSecret });
+
                         // Для Electron используем file:// или localhost в зависимости от режима
-                        const isElectron = typeof window !== 'undefined' && (
-                          window.electron?.isElectron || 
-                          (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron')) ||
-                          window.location.protocol === 'file:'
-                        )
-                        
-                        let redirectUri
-                        if (isElectron && window.location.protocol === 'file:') {
+                        const isElectron =
+                          typeof window !== "undefined" &&
+                          (window.electron?.isElectron ||
+                            (typeof navigator !== "undefined" &&
+                              navigator.userAgent.includes("Electron")) ||
+                            window.location.protocol === "file:");
+
+                        let redirectUri;
+                        if (
+                          isElectron &&
+                          window.location.protocol === "file:"
+                        ) {
                           // В production Electron используем file://
-                          redirectUri = 'file:///mixid-callback'
+                          redirectUri = "file:///mixid-callback";
                         } else if (isElectron) {
                           // В dev режиме используем localhost
-                          redirectUri = window.location.origin + '/mixid-callback'
+                          redirectUri =
+                            window.location.origin + "/mixid-callback";
                         } else {
                           // В браузере используем текущий origin
-                          redirectUri = window.location.origin + '/mixid-callback'
+                          redirectUri =
+                            window.location.origin + "/mixid-callback";
                         }
-                        
-                        console.log('MIX ID redirect URI:', redirectUri, 'isElectron:', isElectron, 'protocol:', window.location.protocol)
-                        const { authorizationUrl, code } = await mixIdApi.initiateOAuth(redirectUri)
-                        
-                        const width = 600
-                        const height = 700
-                        const left = window.screenX + (window.outerWidth - width) / 2
-                        const top = window.screenY + (window.outerHeight - height) / 2
-                        
+
+                        console.log(
+                          "MIX ID redirect URI:",
+                          redirectUri,
+                          "isElectron:",
+                          isElectron,
+                          "protocol:",
+                          window.location.protocol,
+                        );
+                        const { authorizationUrl, code } =
+                          await mixIdApi.initiateOAuth(redirectUri);
+
+                        const width = 600;
+                        const height = 700;
+                        const left =
+                          window.screenX + (window.outerWidth - width) / 2;
+                        const top =
+                          window.screenY + (window.outerHeight - height) / 2;
+
                         const oauthWindow = window.open(
                           authorizationUrl,
-                          'MIX ID Authorization',
-                          `width=${width},height=${height},left=${left},top=${top}`
-                        )
-                        
+                          "MIX ID Authorization",
+                          `width=${width},height=${height},left=${left},top=${top}`,
+                        );
+
                         const handleMessage = async (event: MessageEvent) => {
-                          if (event.origin !== window.location.origin) return
-                          if (event.data.type === 'mixid-oauth-callback') {
-                            window.removeEventListener('message', handleMessage)
-                            oauthWindow?.close()
-                            
+                          if (event.origin !== window.location.origin) return;
+                          if (event.data.type === "mixid-oauth-callback") {
+                            window.removeEventListener(
+                              "message",
+                              handleMessage,
+                            );
+                            oauthWindow?.close();
+
                             try {
-                              const { code: callbackCode } = event.data
-                              const tokenResponse = await mixIdApi.exchangeCodeForToken(callbackCode || code, redirectUri)
-                              
+                              const { code: callbackCode } = event.data;
+                              const tokenResponse =
+                                await mixIdApi.exchangeCodeForToken(
+                                  callbackCode || code,
+                                  redirectUri,
+                                );
+
                               // Сохраняем токен для использования в бэкенде
                               if (tokenResponse?.access_token) {
-                                localStorage.setItem('mixid_access_token', tokenResponse.access_token)
+                                localStorage.setItem(
+                                  "mixid_access_token",
+                                  tokenResponse.access_token,
+                                );
                               }
-                              
+
                               // Dispatch event to trigger WebSocket connection and status update
-                              window.dispatchEvent(new Event('mixid-config-changed'))
-                              
+                              window.dispatchEvent(
+                                new Event("mixid-config-changed"),
+                              );
+
                               // Download settings
-                              const remoteSettings = await mixIdApi.downloadSettings()
+                              const remoteSettings =
+                                await mixIdApi.downloadSettings();
                               if (remoteSettings.settings) {
-                                updateSettings(remoteSettings.settings)
-                                setSyncSuccess(true)
-                                setProjects([]) // Will be loaded after settings are saved
+                                updateSettings(remoteSettings.settings);
+                                setSyncSuccess(true);
+                                setProjects([]); // Will be loaded after settings are saved
                               }
                             } catch (error) {
-                              setSyncError(error instanceof Error ? error.message : 'Ошибка синхронизации')
+                              setSyncError(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Ошибка синхронизации",
+                              );
                             } finally {
-                              setSyncing(false)
+                              setSyncing(false);
                             }
                           }
-                        }
-                        
-                        window.addEventListener('message', handleMessage)
-                        
+                        };
+
+                        window.addEventListener("message", handleMessage);
+
                         const checkClosed = setInterval(() => {
                           if (oauthWindow?.closed) {
-                            clearInterval(checkClosed)
-                            window.removeEventListener('message', handleMessage)
+                            clearInterval(checkClosed);
+                            window.removeEventListener(
+                              "message",
+                              handleMessage,
+                            );
                             if (!syncSuccess) {
-                              setSyncing(false)
+                              setSyncing(false);
                             }
                           }
-                        }, 1000)
+                        }, 1000);
                       } catch (error) {
-                        setSyncError(error instanceof Error ? error.message : 'Ошибка подключения')
-                        setSyncing(false)
+                        setSyncError(
+                          error instanceof Error
+                            ? error.message
+                            : "Ошибка подключения",
+                        );
+                        setSyncing(false);
                       }
                     }}
                     loading={syncing}
                     leftSection={<IconPlug size={16} />}
                     fullWidth
                   >
-                    {syncing ? 'Подключение...' : 'Подключить MIX ID'}
+                    {syncing ? "Подключение..." : "Подключить MIX ID"}
                   </Button>
-                  
+
                   {syncSuccess && (
-                    <Alert color="green" title="Синхронизация успешна" icon={<IconCheck size={16} />}>
+                    <Alert
+                      color="green"
+                      title="Синхронизация успешна"
+                      icon={<IconCheck size={16} />}
+                    >
                       <Text>Настройки загружены из облака</Text>
                     </Alert>
                   )}
-                  
+
                   {syncError && (
-                    <Alert color="red" title="Ошибка синхронизации" icon={<IconX size={16} />}>
+                    <Alert
+                      color="red"
+                      title="Ошибка синхронизации"
+                      icon={<IconX size={16} />}
+                    >
                       {syncError}
                     </Alert>
                   )}
                 </>
-              ) : setupMethod === 'manual' ? (
+              ) : setupMethod === "manual" ? (
                 <>
                   <TextInput
                     label="URL Kimai"
@@ -479,14 +591,22 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                     Проверить подключение
                   </Button>
 
-                  {connectionStatus === 'success' && (
-                    <Alert color="green" title="Подключение успешно" icon={<IconCheck size={16} />}>
+                  {connectionStatus === "success" && (
+                    <Alert
+                      color="green"
+                      title="Подключение успешно"
+                      icon={<IconCheck size={16} />}
+                    >
                       <Text>Креденшелы приняты бэкендом</Text>
                     </Alert>
                   )}
 
-                  {connectionStatus === 'error' && connectionError && (
-                    <Alert color="red" title="Ошибка подключения" icon={<IconX size={16} />}>
+                  {connectionStatus === "error" && connectionError && (
+                    <Alert
+                      color="red"
+                      title="Ошибка подключения"
+                      icon={<IconX size={16} />}
+                    >
                       {connectionError}
                     </Alert>
                   )}
@@ -497,7 +617,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                     <Loader size="lg" />
                   ) : (
                     <Alert color="blue" title="Ожидание">
-                      Загрузите файл настроек на предыдущем шаге или подключитесь к MIX ID
+                      Загрузите файл настроек на предыдущем шаге или
+                      подключитесь к MIX ID
                     </Alert>
                   )}
                 </Stack>
@@ -514,7 +635,8 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             <Stack gap="md" mt="xl">
               <Alert color="green" title="Настройка завершена!">
                 <Text mb="md">
-                  Приложение готово к работе. Вы можете настроить проекты и другие параметры в разделе настроек.
+                  Приложение готово к работе. Вы можете настроить проекты и
+                  другие параметры в разделе настроек.
                 </Text>
                 {projects.length > 0 && (
                   <Badge color="blue" size="lg">
@@ -540,7 +662,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               Назад
             </Button>
           )}
-          
+
           {active < 2 && (
             <Button
               onClick={() => setActive(active + 1)}
@@ -552,15 +674,12 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               Далее
             </Button>
           )}
-          
+
           {active === 2 && (
-            <Button onClick={handleComplete}>
-              Завершить настройку
-            </Button>
+            <Button onClick={handleComplete}>Завершить настройку</Button>
           )}
         </Group>
       </Stack>
     </Paper>
-  )
+  );
 }
-

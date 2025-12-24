@@ -1,48 +1,47 @@
 /**
  * InitialRedirect
- * 
+ *
  * Компонент для начального редиректа при загрузке приложения.
  * Определяет, куда направить пользователя в зависимости от его статуса и настроек.
  */
 
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useSettings } from '@/shared/hooks/useSettings'
-import { useMixIdStatus } from '@localzet/data-connector/hooks'
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSettings } from "@/shared/hooks/useSettings";
+import { useMixIdStatus } from "@localzet/data-connector/hooks";
 
 export function InitialRedirect() {
-  const { settings } = useSettings()
-  const navigate = useNavigate()
-  const mixIdStatus = useMixIdStatus()
+  const { settings } = useSettings();
+  const navigate = useNavigate();
+  const mixIdStatus = useMixIdStatus();
 
   useEffect(() => {
-    const appMode = settings.appMode ?? 'normal'
+    const appMode = settings.appMode ?? "normal";
 
     // Standalone: прежняя логика визарда
-    if (appMode === 'standalone') {
+    if (appMode === "standalone") {
       if (!settings.apiUrl || !settings.apiKey) {
-        navigate('/setup', { replace: true })
+        navigate("/setup", { replace: true });
       } else {
-        navigate('/dashboard', { replace: true })
+        navigate("/dashboard", { replace: true });
       }
-      return
+      return;
     }
 
     // Normal (многопользовательский): проверяем MIX ID и настройки
     if (!mixIdStatus.isConnected) {
-      navigate('/auth', { replace: true })
-      return
+      navigate("/auth", { replace: true });
+      return;
     }
 
     // Если подключен к MIX ID, проверяем наличие настроек
     // Если настроек нет (нет apiUrl или apiKey), редиректим на страницу настроек
     if (!settings.apiUrl || !settings.apiKey) {
-      navigate('/settings', { replace: true })
+      navigate("/settings", { replace: true });
     } else {
-      navigate('/dashboard', { replace: true })
+      navigate("/dashboard", { replace: true });
     }
-  }, [settings, mixIdStatus.isConnected, navigate])
+  }, [settings, mixIdStatus.isConnected, navigate]);
 
-  return null
+  return null;
 }
-

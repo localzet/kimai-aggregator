@@ -1,27 +1,38 @@
 /**
  * NotificationsButton
- * 
+ *
  * Виджет кнопки уведомлений в хедере.
  * Отображает количество непрочитанных уведомлений и позволяет их просматривать.
  */
 
-import { useState } from 'react'
-import { ActionIcon, Badge, Menu, ScrollArea, Text, Group, Stack, Paper, Button } from '@mantine/core'
-import { IconBell, IconCheck } from '@tabler/icons-react'
-import { useNotifications } from '@/shared/hooks/useNotifications'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/ru'
+import { useState } from "react";
+import {
+  ActionIcon,
+  Badge,
+  Menu,
+  ScrollArea,
+  Text,
+  Group,
+  Stack,
+  Paper,
+  Button,
+} from "@mantine/core";
+import { IconBell, IconCheck } from "@tabler/icons-react";
+import { useNotifications } from "@/shared/hooks/useNotifications";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/ru";
 
-dayjs.extend(relativeTime)
-dayjs.locale('ru')
+dayjs.extend(relativeTime);
+dayjs.locale("ru");
 
 export function NotificationsButton() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
-  const [opened, setOpened] = useState(false)
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
+  const [opened, setOpened] = useState(false);
 
-  const unreadNotifications = notifications.filter((n) => !n.read)
-  const readNotifications = notifications.filter((n) => n.read)
+  const unreadNotifications = notifications.filter((n) => !n.read);
+  const readNotifications = notifications.filter((n) => n.read);
 
   return (
     <Menu
@@ -44,7 +55,7 @@ export function NotificationsButton() {
               variant="filled"
               color="red"
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount > 9 ? "9+" : unreadCount}
             </Badge>
           )}
         </ActionIcon>
@@ -59,8 +70,8 @@ export function NotificationsButton() {
                 size="xs"
                 variant="subtle"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  markAllAsRead()
+                  e.stopPropagation();
+                  markAllAsRead();
                 }}
               >
                 Отметить все как прочитанные
@@ -85,10 +96,14 @@ export function NotificationsButton() {
                       key={notification.id}
                       p="sm"
                       withBorder
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                       onClick={() => markAsRead(notification.id)}
                     >
-                      <Group justify="space-between" align="flex-start" gap="xs">
+                      <Group
+                        justify="space-between"
+                        align="flex-start"
+                        gap="xs"
+                      >
                         <Stack gap={4} style={{ flex: 1 }}>
                           <Text fw={500} size="sm">
                             {notification.title}
@@ -104,8 +119,8 @@ export function NotificationsButton() {
                           size="sm"
                           variant="subtle"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            markAsRead(notification.id)
+                            e.stopPropagation();
+                            markAsRead(notification.id);
                           }}
                         >
                           <IconCheck size={16} />
@@ -150,6 +165,5 @@ export function NotificationsButton() {
         </ScrollArea>
       </Menu.Dropdown>
     </Menu>
-  )
+  );
 }
-

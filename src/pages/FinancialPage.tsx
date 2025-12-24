@@ -1,26 +1,29 @@
-import { Stack } from '@mantine/core'
-import { motion } from 'motion/react'
-import FinancialTable from '@/components/FinancialTable'
-import { FinancialMetrics } from '@/components/FinancialMetrics'
-import ReportGenerator from '@/components/ReportGenerator'
-import { useSettings, useDashboardData, useSyncStatus } from '@/shared/hooks'
-import { Container, Loader, Alert, Button, Group } from '@mantine/core'
+import { Stack } from "@mantine/core";
+import { motion } from "motion/react";
+import FinancialTable from "@/components/FinancialTable";
+import { FinancialMetrics } from "@/components/FinancialMetrics";
+import ReportGenerator from "@/components/ReportGenerator";
+import { useSettings, useDashboardData, useSyncStatus } from "@/shared/hooks";
+import { Container, Loader, Alert, Button, Group } from "@mantine/core";
 
-const MotionStack = motion(Stack)
+const MotionStack = motion(Stack);
 
 function FinancialPage() {
-  const { settings } = useSettings()
-  const syncStatus = useSyncStatus(settings)
-  const { weeks, loading, error, reload, syncing } = useDashboardData(settings, syncStatus)
-  
-  const currentStatus = syncing ? 'updating' : syncStatus.status
+  const { settings } = useSettings();
+  const syncStatus = useSyncStatus(settings);
+  const { weeks, loading, error, reload, syncing } = useDashboardData(
+    settings,
+    syncStatus,
+  );
+
+  const currentStatus = syncing ? "updating" : syncStatus.status;
 
   if (loading) {
     return (
       <Container>
         <Loader size="lg" />
       </Container>
-    )
+    );
   }
 
   if (error) {
@@ -30,7 +33,7 @@ function FinancialPage() {
           {error}
         </Alert>
       </Container>
-    )
+    );
   }
 
   return (
@@ -45,10 +48,10 @@ function FinancialPage() {
       </Group>
 
       <FinancialMetrics weeks={weeks} isLoading={loading || syncing} />
-      
+
       <FinancialTable weeks={weeks} settings={settings} />
     </MotionStack>
-  )
+  );
 }
 
-export default FinancialPage
+export default FinancialPage;

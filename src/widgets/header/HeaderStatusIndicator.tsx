@@ -1,151 +1,168 @@
 /**
  * HeaderStatusIndicator
- * 
+ *
  * Виджет для отображения статуса синхронизации данных и MIX ID в хедере.
  * Показывает индикаторы состояния данных, актуальности и статуса MIX ID.
  */
 
-import { Group, Badge, Tooltip } from '@mantine/core'
-import { IconWifi, IconWifiOff, IconRefresh, IconCloud, IconCloudOff, IconPlugConnected, IconPlugConnectedX, IconClock } from '@tabler/icons-react'
-import { motion } from 'motion/react'
-import { useMemo, useCallback } from 'react'
-import { useSettings, useSyncStatus } from '@/shared/hooks'
-import { useMixIdStatus } from '@/shared/useMixIdStub'
-import { useDataFreshness } from '@/shared/hooks/useDataFreshness'
-import { useDashboardData } from '@/shared/hooks/useDashboardData'
-import { BackendApi } from '@/shared/api/backendApi'
+import { Group, Badge, Tooltip } from "@mantine/core";
+import {
+  IconWifi,
+  IconWifiOff,
+  IconRefresh,
+  IconCloud,
+  IconCloudOff,
+  IconPlugConnected,
+  IconPlugConnectedX,
+  IconClock,
+} from "@tabler/icons-react";
+import { motion } from "motion/react";
+import { useMemo, useCallback } from "react";
+import { useSettings, useSyncStatus } from "@/shared/hooks";
+import { useMixIdStatus } from "@/shared/useMixIdStub";
+import { useDataFreshness } from "@/shared/hooks/useDataFreshness";
+import { useDashboardData } from "@/shared/hooks/useDashboardData";
+import { BackendApi } from "@/shared/api/backendApi";
 
 export function HeaderStatusIndicator() {
-  const { settings } = useSettings()
-  const syncStatus = useSyncStatus(settings)
-  const mixIdStatus = useMixIdStatus()
-  const { syncing, reload } = useDashboardData(settings, syncStatus)
-  const dataFreshness = useDataFreshness(settings)
+  const { settings } = useSettings();
+  const syncStatus = useSyncStatus(settings);
+  const mixIdStatus = useMixIdStatus();
+  const { syncing, reload } = useDashboardData(settings, syncStatus);
+  const dataFreshness = useDataFreshness(settings);
 
-  const currentDataStatus = syncing ? 'updating' : syncStatus.status
+  const currentDataStatus = syncing ? "updating" : syncStatus.status;
 
   // Обработчик клика на индикатор: запускает синхронизацию на бэке и запрашивает данные
   const handleRefresh = useCallback(async () => {
     if (!settings.backendUrl || !settings.backendToken) {
-      return
+      return;
     }
 
     try {
-      const backendApi = new BackendApi(settings.backendUrl, settings.backendToken)
+      const backendApi = new BackendApi(
+        settings.backendUrl,
+        settings.backendToken,
+      );
       // Запускаем синхронизацию на бэке
-      await backendApi.triggerSync()
+      await backendApi.triggerSync();
       // Запрашиваем обновленные данные
-      await reload()
+      await reload();
     } catch (error) {
-      console.error('Error triggering sync:', error)
+      console.error("Error triggering sync:", error);
     }
-  }, [settings.backendUrl, settings.backendToken, reload])
+  }, [settings.backendUrl, settings.backendToken, reload]);
 
   // Мемоизируем конфигурации для оптимизации производительности
   const dataConfig = useMemo(() => {
     switch (currentDataStatus) {
-      case 'online':
+      case "online":
         return {
-          color: 'green' as const,
+          color: "green" as const,
           icon: <IconWifi size="1rem" />,
-          label: 'Данные онлайн',
-          description: 'Данные актуальны. Нажмите для обновления',
-        }
-      case 'updating':
+          label: "Данные онлайн",
+          description: "Данные актуальны. Нажмите для обновления",
+        };
+      case "updating":
         return {
-          color: 'yellow' as const,
-          icon: <IconRefresh size="1rem" style={{ animation: 'spin 1s linear infinite' }} />,
-          label: 'Обновление данных',
-          description: 'Идет синхронизация данных',
-        }
-      case 'offline':
+          color: "yellow" as const,
+          icon: (
+            <IconRefresh
+              size="1rem"
+              style={{ animation: "spin 1s linear infinite" }}
+            />
+          ),
+          label: "Обновление данных",
+          description: "Идет синхронизация данных",
+        };
+      case "offline":
         return {
-          color: 'red' as const,
+          color: "red" as const,
           icon: <IconWifiOff size="1rem" />,
-          label: 'Данные оффлайн',
-          description: syncStatus.lastUpdate 
-            ? `Последнее обновление: ${new Date(syncStatus.lastUpdate).toLocaleString('ru-RU')}. Нажмите для попытки обновления`
-            : 'Нет подключения к интернету. Нажмите для попытки обновления',
-        }
+          label: "Данные оффлайн",
+          description: syncStatus.lastUpdate
+            ? `Последнее обновление: ${new Date(syncStatus.lastUpdate).toLocaleString("ru-RU")}. Нажмите для попытки обновления`
+            : "Нет подключения к интернету. Нажмите для попытки обновления",
+        };
       default:
         return {
-          color: 'gray' as const,
+          color: "gray" as const,
           icon: <IconWifi size="1rem" />,
-          label: 'Неизвестно',
-          description: '',
-        }
+          label: "Неизвестно",
+          description: "",
+        };
     }
-  }, [currentDataStatus, syncStatus.lastUpdate])
+  }, [currentDataStatus, syncStatus.lastUpdate]);
 
   const mixIdConfig = useMemo(() => {
     if (!mixIdStatus.hasConfig) {
-      return null
+      return null;
     }
 
     switch (mixIdStatus.syncStatus) {
-      case 'connected-ws':
+      case "connected-ws":
         return {
-          color: 'green' as const,
+          color: "green" as const,
           icon: <IconPlugConnected size="1rem" />,
-          label: 'MIX ID (WebSocket)',
-          description: 'Синхронизация через WebSocket активна',
-        }
-      case 'connected-rest':
+          label: "MIX ID (WebSocket)",
+          description: "Синхронизация через WebSocket активна",
+        };
+      case "connected-rest":
         return {
-          color: 'blue' as const,
+          color: "blue" as const,
           icon: <IconCloud size="1rem" />,
-          label: 'MIX ID (REST)',
-          description: 'Синхронизация через REST API (WebSocket недоступен)',
-        }
-      case 'disconnected':
+          label: "MIX ID (REST)",
+          description: "Синхронизация через REST API (WebSocket недоступен)",
+        };
+      case "disconnected":
         return {
-          color: 'orange' as const,
+          color: "orange" as const,
           icon: <IconPlugConnectedX size="1rem" />,
-          label: 'MIX ID отключен',
-          description: 'MIX ID настроен, но соединение недоступно',
-        }
-      case 'checking':
+          label: "MIX ID отключен",
+          description: "MIX ID настроен, но соединение недоступно",
+        };
+      case "checking":
         return {
-          color: 'gray' as const,
+          color: "gray" as const,
           icon: <IconCloudOff size="1rem" />,
-          label: 'Проверка MIX ID',
-          description: 'Проверка состояния подключения...',
-        }
+          label: "Проверка MIX ID",
+          description: "Проверка состояния подключения...",
+        };
       default:
-        return null
+        return null;
     }
-  }, [mixIdStatus.hasConfig, mixIdStatus.syncStatus])
+  }, [mixIdStatus.hasConfig, mixIdStatus.syncStatus]);
 
-  const isDataClickable = !!reload && currentDataStatus !== 'updating'
+  const isDataClickable = !!reload && currentDataStatus !== "updating";
 
   // Конфигурация индикатора актуальности данных
   const freshnessConfig = useMemo(() => {
     switch (dataFreshness.status) {
-      case 'fresh':
+      case "fresh":
         return {
-          color: 'green' as const,
+          color: "green" as const,
           icon: <IconClock size="1rem" />,
-          label: 'Актуально',
+          label: "Актуально",
           description: dataFreshness.message,
-        }
-      case 'stale':
+        };
+      case "stale":
         return {
-          color: 'orange' as const,
+          color: "orange" as const,
           icon: <IconClock size="1rem" />,
-          label: 'Устарело',
+          label: "Устарело",
           description: dataFreshness.message,
-        }
-      case 'very_stale':
+        };
+      case "very_stale":
         return {
-          color: 'red' as const,
+          color: "red" as const,
           icon: <IconClock size="1rem" />,
-          label: 'Сильно устарело',
+          label: "Сильно устарело",
           description: dataFreshness.message,
-        }
+        };
       default:
-        return null
+        return null;
     }
-  }, [dataFreshness.status, dataFreshness.message])
+  }, [dataFreshness.status, dataFreshness.message]);
 
   return (
     <Group gap="xs">
@@ -163,7 +180,7 @@ export function HeaderStatusIndicator() {
               leftSection={freshnessConfig.icon}
               size="lg"
               style={{
-                userSelect: 'none',
+                userSelect: "none",
               }}
             />
           </Tooltip>
@@ -183,23 +200,23 @@ export function HeaderStatusIndicator() {
             leftSection={dataConfig.icon}
             size="lg"
             style={{
-              cursor: isDataClickable ? 'pointer' : 'default',
-              userSelect: 'none',
+              cursor: isDataClickable ? "pointer" : "default",
+              userSelect: "none",
             }}
             onClick={isDataClickable ? handleRefresh : undefined}
             onMouseDown={(e) => {
               if (isDataClickable) {
-                e.currentTarget.style.transform = 'scale(0.95)'
+                e.currentTarget.style.transform = "scale(0.95)";
               }
             }}
             onMouseUp={(e) => {
               if (isDataClickable) {
-                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.transform = "scale(1)";
               }
             }}
             onMouseLeave={(e) => {
               if (isDataClickable) {
-                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.transform = "scale(1)";
               }
             }}
           />
@@ -220,14 +237,12 @@ export function HeaderStatusIndicator() {
               leftSection={mixIdConfig.icon}
               size="lg"
               style={{
-                userSelect: 'none',
+                userSelect: "none",
               }}
             />
           </Tooltip>
         </motion.div>
       )}
-
     </Group>
-  )
+  );
 }
-

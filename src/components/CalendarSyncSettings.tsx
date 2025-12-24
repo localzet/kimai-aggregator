@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Paper,
   Stack,
@@ -15,61 +15,67 @@ import {
   Badge,
   ActionIcon,
   Table,
-} from '@mantine/core'
-import { IconRefresh, IconCheck, IconX, IconTrash, IconPlus } from '@tabler/icons-react'
-import { notifications } from '@mantine/notifications'
-import { CalendarSyncSettings } from '@/shared/hooks/useSettings'
-import { GoogleCalendarSync } from '@/shared/api/calendarSync'
-import { useCalendarSync } from '@/shared/hooks'
-import { useSettings } from '@/shared/hooks/useSettings'
+} from "@mantine/core";
+import {
+  IconRefresh,
+  IconCheck,
+  IconX,
+  IconTrash,
+  IconPlus,
+} from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { CalendarSyncSettings } from "@/shared/hooks/useSettings";
+import { GoogleCalendarSync } from "@/shared/api/calendarSync";
+import { useCalendarSync } from "@/shared/hooks";
+import { useSettings } from "@/shared/hooks/useSettings";
 
 interface CalendarSyncSettingsProps {
-  settings: CalendarSyncSettings
-  onUpdate: (settings: CalendarSyncSettings) => void
+  settings: CalendarSyncSettings;
+  onUpdate: (settings: CalendarSyncSettings) => void;
 }
 
 export default function CalendarSyncSettingsComponent({
   settings,
   onUpdate,
 }: CalendarSyncSettingsProps) {
-  const [authorizing, setAuthorizing] = useState(false)
-  const { settings: allSettings } = useSettings()
-  const { sync: syncCalendar, syncing: syncingCalendar } = useCalendarSync()
+  const [authorizing, setAuthorizing] = useState(false);
+  const { settings: allSettings } = useSettings();
+  const { sync: syncCalendar, syncing: syncingCalendar } = useCalendarSync();
 
   const handleAuthorizeGoogle = async () => {
     if (!settings.googleClientId) {
       notifications.show({
-        title: 'Ошибка',
-        message: 'Сначала укажите Google Client ID',
-        color: 'red',
-      })
-      return
+        title: "Ошибка",
+        message: "Сначала укажите Google Client ID",
+        color: "red",
+      });
+      return;
     }
 
     try {
-      setAuthorizing(true)
-      const sync = new GoogleCalendarSync(settings)
-      const tokens = await sync.authorize()
+      setAuthorizing(true);
+      const sync = new GoogleCalendarSync(settings);
+      const tokens = await sync.authorize();
       onUpdate({
         ...settings,
         googleAccessToken: tokens.accessToken,
         googleRefreshToken: tokens.refreshToken,
-      })
+      });
       notifications.show({
-        title: 'Успешно',
-        message: 'Авторизация Google Calendar выполнена',
-        color: 'green',
-      })
+        title: "Успешно",
+        message: "Авторизация Google Calendar выполнена",
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
-        title: 'Ошибка авторизации',
-        message: error instanceof Error ? error.message : 'Неизвестная ошибка',
-        color: 'red',
-      })
+        title: "Ошибка авторизации",
+        message: error instanceof Error ? error.message : "Неизвестная ошибка",
+        color: "red",
+      });
     } finally {
-      setAuthorizing(false)
+      setAuthorizing(false);
     }
-  }
+  };
 
   return (
     <Paper p="xl" withBorder>
@@ -94,21 +100,24 @@ export default function CalendarSyncSettingsComponent({
               label="Тип календаря"
               description="Выберите календарь для синхронизации"
               data={[
-                { value: 'google', label: 'Google Calendar' },
-                { value: 'notion', label: 'Notion Calendar' },
+                { value: "google", label: "Google Calendar" },
+                { value: "notion", label: "Notion Calendar" },
               ]}
               value={settings.syncType || null}
               onChange={(value) =>
                 onUpdate({
                   ...settings,
-                  syncType: (value as 'google' | 'notion') || null,
+                  syncType: (value as "google" | "notion") || null,
                 })
               }
             />
 
-            {settings.syncType === 'google' && (
+            {settings.syncType === "google" && (
               <Stack gap="md">
-                <Divider label="Настройки Google Calendar" labelPosition="left" />
+                <Divider
+                  label="Настройки Google Calendar"
+                  labelPosition="left"
+                />
                 <Alert color="blue" title="Инструкция">
                   <Text size="sm" mb="xs">
                     1. Создайте проект в Google Cloud Console
@@ -117,20 +126,23 @@ export default function CalendarSyncSettingsComponent({
                     2. Включите Google Calendar API
                   </Text>
                   <Text size="sm" mb="xs">
-                    3. Создайте OAuth 2.0 credentials (Client ID и Client Secret)
+                    3. Создайте OAuth 2.0 credentials (Client ID и Client
+                    Secret)
                   </Text>
                   <Text size="sm" mb="xs">
-                    4. Добавьте redirect URI: {window.location.origin}/oauth/callback
+                    4. Добавьте redirect URI: {window.location.origin}
+                    /oauth/callback
                   </Text>
                   <Text size="sm">
-                    5. Введите Client ID и Client Secret ниже, затем нажмите "Авторизовать"
+                    5. Введите Client ID и Client Secret ниже, затем нажмите
+                    "Авторизовать"
                   </Text>
                 </Alert>
 
                 <TextInput
                   label="Google Client ID"
                   placeholder="xxxxx.apps.googleusercontent.com"
-                  value={settings.googleClientId || ''}
+                  value={settings.googleClientId || ""}
                   onChange={(e) =>
                     onUpdate({
                       ...settings,
@@ -143,7 +155,7 @@ export default function CalendarSyncSettingsComponent({
                   label="Google Client Secret"
                   type="password"
                   placeholder="GOCSPX-xxxxx"
-                  value={settings.googleClientSecret || ''}
+                  value={settings.googleClientSecret || ""}
                   onChange={(e) =>
                     onUpdate({
                       ...settings,
@@ -156,11 +168,11 @@ export default function CalendarSyncSettingsComponent({
                   label="Calendar ID"
                   description="ID календаря (оставьте пустым для основного календаря)"
                   placeholder="primary"
-                  value={settings.googleCalendarId || ''}
+                  value={settings.googleCalendarId || ""}
                   onChange={(e) =>
                     onUpdate({
                       ...settings,
-                      googleCalendarId: e.currentTarget.value || 'primary',
+                      googleCalendarId: e.currentTarget.value || "primary",
                     })
                   }
                 />
@@ -181,35 +193,41 @@ export default function CalendarSyncSettingsComponent({
               </Stack>
             )}
 
-            {settings.syncType === 'notion' && (
+            {settings.syncType === "notion" && (
               <Stack gap="md">
                 <Divider label="Настройки Notion" labelPosition="left" />
                 {(() => {
-                  const isElectron = typeof window !== 'undefined' && (
-                    window.electron?.isElectron || 
-                    (typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron'))
-                  )
+                  const isElectron =
+                    typeof window !== "undefined" &&
+                    (window.electron?.isElectron ||
+                      (typeof navigator !== "undefined" &&
+                        navigator.userAgent.includes("Electron")));
                   return !isElectron ? (
                     <Alert color="orange" title="Важно">
                       <Text size="sm" fw={500} mb="xs">
-                        Синхронизация с Notion работает только в Electron приложении из-за ограничений CORS браузера.
+                        Синхронизация с Notion работает только в Electron
+                        приложении из-за ограничений CORS браузера.
                       </Text>
                       <Text size="sm">
-                        Если вы используете собранное Electron приложение, убедитесь, что preload.js загружается правильно.
-                        Откройте DevTools (Ctrl+Shift+I) и проверьте консоль на наличие ошибок.
+                        Если вы используете собранное Electron приложение,
+                        убедитесь, что preload.js загружается правильно.
+                        Откройте DevTools (Ctrl+Shift+I) и проверьте консоль на
+                        наличие ошибок.
                       </Text>
                     </Alert>
                   ) : (
                     <Alert color="green" title="Electron обнаружен">
                       <Text size="sm">
-                        Electron окружение обнаружено. Синхронизация с Notion должна работать.
+                        Electron окружение обнаружено. Синхронизация с Notion
+                        должна работать.
                       </Text>
                     </Alert>
-                  )
+                  );
                 })()}
                 <Alert color="blue" title="Инструкция">
                   <Text size="sm" mb="xs">
-                    1. Создайте интеграцию в Notion (Settings & Members → Integrations → New integration)
+                    1. Создайте интеграцию в Notion (Settings & Members →
+                    Integrations → New integration)
                   </Text>
                   <Text size="sm" mb="xs">
                     2. Скопируйте Internal Integration Token
@@ -247,7 +265,7 @@ export default function CalendarSyncSettingsComponent({
                   label="Notion API Key"
                   type="password"
                   placeholder="secret_xxxxx"
-                  value={settings.notionApiKey || ''}
+                  value={settings.notionApiKey || ""}
                   onChange={(e) =>
                     onUpdate({
                       ...settings,
@@ -259,7 +277,7 @@ export default function CalendarSyncSettingsComponent({
                 <TextInput
                   label="Notion Database ID"
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  value={settings.notionDatabaseId || ''}
+                  value={settings.notionDatabaseId || ""}
                   onChange={(e) =>
                     onUpdate({
                       ...settings,
@@ -268,15 +286,20 @@ export default function CalendarSyncSettingsComponent({
                   }
                 />
 
-                <Divider label="Шаблоны страниц для проектов" labelPosition="left" />
+                <Divider
+                  label="Шаблоны страниц для проектов"
+                  labelPosition="left"
+                />
                 <Alert color="blue" title="Информация">
                   <Text size="sm" mb="xs">
-                    Вы можете настроить шаблоны страниц Notion для каждого проекта. 
-                    При создании записи в Notion будет использоваться соответствующий шаблон.
+                    Вы можете настроить шаблоны страниц Notion для каждого
+                    проекта. При создании записи в Notion будет использоваться
+                    соответствующий шаблон.
                   </Text>
                   <Text size="sm">
-                    Чтобы получить ID шаблона, создайте страницу в Notion с нужным шаблоном, 
-                    затем скопируйте ID из URL страницы (последняя часть после последнего дефиса).
+                    Чтобы получить ID шаблона, создайте страницу в Notion с
+                    нужным шаблоном, затем скопируйте ID из URL страницы
+                    (последняя часть после последнего дефиса).
                   </Text>
                 </Alert>
 
@@ -285,46 +308,55 @@ export default function CalendarSyncSettingsComponent({
                     <Table.Tr>
                       <Table.Th>Название проекта</Table.Th>
                       <Table.Th>ID шаблона Notion</Table.Th>
-                      <Table.Th style={{ width: '50px' }}></Table.Th>
+                      <Table.Th style={{ width: "50px" }}></Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {Object.entries(settings.notionProjectTemplates || {}).map(([projectName, templateId]) => (
-                      <Table.Tr key={projectName}>
-                        <Table.Td>{projectName}</Table.Td>
-                        <Table.Td>
-                          <TextInput
-                            size="xs"
-                            value={templateId}
-                            onChange={(e) => {
-                              const newTemplates = { ...(settings.notionProjectTemplates || {}) }
-                              newTemplates[projectName] = e.currentTarget.value
-                              onUpdate({
-                                ...settings,
-                                notionProjectTemplates: newTemplates,
-                              })
-                            }}
-                          />
-                        </Table.Td>
-                        <Table.Td>
-                          <ActionIcon
-                            color="red"
-                            variant="subtle"
-                            onClick={() => {
-                              const newTemplates = { ...(settings.notionProjectTemplates || {}) }
-                              delete newTemplates[projectName]
-                              onUpdate({
-                                ...settings,
-                                notionProjectTemplates: newTemplates,
-                              })
-                            }}
-                          >
-                            <IconTrash size={16} />
-                          </ActionIcon>
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                    {(!settings.notionProjectTemplates || Object.keys(settings.notionProjectTemplates).length === 0) && (
+                    {Object.entries(settings.notionProjectTemplates || {}).map(
+                      ([projectName, templateId]) => (
+                        <Table.Tr key={projectName}>
+                          <Table.Td>{projectName}</Table.Td>
+                          <Table.Td>
+                            <TextInput
+                              size="xs"
+                              value={templateId}
+                              onChange={(e) => {
+                                const newTemplates = {
+                                  ...(settings.notionProjectTemplates || {}),
+                                };
+                                newTemplates[projectName] =
+                                  e.currentTarget.value;
+                                onUpdate({
+                                  ...settings,
+                                  notionProjectTemplates: newTemplates,
+                                });
+                              }}
+                            />
+                          </Table.Td>
+                          <Table.Td>
+                            <ActionIcon
+                              color="red"
+                              variant="subtle"
+                              onClick={() => {
+                                const newTemplates = {
+                                  ...(settings.notionProjectTemplates || {}),
+                                };
+                                delete newTemplates[projectName];
+                                onUpdate({
+                                  ...settings,
+                                  notionProjectTemplates: newTemplates,
+                                });
+                              }}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Table.Td>
+                        </Table.Tr>
+                      ),
+                    )}
+                    {(!settings.notionProjectTemplates ||
+                      Object.keys(settings.notionProjectTemplates).length ===
+                        0) && (
                       <Table.Tr>
                         <Table.Td colSpan={3}>
                           <Text size="sm" c="dimmed" ta="center">
@@ -340,14 +372,16 @@ export default function CalendarSyncSettingsComponent({
                   variant="light"
                   leftSection={<IconPlus size={16} />}
                   onClick={() => {
-                    const projectName = prompt('Введите название проекта:')
+                    const projectName = prompt("Введите название проекта:");
                     if (projectName && projectName.trim()) {
-                      const newTemplates = { ...(settings.notionProjectTemplates || {}) }
-                      newTemplates[projectName.trim()] = ''
+                      const newTemplates = {
+                        ...(settings.notionProjectTemplates || {}),
+                      };
+                      newTemplates[projectName.trim()] = "";
                       onUpdate({
                         ...settings,
                         notionProjectTemplates: newTemplates,
-                      })
+                      });
                     }
                   }}
                 >
@@ -357,7 +391,8 @@ export default function CalendarSyncSettingsComponent({
                 {settings.notionApiKey && settings.notionDatabaseId ? (
                   <Alert color="green" title="Готово к синхронизации">
                     <Text size="sm">
-                      Все необходимые данные заполнены. Синхронизация будет выполняться автоматически.
+                      Все необходимые данные заполнены. Синхронизация будет
+                      выполняться автоматически.
                     </Text>
                   </Alert>
                 ) : (
@@ -419,6 +454,5 @@ export default function CalendarSyncSettingsComponent({
         )}
       </Stack>
     </Paper>
-  )
+  );
 }
-

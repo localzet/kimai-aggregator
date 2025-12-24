@@ -1,15 +1,14 @@
-import { Card, CardProps } from '@mantine/core'
-import { ReactNode } from 'react'
+import { Card, CardProps } from "@mantine/core";
+import { ReactNode } from "react";
 
 interface TableContainerProps extends CardProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function TableContainer({ children, ...props }: TableContainerProps) {
-    return (
-        <Card {...props} bg="var(--mantine-color-body)">
-            {children}
-        </Card>
-    )
+  return (
+    <Card {...props} bg="var(--mantine-color-body)">
+      {children}
+    </Card>
+  );
 }
-
