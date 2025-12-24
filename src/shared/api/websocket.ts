@@ -17,10 +17,24 @@ export class WebSocketClient {
     new Set();
 
   constructor(baseUrl: string, token: string) {
-    // Remove trailing slash and protocol
-    const cleanUrl = baseUrl.replace(/\/$/, "").replace(/^https?:\/\//, "");
-    const wsProtocol = baseUrl.startsWith("https") ? "wss" : "ws";
-    this.url = `${wsProtocol}://${cleanUrl}/api/ws?token=${encodeURIComponent(token)}`;
+    // Normalize base URL and avoid duplicate /api segments
+    let base = (baseUrl || "").trim();
+    if (typeof window !== "undefined" && base === "") {
+      base = window.location.origin;
+    }
+    if (!/^https?:\/\//i.test(base) && typeof window !== "undefined") {
+      base = (window.location.protocol || "https:") + "//" + base;
+    }
+
+    // Ensure no trailing slash
+    base = base.replace(/\/$/, "");
+
+    // If base already contains /api at the end, use /ws, otherwise use /api/ws
+    const needsApiPrefix = !base.endsWith("/api");
+
+    // Convert http(s) -> ws(s)
+    const wsBase = base.replace(/^http/, "ws");
+    this.url = `${wsBase}${needsApiPrefix ? "/api/ws" : "/ws"}?token=${encodeURIComponent(token)}`;
     this.token = token;
   }
 
