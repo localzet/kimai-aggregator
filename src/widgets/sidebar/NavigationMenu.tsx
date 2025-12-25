@@ -19,8 +19,8 @@ import {
 import { HiCurrencyDollar } from "react-icons/hi";
 
 export function useNavigationMenu(): MenuItem[] {
-  const { settings } = useSettings();
-  const showFullMenu = !!(settings.apiUrl && settings.apiKey);
+  const { settings, loading } = useSettings();
+  const showFullMenu = !loading && !!(settings.apiUrl && settings.apiKey);
 
   return useMemo(() => {
     const menu: MenuItem[] = [];

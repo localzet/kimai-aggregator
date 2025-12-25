@@ -11,7 +11,7 @@ import { useSettings } from "@/shared/hooks/useSettings";
 import { useMixIdStatus } from "@localzet/data-connector/hooks";
 
 export function InitialRedirect() {
-  const { settings } = useSettings();
+  const { settings, loading } = useSettings();
   const navigate = useNavigate();
   const mixIdStatus = useMixIdStatus();
 
@@ -33,6 +33,11 @@ export function InitialRedirect() {
       settings.backendToken && settings.backendToken.length > 0
     );
 
+    // If we have a backend token, wait until backend settings load finishes
+    if (hasBackendToken && loading) {
+      return;
+    }
+
     if (hasBackendToken) {
       // If logged into backend, send to settings or dashboard depending on presence of Kimai settings
       if (!settings.apiUrl || !settings.apiKey) {
@@ -51,7 +56,7 @@ export function InitialRedirect() {
 
     // If connected to MIX ID but no backend token yet, send user to /auth to complete backend login
     navigate("/auth", { replace: true });
-  }, [settings, mixIdStatus.isConnected, navigate]);
+  }, [settings, loading, mixIdStatus.isConnected, navigate]);
 
   return null;
 }

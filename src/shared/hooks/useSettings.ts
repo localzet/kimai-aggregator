@@ -99,15 +99,16 @@ export function useSettings() {
       // Ответ бэкенда в snake_case, поэтому приводим через any и маппим вручную
       const backendSettings: any = await backendApi.getSettings();
 
+      // Merge backend settings with local settings: do not overwrite local values with empty backend values
       const convertedSettings: Settings = {
-        apiUrl: backendSettings?.kimai_api_url || "",
-        apiKey: backendSettings?.kimai_api_key || "",
-        ratePerMinute: backendSettings?.rate_per_minute || 0,
+        apiUrl: backendSettings?.kimai_api_url || settings.apiUrl || "",
+        apiKey: backendSettings?.kimai_api_key || settings.apiKey || "",
+        ratePerMinute: backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
         useProxy: false,
-        projectSettings: backendSettings?.project_settings || {},
-        excludedTags: backendSettings?.excluded_tags || [],
+        projectSettings: backendSettings?.project_settings || settings.projectSettings || {},
+        excludedTags: backendSettings?.excluded_tags || settings.excludedTags || [],
         calendarSync:
-          backendSettings?.calendar_sync || defaultSettings.calendarSync,
+          backendSettings?.calendar_sync || settings.calendarSync || defaultSettings.calendarSync,
         appMode: "normal",
         backendUrl: settings.backendUrl,
         backendToken: settings.backendToken,
@@ -126,7 +127,7 @@ export function useSettings() {
     if (settings.backendUrl && settings.backendToken) {
       loadSettingsFromBackend();
     }
-  }, []); // Только при монтировании
+  }, [settings.backendUrl, settings.backendToken]);
 
   const updateSettings = useCallback(
     async (newSettings: Settings) => {

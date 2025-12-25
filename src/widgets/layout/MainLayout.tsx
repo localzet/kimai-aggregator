@@ -67,7 +67,7 @@ export function MainLayout() {
     }
   }, []);
 
-  const { settings } = useSettings();
+  const { settings, loading } = useSettings();
   const { pathname } = useLocation();
   const mixIdStatus = useMixIdStatus();
   const { performSync } = useUnifiedSync();
@@ -78,15 +78,17 @@ export function MainLayout() {
   // Если нет настроек и мы не на странице настроек, редиректим на страницу настроек
   useEffect(() => {
     const appMode = settings.appMode ?? "normal";
+    // Only redirect to settings when we are not loading backend settings
     if (
       appMode === "normal" &&
+      !loading &&
       !settings.apiUrl &&
       !settings.apiKey &&
       pathname !== "/settings"
     ) {
       navigate("/settings", { replace: true });
     }
-  }, [settings, pathname, navigate]);
+  }, [settings, loading, pathname, navigate]);
 
   // Триггер синхронизации при переходе по страницам с дебаунсингом
   useEffect(() => {
@@ -144,8 +146,8 @@ export function MainLayout() {
             </Group>
             <Group style={{ flexShrink: 0 }} gap="xs">
               <HeaderStatusIndicator />
-              {mixIdStatus.isConnected && <NotificationsButton />}
-              {mixIdStatus.isConnected && <LogoutButton />}
+              {(settings.backendToken ?? "") !== "" && <NotificationsButton />}
+              {(settings.backendToken ?? "") !== "" && <LogoutButton />}
             </Group>
           </Group>
         </Container>
