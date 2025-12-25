@@ -103,12 +103,17 @@ export function useSettings() {
       const convertedSettings: Settings = {
         apiUrl: backendSettings?.kimai_api_url || settings.apiUrl || "",
         apiKey: backendSettings?.kimai_api_key || settings.apiKey || "",
-        ratePerMinute: backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
+        ratePerMinute:
+          backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
         useProxy: false,
-        projectSettings: backendSettings?.project_settings || settings.projectSettings || {},
-        excludedTags: backendSettings?.excluded_tags || settings.excludedTags || [],
+        projectSettings:
+          backendSettings?.project_settings || settings.projectSettings || {},
+        excludedTags:
+          backendSettings?.excluded_tags || settings.excludedTags || [],
         calendarSync:
-          backendSettings?.calendar_sync || settings.calendarSync || defaultSettings.calendarSync,
+          backendSettings?.calendar_sync ||
+          settings.calendarSync ||
+          defaultSettings.calendarSync,
         appMode: "normal",
         backendUrl: settings.backendUrl,
         backendToken: settings.backendToken,
