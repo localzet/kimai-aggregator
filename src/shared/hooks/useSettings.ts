@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { ProjectSettings } from "@/shared/api/kimaiApi";
-import { BackendApi } from "@/shared/api/backendApi";
-import { mixIdApi } from "@/shared/mixIdStub";
+import { createBackendClient } from "@/shared/api/backendClient";
+import { setToken as setSessionToken } from "@entities/session-store";
+import consola from 'consola/browser'
 
 export interface CalendarSyncSettings {
   enabled: boolean;
@@ -69,6 +70,15 @@ export function useSettings() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // If a backend token was stored previously, migrate it into the session store
+        // so axios has the Authorization header available on first load.
+        if (parsed.backendToken) {
+          try {
+            setSessionToken({ accessToken: parsed.backendToken, refreshToken: parsed.backendRefreshToken });
+          } catch (e) {
+            // ignore
+          }
+        }
         return {
           ...defaultSettings,
           backendUrl: parsed.backendUrl || defaultSettings.backendUrl,
@@ -84,46 +94,64 @@ export function useSettings() {
 
   const [loading, setLoading] = useState(false);
 
+  // Shared in-flight promise to avoid multiple components triggering
+  // the settings load simultaneously (prevents request storms).
+  // This lives at module scope so all hook instances share it.
+  let _globalLoad: Promise<void> | null = (useSettings as any)._globalLoad || null;
+
   // Загрузка настроек с бэкенда
   const loadSettingsFromBackend = useCallback(async () => {
-    if (!settings.backendUrl || !settings.backendToken) {
+    if (!settings.backendUrl || !settings.backendToken) return;
+
+    // reuse global promise if another hook instance already started loading
+    if (_globalLoad) {
+      try {
+        await _globalLoad;
+      } catch {
+        // ignore errors from the other loader
+      }
       return;
     }
 
+    const loader = (async () => {
+      try {
+        setLoading(true);
+        const backendApi = createBackendClient(settings.backendUrl || "")
+        // Ответ бэкенда в snake_case, поэтому приводим через any и маппим вручную
+        const backendSettings: any = await backendApi.getSettings();
+
+        // Merge backend settings with local settings: do not overwrite local values with empty backend values
+        const convertedSettings: Settings = {
+          apiUrl: backendSettings?.kimai_api_url || settings.apiUrl || "",
+          apiKey: backendSettings?.kimai_api_key || settings.apiKey || "",
+          ratePerMinute: backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
+          useProxy: false,
+          projectSettings: backendSettings?.project_settings || settings.projectSettings || {},
+          excludedTags: backendSettings?.excluded_tags || settings.excludedTags || [],
+          calendarSync:
+            backendSettings?.calendar_sync || settings.calendarSync || defaultSettings.calendarSync,
+          appMode: "normal",
+          backendUrl: settings.backendUrl,
+          backendToken: settings.backendToken,
+        };
+
+        setSettings(convertedSettings);
+      } catch (error) {
+        console.warn("Could not load settings from backend:", error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+
+    // store on function object so other hook instances can see it
+    (useSettings as any)._globalLoad = loader;
+    _globalLoad = loader;
+
     try {
-      setLoading(true);
-      const backendApi = new BackendApi(
-        settings.backendUrl,
-        settings.backendToken,
-      );
-      // Ответ бэкенда в snake_case, поэтому приводим через any и маппим вручную
-      const backendSettings: any = await backendApi.getSettings();
-
-      // Merge backend settings with local settings: do not overwrite local values with empty backend values
-      const convertedSettings: Settings = {
-        apiUrl: backendSettings?.kimai_api_url || settings.apiUrl || "",
-        apiKey: backendSettings?.kimai_api_key || settings.apiKey || "",
-        ratePerMinute:
-          backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
-        useProxy: false,
-        projectSettings:
-          backendSettings?.project_settings || settings.projectSettings || {},
-        excludedTags:
-          backendSettings?.excluded_tags || settings.excludedTags || [],
-        calendarSync:
-          backendSettings?.calendar_sync ||
-          settings.calendarSync ||
-          defaultSettings.calendarSync,
-        appMode: "normal",
-        backendUrl: settings.backendUrl,
-        backendToken: settings.backendToken,
-      };
-
-      setSettings(convertedSettings);
-    } catch (error) {
-      console.warn("Could not load settings from backend:", error);
+      await loader;
     } finally {
-      setLoading(false);
+      (useSettings as any)._globalLoad = null;
+      _globalLoad = null;
     }
   }, [settings.backendUrl, settings.backendToken]);
 
@@ -153,10 +181,7 @@ export function useSettings() {
         newSettings.apiKey
       ) {
         try {
-          const backendApi = new BackendApi(
-            newSettings.backendUrl,
-            newSettings.backendToken,
-          );
+          const backendApi = createBackendClient(newSettings.backendUrl || "")
 
           // Отправляем настройки в бэкенд (payload в snake_case)
           const payload: any = {
@@ -170,22 +195,7 @@ export function useSettings() {
 
           await backendApi.updateSettings(payload);
 
-          // Отправляем настройки в MIX ID (только настройки, не данные!)
-          try {
-            const apiBase =
-              import.meta.env.VITE_MIX_ID_API_BASE ||
-              "https://data-center.zorin.cloud/api";
-            const clientId = import.meta.env.VITE_MIX_ID_CLIENT_ID || "";
-            const clientSecret =
-              import.meta.env.VITE_MIX_ID_CLIENT_SECRET || "";
-
-            if (clientId && clientSecret) {
-              mixIdApi.setConfig({ apiBase, clientId, clientSecret });
-              await mixIdApi.uploadSettings(newSettings);
-            }
-          } catch (e) {
-            console.warn("Could not upload settings to MIX ID:", e);
-          }
+          // MIX ID integration removed — frontend no longer uploads settings to MIX ID
         } catch (error) {
           console.warn("Could not update settings on backend:", error);
         }

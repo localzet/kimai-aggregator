@@ -19,11 +19,11 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useForm } from "@mantine/form";
-import { KimaiApi, Project } from "@/shared/api/kimaiApi";
+import { Project } from "@/shared/api/kimaiApi";
+import createKimaiClient from "@/shared/api/kimaiClient";
 import { Settings } from "@/shared/hooks/useSettings";
 import ProjectSettingsForm from "./ProjectSettingsForm";
 import CalendarSyncSettings from "./CalendarSyncSettings";
-import { MixIdConnection } from "@localzet/data-connector/components";
 
 interface SettingsFormProps {
   settings: Settings;
@@ -65,17 +65,17 @@ export default function SettingsForm({
       return;
     }
 
-    try {
-      setLoadingProjects(true);
-      setError(null);
-      const api = new KimaiApi(
-        form.values.apiUrl.trim(),
-        form.values.apiKey.trim(),
-        form.values.useProxy,
-      );
-      const projectsData = await api.getProjects();
-      setProjects(projectsData);
-    } catch (err) {
+      try {
+        setLoadingProjects(true);
+        setError(null);
+        const api = createKimaiClient(
+          form.values.apiUrl.trim(),
+          form.values.apiKey.trim(),
+          form.values.useProxy,
+        );
+        const projectsData = await api.getProjects();
+        setProjects(projectsData as any[]);
+      } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка загрузки проектов");
       console.error("Error loading projects:", err);
       setProjects([]);
@@ -85,15 +85,15 @@ export default function SettingsForm({
   };
 
   const loadTags = async () => {
-    if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
+      if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
     try {
-      const api = new KimaiApi(
+      const api = createKimaiClient(
         form.values.apiUrl.trim(),
         form.values.apiKey.trim(),
         form.values.useProxy,
       );
       const data = (await api.getTags()) as string[];
-      setTags(data);
+      setTags(data || []);
     } catch (e) {
       console.error("Error loading tags:", e);
     }
@@ -262,13 +262,7 @@ export default function SettingsForm({
 
   return (
     <Stack gap="xl">
-      <MixIdConnection
-        onConnected={() => {}}
-        onDisconnected={() => {}}
-        showSyncSettings={true}
-        showSyncData={true}
-        notifications={notifications}
-      />
+      {/* MIX ID connection removed */}
 
       <Paper p="xl" withBorder>
         <form onSubmit={form.onSubmit(handleSubmit)}>

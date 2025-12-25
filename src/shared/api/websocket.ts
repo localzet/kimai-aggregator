@@ -39,13 +39,43 @@ export class WebSocketClient {
   }
 
   connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.ws = new WebSocket(this.url);
+    // Prevent connecting with an obviously expired or missing token
+    try {
+      if (!this.token) {
+        return Promise.reject(new Error("No token provided for WebSocket"));
+      }
+      // Basic JWT expiry check (token is base64 parts)
+      const parts = this.token.split('.');
+      if (parts.length === 3) {
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.exp && typeof payload.exp === 'number') {
+            const now = Math.floor(Date.now() / 1000);
+            if (payload.exp < now) {
+              return Promise.reject(new Error('Token expired'));
+            }
+          }
+        } catch (e) {
+          // ignore malformed payload
+        }
+      }
+
+      this.ws = new WebSocket(this.url);
+
+      return new Promise((resolve, reject) => {
+        let settled = false;
+
+        const cleanup = () => {
+          if (!this.ws) return;
+          this.ws.onopen = null;
+          this.ws.onmessage = null;
+          this.ws.onerror = null;
+          this.ws.onclose = null;
+        };
 
         this.ws.onopen = () => {
-          console.log("WebSocket connected");
           this.reconnectAttempts = 0;
+          settled = true;
           resolve();
         };
 
@@ -59,19 +89,30 @@ export class WebSocketClient {
         };
 
         this.ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
-          reject(error);
+          if (!settled) {
+            settled = true;
+            cleanup();
+            reject(new Error('WebSocket connection error'));
+          } else {
+            console.error('WebSocket error after connect:', error);
+          }
         };
 
-        this.ws.onclose = () => {
-          console.log("WebSocket closed");
+        this.ws.onclose = (ev) => {
+          console.log("WebSocket closed", ev?.code, ev?.reason);
           this.ws = null;
-          this.attemptReconnect();
+          if (!settled) {
+            settled = true;
+            cleanup();
+            reject(new Error('WebSocket closed before open'));
+          } else {
+            this.attemptReconnect();
+          }
         };
-      } catch (error) {
-        reject(error);
-      }
-    });
+      });
+    } catch (e) {
+      return Promise.reject(e instanceof Error ? e : new Error(String(e)));
+    }
   }
 
   private attemptReconnect() {

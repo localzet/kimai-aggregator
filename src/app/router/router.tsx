@@ -12,12 +12,11 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
-import { ErrorBoundary, ErrorBoundaryProps } from "react-error-boundary";
-import { Outlet } from "react-router-dom";
-import { FC, lazy } from "react";
-import { AuthGuard, SetupGuard } from "./guards";
-import { InitialRedirect, ErrorPage } from "./components";
+import { lazy } from "react";
+import { AuthGuard } from "./guards";
+import { ErrorPage } from "./components";
 import { RootLayout } from "../layouts/root/root.layout";
+import { ErrorBoundaryHoc } from "@shared/hoks/error-boundary";
 
 // Lazy load pages for code splitting
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
@@ -31,55 +30,30 @@ const StatisticsPage = lazy(() => import("@/pages/StatisticsPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const TimeAnalysisPage = lazy(() => import("@/pages/TimeAnalysisPage"));
 const MLInsightsPage = lazy(() => import("@/pages/MLInsightsPage"));
-const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage"));
-const MixIdCallbackPage = lazy(() =>
-  import("@localzet/data-connector/components").then((m) => ({
-    default: m.MixIdCallbackPage,
-  })),
-);
 const MainLayout = lazy(() =>
   import("@/widgets/layout").then((module) => ({ default: module.MainLayout })),
 );
-
-/**
- * ErrorBoundaryHoc
- *
- * HOC для оборачивания маршрутов в ErrorBoundary
- */
-export const ErrorBoundaryHoc: FC<ErrorBoundaryProps> = (props) => {
-  return (
-    <ErrorBoundary {...props}>
-      <Outlet />
-    </ErrorBoundary>
-  );
-};
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<ErrorBoundaryHoc fallback={<ErrorPage />} />}>
       <Route element={<RootLayout />}>
-        <Route element={<AuthPage />} path="/auth" />
-        <Route element={<SetupPage />} path="/setup" />
-        <Route element={<MixIdCallbackPage />} path="/mixid-callback" />
-        <Route element={<OAuthCallbackPage />} path="/oauth/callback" />
+
         <Route element={<AuthGuard />}>
-          <Route element={<MainLayout />} path="/">
-            <Route element={<Navigate replace to="/dashboard" />} index />
+          <Route element={<Navigate replace to="/dashboard" />} path="/" />
+
+          <Route element={<AuthPage />} path="/auth" />
+          <Route element={<SetupPage />} path="/setup" />
+
+          <Route element={<MainLayout />}>
+            <Route element={<DashboardPage />} path="/dashboard" index />
             <Route element={<SettingsPage />} path="/settings" />
-            <Route element={<DashboardPage />} path="/dashboard" />
-
             <Route element={<TimesheetPage />} path="/timesheet" />
-
             <Route element={<FinancialPage />} path="/financial" />
-
             <Route element={<PaymentHistoryPage />} path="/payment-history" />
-
             <Route element={<StatisticsPage />} path="/statistics" />
-
             <Route element={<CalendarPage />} path="/calendar" />
-
             <Route element={<TimeAnalysisPage />} path="/time-analysis" />
-
             <Route element={<MLInsightsPage />} path="/ml-insights" />
           </Route>
         </Route>

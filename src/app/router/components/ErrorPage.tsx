@@ -7,7 +7,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button, Container, Group, Title, Text } from "@mantine/core";
-import classesError from "@/error.module.css";
+import classesError from "./error.module.css";
 
 export function ErrorPage() {
   const navigate = useNavigate();

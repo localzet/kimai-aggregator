@@ -46,3 +46,16 @@ export function RootLayout() {
     </div>
   );
 }
+
+export function RootWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={classes.root}>
+      <div className="animated-background"></div>
+      <div className={classes.content}>
+        <main className={classes.main}>
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

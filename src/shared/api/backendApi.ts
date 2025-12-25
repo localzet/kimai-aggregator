@@ -1,214 +1,66 @@
-import { Settings, AppMode } from "@/shared/hooks/useSettings";
-import { Timesheet, WeekData } from "./kimaiApi";
+import createBackendClient from './backendClient'
 
-export interface BackendAuthResponse {
-  token: string;
-  user_id: string;
-  refresh_token?: string;
-}
-export interface BackendAuthWithRefreshResponse extends BackendAuthResponse {
-  refresh_token?: string;
-}
-
-export interface BackendTimesheetListResponse {
-  timesheets: Timesheet[];
-  total: number;
-}
-
-export interface BackendSyncStatus {
-  status: string;
-  last_kimai_sync?: string;
-  last_calendar_sync?: string;
-  last_ml_sync?: string;
-}
-
+// Compatibility wrapper: keep class interface used across the app,
+// delegate implementation to the new axios-based client factory.
 export class BackendApi {
-  private baseUrl: string;
-  private token: string | null = null;
+  private client: ReturnType<typeof createBackendClient>
 
-  constructor(baseUrl: string, token?: string) {
-    let base = (baseUrl || "").trim();
-    // If no protocol/host provided, assume same origin in browser
-    if (typeof window !== "undefined" && base === "") {
-      base = window.location.origin;
-    }
-    // Prepend http:// if a bare hostname was provided accidentally
-    if (
-      !/^https?:\/\//i.test(base) &&
-      base.length > 0 &&
-      typeof window !== "undefined"
-    ) {
-      // If running in browser and base is like 'example.com', add origin protocol
-      base = (window.location.protocol || "https:") + "//" + base;
-    }
-    this.baseUrl = base.replace(/\/$/, "");
-    this.token = token || null;
+  constructor(baseUrl: string, _token?: string) {
+    this.client = createBackendClient(baseUrl)
   }
 
-  setToken(token: string | null) {
-    this.token = token || null;
+  setToken(_token: string | null) {
+    // token is managed by session store and axios interceptors
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
-    // Protect against accidental unauthenticated requests to protected endpoints
-    const publicPrefixes = ["/api/auth/", "/health", "/api/public/"];
-    const isPublic = publicPrefixes.some((p) => endpoint.startsWith(p));
-    if (!this.token && !isPublic) {
-      const msg =
-        "BackendApi: missing backend token; aborting call to protected endpoint " +
-        endpoint;
-      console.error(msg);
-      throw new Error(msg);
-    }
-    const headers = new Headers({
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(options.headers ?? {}),
-    });
-
-    if (this.token) {
-      headers.set("Authorization", `Bearer ${this.token}`);
-    }
-
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Неверный токен авторизации");
-      }
-      const errorBody = await response.json().catch(() => null);
-      let errMsg = response.statusText || `API Error: ${response.status}`;
-      if (errorBody) {
-        if (typeof errorBody === "object") {
-          errMsg =
-            (errorBody as any).message ||
-            (errorBody as any).error ||
-            (errorBody as any).detail ||
-            JSON.stringify(errorBody);
-        } else {
-          errMsg = String(errorBody);
-        }
-      }
-      throw new Error(errMsg);
-    }
-
-    return response.json();
+  // Legacy mix-id login (kept for compatibility)
+  login(mixIdToken: string) {
+    return this.client.login(mixIdToken as any)
   }
 
-  async login(mixIdToken: string): Promise<BackendAuthResponse> {
-    return this.request<BackendAuthResponse>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ mix_id_token: mixIdToken }),
-    });
+  // Local login/register (new endpoints)
+  loginLocal(email: string, password: string) {
+    return this.client.login(email, password)
   }
 
-  async loginLocal(
-    email: string,
-    password: string,
-  ): Promise<BackendAuthResponse> {
-    return this.request<BackendAuthResponse>("/api/auth/login/local", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+  registerLocal(email: string, password: string) {
+    return this.client.register(email, password)
   }
 
-  async registerLocal(
-    email: string,
-    password: string,
-  ): Promise<BackendAuthResponse> {
-    return this.request<BackendAuthResponse>("/api/auth/register/local", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+  refreshSession(refreshToken: string) {
+    return this.client.refreshSession(refreshToken)
   }
 
-  async exchangeMixIdCode(
-    code: string,
-    redirectUri?: string,
-  ): Promise<BackendAuthResponse> {
-    return this.request<BackendAuthWithRefreshResponse>(
-      "/api/auth/mixid/exchange",
-      {
-        method: "POST",
-        body: JSON.stringify({ code, redirect_uri: redirectUri }),
-      },
-    );
+  logout() {
+    return this.client.logout()
   }
 
-  async refreshSession(
-    refreshToken: string,
-  ): Promise<BackendAuthWithRefreshResponse> {
-    return this.request<BackendAuthWithRefreshResponse>("/api/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
+  getTimesheets(startDate?: string, endDate?: string, limit?: number, offset?: number) {
+    return this.client.getTimesheets(startDate, endDate, limit, offset)
   }
 
-  async logout(): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>("/api/auth/logout", {
-      method: "POST",
-    });
+  getSettings() {
+    return this.client.getSettings()
   }
 
-  async getTimesheets(
-    startDate?: string,
-    endDate?: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<BackendTimesheetListResponse> {
-    const params = new URLSearchParams();
-    if (startDate) params.append("start_date", startDate);
-    if (endDate) params.append("end_date", endDate);
-    if (limit) params.append("limit", limit.toString());
-    if (offset) params.append("offset", offset.toString());
-
-    return this.request<BackendTimesheetListResponse>(
-      `/api/timesheets?${params.toString()}`,
-    );
+  updateSettings(settings: unknown) {
+    return this.client.updateSettings(settings)
   }
 
-  async getSettings(): Promise<Settings> {
-    return this.request<Settings>("/api/settings");
+  triggerSync() {
+    return this.client.triggerSync()
   }
 
-  async updateSettings(settings: Partial<Settings>): Promise<Settings> {
-    return this.request<Settings>("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify(settings),
-    });
+  getSyncStatus() {
+    return this.client.getSyncStatus()
   }
 
-  async triggerSync(): Promise<{ status: string; message: string }> {
-    return this.request<{ status: string; message: string }>(
-      "/api/sync/trigger",
-      {
-        method: "POST",
-      },
-    );
-  }
-
-  async getSyncStatus(): Promise<BackendSyncStatus> {
-    return this.request<BackendSyncStatus>("/api/sync/status", {
-      method: "POST",
-    });
-  }
-
-  async getMLPrediction(
-    predictionType: string,
-    context?: Record<string, unknown>,
-  ): Promise<unknown> {
-    return this.request("/api/ml/predict", {
-      method: "POST",
-      body: JSON.stringify({
-        prediction_type: predictionType,
-        context: context || {},
-      }),
-    });
+  getMLPrediction(predictionType: string, context?: Record<string, unknown>) {
+    // Optional — backend client may implement ML endpoint
+    // @ts-ignore
+    return (this.client as any).getMLPrediction?.(predictionType, context)
   }
 }
+
+export default BackendApi
+

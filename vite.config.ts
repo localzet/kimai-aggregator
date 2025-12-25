@@ -194,6 +194,10 @@ export default defineConfig({
     },
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json']
   },
+  define: {
+    __DOMAIN_BACKEND__: JSON.stringify(process.env.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud').trim(),
+    __NODE_ENV__: JSON.stringify(process.env.NODE_ENV).trim(),
+  },
   server: {
     proxy: {
       '/api/proxy': {

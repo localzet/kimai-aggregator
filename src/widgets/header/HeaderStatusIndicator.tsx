@@ -22,7 +22,7 @@ import { useSettings, useSyncStatus } from "@/shared/hooks";
 import { useMixIdStatus } from "@/shared/useMixIdStub";
 import { useDataFreshness } from "@/shared/hooks/useDataFreshness";
 import { useDashboardData } from "@/shared/hooks/useDashboardData";
-import { BackendApi } from "@/shared/api/backendApi";
+import { createBackendClient } from "@/shared/api/backendClient";
 
 export function HeaderStatusIndicator() {
   const { settings } = useSettings();
@@ -40,10 +40,7 @@ export function HeaderStatusIndicator() {
     }
 
     try {
-      const backendApi = new BackendApi(
-        settings.backendUrl,
-        settings.backendToken,
-      );
+      const backendApi = createBackendClient(settings.backendUrl || '');
       // Запускаем синхронизацию на бэке
       await backendApi.triggerSync();
       // Запрашиваем обновленные данные

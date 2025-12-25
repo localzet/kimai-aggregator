@@ -36,6 +36,7 @@ import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { NavigationProgress } from "@mantine/nprogress";
 import { theme } from "./theme";
+import { AuthProvider } from "./app/router/components/AuthProvider";
 
 export function App() {
   const mq = useMediaQuery("(min-width: 40em)");
@@ -50,40 +51,42 @@ export function App() {
   }, []);
 
   return (
-    <DirectionProvider>
-      <MantineProvider defaultColorScheme="dark" theme={theme}>
-        <ModalsProvider>
-          <Notifications position={mq ? "top-right" : "bottom-right"} />
-          <NavigationProgress />
+    <AuthProvider>
+      <DirectionProvider>
+        <MantineProvider defaultColorScheme="dark" theme={theme}>
+          <ModalsProvider>
+            <Notifications position={mq ? "top-right" : "bottom-right"} />
+            <NavigationProgress />
 
-          <Suspense
-            fallback={
-              <Center h="100%">
-                <Center
-                  style={{
-                    height: `calc(60vh - var(--app-shell-header-height) - 20px)`,
-                  }}
-                >
-                  <Stack align="center" gap="xs" w="100%">
-                    <Progress
-                      animated
-                      color="cyan"
-                      maw="32rem"
-                      radius="xs"
-                      striped
-                      value={100}
-                      w="80%"
-                    />
-                  </Stack>
+            <Suspense
+              fallback={
+                <Center h="100%">
+                  <Center
+                    style={{
+                      height: `calc(60vh - var(--app-shell-header-height) - 20px)`,
+                    }}
+                  >
+                    <Stack align="center" gap="xs" w="100%">
+                      <Progress
+                        animated
+                        color="cyan"
+                        maw="32rem"
+                        radius="xs"
+                        striped
+                        value={100}
+                        w="80%"
+                      />
+                    </Stack>
+                  </Center>
                 </Center>
-              </Center>
-            }
-          >
-            <Router />
-          </Suspense>
-        </ModalsProvider>
-      </MantineProvider>
-    </DirectionProvider>
+              }
+            >
+              <Router />
+            </Suspense>
+          </ModalsProvider>
+        </MantineProvider>
+      </DirectionProvider>
+    </AuthProvider>
   );
 }
 

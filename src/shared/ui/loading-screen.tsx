@@ -1,4 +1,4 @@
-import { Center, Progress, Stack, Text } from "@mantine/core";
+import { Card, Center, Progress, Stack, Text } from "@mantine/core";
 
 export function LoadingScreen({
   height = "100dvh",
@@ -11,22 +11,22 @@ export function LoadingScreen({
 }) {
   return (
     <Center
-      style={{
-        height: `calc(${height} - var(--app-shell-header-height) - 20px)`,
-      }}
+      h="100vh"
     >
-      <Stack align="center" gap="xs" w="100%">
-        {text && <Text size="lg">{text}</Text>}
-        <Progress
-          animated
-          color="cyan"
-          maw="32rem"
-          radius="xs"
-          striped
-          value={value}
-          w="80%"
-        />
-      </Stack>
+      <Card shadow="md" padding="md" radius="md" maw="32rem" w="100%" bg={'transparent'} style={{ backdropFilter: 'blur(8px)' }}>
+        <Stack align="center" gap="xs" w="100%">
+          <Text size="lg">{text || "Kimai Aggregator"}</Text>
+          <Progress
+            animated
+            color="cyan"
+            maw="32rem"
+            radius="md"
+            striped
+            value={value}
+            w="92%"
+          />
+        </Stack>
+      </Card>
     </Center>
   );
 }

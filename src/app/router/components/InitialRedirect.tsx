@@ -8,12 +8,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/shared/hooks/useSettings";
-import { useMixIdStatus } from "@localzet/data-connector/hooks";
 
 export function InitialRedirect() {
   const { settings, loading } = useSettings();
   const navigate = useNavigate();
-  const mixIdStatus = useMixIdStatus();
 
   useEffect(() => {
     const appMode = settings.appMode ?? "normal";
@@ -48,15 +46,9 @@ export function InitialRedirect() {
       return;
     }
 
-    // No backend token: fall back to MIX ID connection state
-    if (!mixIdStatus.isConnected) {
-      navigate("/auth", { replace: true });
-      return;
-    }
-
-    // If connected to MIX ID but no backend token yet, send user to /auth to complete backend login
+    // No backend token: send to auth page
     navigate("/auth", { replace: true });
-  }, [settings, loading, mixIdStatus.isConnected, navigate]);
+  }, [settings.appMode, settings.apiUrl, settings.apiKey, settings.backendToken, loading, navigate]);
 
   return null;
 }

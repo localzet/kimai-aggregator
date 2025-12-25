@@ -7,7 +7,7 @@ import {
   Project,
   Activity,
 } from "@/shared/api/kimaiApi";
-import { BackendApi } from "@/shared/api/backendApi";
+import { createBackendClient } from "@/shared/api/backendClient";
 import { WebSocketClient } from "@/shared/api/websocket";
 import { db } from "@/shared/api/db";
 import dayjs from "dayjs";
@@ -193,10 +193,7 @@ export function useDashboardData(
 
         await db.init();
 
-        const backendApi = new BackendApi(
-          currentSettings.backendUrl,
-          currentSettings.backendToken,
-        );
+        const backendApi = createBackendClient(currentSettings.backendUrl || "")
 
         // Определяем период загрузки
         const endDate = dayjs();

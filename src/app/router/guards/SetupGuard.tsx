@@ -36,9 +36,8 @@ export function SetupGuard({ children }: SetupGuardProps) {
         navigate("/auth", { replace: true });
       }
     }
-    // В normal‑режиме здесь НЕ редиректим, чтобы избежать петель;
-    // вход/выход через MIX ID обрабатывается InitialRedirect и AuthPage.
-  }, [settings, navigate]);
+    // In normal mode we avoid redirect loops; depend only on specific settings fields.
+  }, [settings.appMode, settings.apiUrl, settings.apiKey, settings.backendToken, navigate]);
 
   const appMode = settings.appMode ?? "normal";
 

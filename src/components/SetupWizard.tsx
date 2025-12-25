@@ -27,7 +27,7 @@ import {
 } from "@tabler/icons-react";
 import { Settings, useSettings, AppMode } from "@/shared/hooks/useSettings";
 import type { Project } from "@/shared/api/kimaiApi";
-import { BackendApi } from "@/shared/api/backendApi";
+import { createBackendClient } from "@/shared/api/backendClient";
 import { mixIdApi } from "@/shared/mixIdStub";
 
 interface SetupWizardProps {
@@ -162,13 +162,10 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
         return;
       }
 
-      // Use BackendApi with token so Authorization header is sent
-      const backendApi = new BackendApi(base, tokenToUse);
+      // Use backend client with token so Authorization header is sent
+      const backendApi = createBackendClient(base);
       // Update settings on backend (backend should validate Kimai credentials)
-      await backendApi.updateSettings({
-        apiUrl: apiUrl.trim(),
-        apiKey: apiKey.trim(),
-      });
+      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() });
       // Persist settings locally (and propagate to backend/MIX ID via useSettings)
       await updateSettings({
         ...settings,

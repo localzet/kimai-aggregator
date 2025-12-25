@@ -9,9 +9,10 @@ import { Button } from "@mantine/core";
 import { TbLogout } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/shared/hooks/useSettings";
+import { removeToken } from "@entities/session-store";
 import { useMixIdStatus } from "@/shared/useMixIdStub";
 import { notifications } from "@mantine/notifications";
-import { BackendApi } from "@/shared/api/backendApi";
+import { createBackendClient } from "@/shared/api/backendClient";
 
 export function LogoutButton() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export function LogoutButton() {
         (import.meta.env.VITE_BACKEND_URL as string) ||
         "";
       if (backendUrl) {
-        const api = new BackendApi(backendUrl, settings.backendToken || "");
+        const api = createBackendClient(backendUrl);
         api.logout().catch((e) => console.warn("Backend logout failed:", e));
       }
     } catch (e) {
@@ -43,7 +44,8 @@ export function LogoutButton() {
     try {
       localStorage.removeItem("mixid_access_token");
       localStorage.removeItem("mixid_token");
-      localStorage.removeItem("backend_refresh_token");
+      // clear tokens stored in session store
+      removeToken();
       const saved = localStorage.getItem("kimai-settings");
       if (saved) {
         const parsed = JSON.parse(saved);
