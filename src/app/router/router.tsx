@@ -38,7 +38,6 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<ErrorBoundaryHoc fallback={<ErrorPage />} />}>
       <Route element={<RootLayout />}>
-
         <Route element={<AuthGuard />}>
           <Route element={<Navigate replace to="/dashboard" />} path="/" />
 

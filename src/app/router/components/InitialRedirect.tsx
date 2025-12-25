@@ -48,7 +48,14 @@ export function InitialRedirect() {
 
     // No backend token: send to auth page
     navigate("/auth", { replace: true });
-  }, [settings.appMode, settings.apiUrl, settings.apiKey, settings.backendToken, loading, navigate]);
+  }, [
+    settings.appMode,
+    settings.apiUrl,
+    settings.apiKey,
+    settings.backendToken,
+    loading,
+    navigate,
+  ]);
 
   return null;
 }

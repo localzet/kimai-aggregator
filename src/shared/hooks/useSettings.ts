@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ProjectSettings } from "@/shared/api/kimaiApi";
 import { createBackendClient } from "@/shared/api/backendClient";
 import { setToken as setSessionToken } from "@entities/session-store";
-import consola from 'consola/browser'
+import consola from "consola/browser";
 
 export interface CalendarSyncSettings {
   enabled: boolean;
@@ -74,7 +74,10 @@ export function useSettings() {
         // so axios has the Authorization header available on first load.
         if (parsed.backendToken) {
           try {
-            setSessionToken({ accessToken: parsed.backendToken, refreshToken: parsed.backendRefreshToken });
+            setSessionToken({
+              accessToken: parsed.backendToken,
+              refreshToken: parsed.backendRefreshToken,
+            });
           } catch (e) {
             // ignore
           }
@@ -97,7 +100,8 @@ export function useSettings() {
   // Shared in-flight promise to avoid multiple components triggering
   // the settings load simultaneously (prevents request storms).
   // This lives at module scope so all hook instances share it.
-  let _globalLoad: Promise<void> | null = (useSettings as any)._globalLoad || null;
+  let _globalLoad: Promise<void> | null =
+    (useSettings as any)._globalLoad || null;
 
   // Загрузка настроек с бэкенда
   const loadSettingsFromBackend = useCallback(async () => {
@@ -116,7 +120,7 @@ export function useSettings() {
     const loader = (async () => {
       try {
         setLoading(true);
-        const backendApi = createBackendClient(settings.backendUrl || "")
+        const backendApi = createBackendClient(settings.backendUrl || "");
         // Ответ бэкенда в snake_case, поэтому приводим через any и маппим вручную
         const backendSettings: any = await backendApi.getSettings();
 
@@ -124,12 +128,17 @@ export function useSettings() {
         const convertedSettings: Settings = {
           apiUrl: backendSettings?.kimai_api_url || settings.apiUrl || "",
           apiKey: backendSettings?.kimai_api_key || settings.apiKey || "",
-          ratePerMinute: backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
+          ratePerMinute:
+            backendSettings?.rate_per_minute ?? settings.ratePerMinute ?? 0,
           useProxy: false,
-          projectSettings: backendSettings?.project_settings || settings.projectSettings || {},
-          excludedTags: backendSettings?.excluded_tags || settings.excludedTags || [],
+          projectSettings:
+            backendSettings?.project_settings || settings.projectSettings || {},
+          excludedTags:
+            backendSettings?.excluded_tags || settings.excludedTags || [],
           calendarSync:
-            backendSettings?.calendar_sync || settings.calendarSync || defaultSettings.calendarSync,
+            backendSettings?.calendar_sync ||
+            settings.calendarSync ||
+            defaultSettings.calendarSync,
           appMode: "normal",
           backendUrl: settings.backendUrl,
           backendToken: settings.backendToken,
@@ -181,7 +190,7 @@ export function useSettings() {
         newSettings.apiKey
       ) {
         try {
-          const backendApi = createBackendClient(newSettings.backendUrl || "")
+          const backendApi = createBackendClient(newSettings.backendUrl || "");
 
           // Отправляем настройки в бэкенд (payload в snake_case)
           const payload: any = {

@@ -1,4 +1,4 @@
 export interface IState {
-    accessToken: string
-    refreshToken?: string
+  accessToken: string;
+  refreshToken?: string;
 }

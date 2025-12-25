@@ -193,7 +193,9 @@ export function useDashboardData(
 
         await db.init();
 
-        const backendApi = createBackendClient(currentSettings.backendUrl || "")
+        const backendApi = createBackendClient(
+          currentSettings.backendUrl || "",
+        );
 
         // Определяем период загрузки
         const endDate = dayjs();

@@ -65,17 +65,17 @@ export default function SettingsForm({
       return;
     }
 
-      try {
-        setLoadingProjects(true);
-        setError(null);
-        const api = createKimaiClient(
-          form.values.apiUrl.trim(),
-          form.values.apiKey.trim(),
-          form.values.useProxy,
-        );
-        const projectsData = await api.getProjects();
-        setProjects(projectsData as any[]);
-      } catch (err) {
+    try {
+      setLoadingProjects(true);
+      setError(null);
+      const api = createKimaiClient(
+        form.values.apiUrl.trim(),
+        form.values.apiKey.trim(),
+        form.values.useProxy,
+      );
+      const projectsData = await api.getProjects();
+      setProjects(projectsData as any[]);
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка загрузки проектов");
       console.error("Error loading projects:", err);
       setProjects([]);
@@ -85,7 +85,7 @@ export default function SettingsForm({
   };
 
   const loadTags = async () => {
-      if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
+    if (!form.values.apiUrl.trim() || !form.values.apiKey.trim()) return;
     try {
       const api = createKimaiClient(
         form.values.apiUrl.trim(),

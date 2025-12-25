@@ -1,12 +1,17 @@
-import { Center, Card, Stack, Title, Text, Container, Group, Box } from "@mantine/core";
+import {
+  Center,
+  Card,
+  Stack,
+  Title,
+  Text,
+  Container,
+  Group,
+  Box,
+} from "@mantine/core";
 import { Page } from "@/shared/ui";
 import AuthForm from "@/components/AuthForm";
 
 function AuthPage() {
-
-
-
-
   return (
     // <Page>
     //   <Container
@@ -33,15 +38,21 @@ function AuthPage() {
         py="xl"
         style={{ position: "relative", zIndex: 1 }}
       >
-
         <Center h="100%">
-          <Card shadow="md" padding="xl" radius="md" maw={480} w="100%" bg={'transparent'} style={{backdropFilter: 'blur(8px)'}}>
-
+          <Card
+            shadow="md"
+            padding="xl"
+            radius="md"
+            maw={480}
+            w="100%"
+            bg={"transparent"}
+            style={{ backdropFilter: "blur(8px)" }}
+          >
             <Stack align="center" gap="xs">
               <Group align="center" gap={4} justify="center">
                 <Title ff="Unbounded" order={1} pos="relative">
                   <Text
-                    c='cyan'
+                    c="cyan"
                     component="span"
                     fw="inherit"
                     fz="inherit"
@@ -58,7 +69,6 @@ function AuthPage() {
                 </Stack>
               </Box>
             </Stack>
-            
           </Card>
         </Center>
       </Container>

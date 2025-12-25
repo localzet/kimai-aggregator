@@ -52,9 +52,7 @@ export function RootWrapper({ children }: { children: React.ReactNode }) {
     <div className={classes.root}>
       <div className="animated-background"></div>
       <div className={classes.content}>
-        <main className={classes.main}>
-          {children}
-        </main>
+        <main className={classes.main}>{children}</main>
       </div>
     </div>
   );

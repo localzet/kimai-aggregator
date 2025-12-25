@@ -165,7 +165,10 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       // Use backend client with token so Authorization header is sent
       const backendApi = createBackendClient(base);
       // Update settings on backend (backend should validate Kimai credentials)
-      await backendApi.updateSettings({ apiUrl: apiUrl.trim(), apiKey: apiKey.trim() });
+      await backendApi.updateSettings({
+        apiUrl: apiUrl.trim(),
+        apiKey: apiKey.trim(),
+      });
       // Persist settings locally (and propagate to backend/MIX ID via useSettings)
       await updateSettings({
         ...settings,

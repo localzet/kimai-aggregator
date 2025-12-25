@@ -12,7 +12,8 @@ export function useAuth() {
 
   const { settings, updateSettings } = useSettings();
 
-  const backendUrl = settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "";
+  const backendUrl =
+    settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "";
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -67,4 +68,3 @@ export function useAuth() {
 }
 
 export default useAuth;
-

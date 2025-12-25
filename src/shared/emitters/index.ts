@@ -1,1 +1,1 @@
-export * from './emit-logout'
+export * from "./emit-logout";

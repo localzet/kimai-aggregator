@@ -40,7 +40,7 @@ export function HeaderStatusIndicator() {
     }
 
     try {
-      const backendApi = createBackendClient(settings.backendUrl || '');
+      const backendApi = createBackendClient(settings.backendUrl || "");
       // Запускаем синхронизацию на бэке
       await backendApi.triggerSync();
       // Запрашиваем обновленные данные

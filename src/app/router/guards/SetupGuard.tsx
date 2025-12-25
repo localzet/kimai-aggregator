@@ -37,7 +37,13 @@ export function SetupGuard({ children }: SetupGuardProps) {
       }
     }
     // In normal mode we avoid redirect loops; depend only on specific settings fields.
-  }, [settings.appMode, settings.apiUrl, settings.apiKey, settings.backendToken, navigate]);
+  }, [
+    settings.appMode,
+    settings.apiUrl,
+    settings.apiKey,
+    settings.backendToken,
+    navigate,
+  ]);
 
   const appMode = settings.appMode ?? "normal";
 

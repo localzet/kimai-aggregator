@@ -1,4 +1,4 @@
 export interface ISetTokenAction {
-    accessToken: string
-    refreshToken?: string
+  accessToken: string;
+  refreshToken?: string;
 }

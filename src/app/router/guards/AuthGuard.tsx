@@ -3,26 +3,26 @@ import { useAuth } from "@shared/hooks/useAuth";
 import { LoadingScreen } from "@/shared/ui";
 
 export function AuthGuard() {
-  const location = useLocation()
-  const { isAuthenticated, isInitialized } = useAuth()
+  const location = useLocation();
+  const { isAuthenticated, isInitialized } = useAuth();
 
   if (!isInitialized) {
-    return <LoadingScreen />
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
-    if (location.pathname.includes('/auth')) {
-      return <Outlet />
+    if (location.pathname.includes("/auth")) {
+      return <Outlet />;
     }
-    return <Navigate replace to={'/auth'} />
+    return <Navigate replace to={"/auth"} />;
   }
 
   if (isAuthenticated) {
-    if (location.pathname.includes('/dashboard')) {
-      return <Outlet />
+    if (location.pathname.includes("/dashboard")) {
+      return <Outlet />;
     }
-    return <Navigate replace to={'/dashboard'} />
+    return <Navigate replace to={"/dashboard"} />;
   }
 
-  return <Outlet />
+  return <Outlet />;
 }

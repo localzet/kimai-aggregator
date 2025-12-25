@@ -10,10 +10,16 @@ export function LoadingScreen({
   value?: number;
 }) {
   return (
-    <Center
-      h="100vh"
-    >
-      <Card shadow="md" padding="md" radius="md" maw="32rem" w="100%" bg={'transparent'} style={{ backdropFilter: 'blur(8px)' }}>
+    <Center h="100vh">
+      <Card
+        shadow="md"
+        padding="md"
+        radius="md"
+        maw="32rem"
+        w="100%"
+        bg={"transparent"}
+        style={{ backdropFilter: "blur(8px)" }}
+      >
         <Stack align="center" gap="xs" w="100%">
           <Text size="lg">{text || "Kimai Aggregator"}</Text>
           <Progress

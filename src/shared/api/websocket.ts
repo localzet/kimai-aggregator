@@ -45,14 +45,14 @@ export class WebSocketClient {
         return Promise.reject(new Error("No token provided for WebSocket"));
       }
       // Basic JWT expiry check (token is base64 parts)
-      const parts = this.token.split('.');
+      const parts = this.token.split(".");
       if (parts.length === 3) {
         try {
           const payload = JSON.parse(atob(parts[1]));
-          if (payload.exp && typeof payload.exp === 'number') {
+          if (payload.exp && typeof payload.exp === "number") {
             const now = Math.floor(Date.now() / 1000);
             if (payload.exp < now) {
-              return Promise.reject(new Error('Token expired'));
+              return Promise.reject(new Error("Token expired"));
             }
           }
         } catch (e) {
@@ -92,9 +92,9 @@ export class WebSocketClient {
           if (!settled) {
             settled = true;
             cleanup();
-            reject(new Error('WebSocket connection error'));
+            reject(new Error("WebSocket connection error"));
           } else {
-            console.error('WebSocket error after connect:', error);
+            console.error("WebSocket error after connect:", error);
           }
         };
 
@@ -104,7 +104,7 @@ export class WebSocketClient {
           if (!settled) {
             settled = true;
             cleanup();
-            reject(new Error('WebSocket closed before open'));
+            reject(new Error("WebSocket closed before open"));
           } else {
             this.attemptReconnect();
           }
