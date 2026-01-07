@@ -15,7 +15,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@gfazioli/mantine-list-view-table": "^1.1.4",
+        "@gfazioli/mantine-list-view-table": "^1.1.10",
         "@gfazioli/mantine-spinner": "^2.3.9",
         "@gfazioli/mantine-split-pane": "^2.5.1",
         "@localzet/data-connector": "^1.0.1",
