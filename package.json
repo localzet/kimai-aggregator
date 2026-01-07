@@ -32,7 +32,7 @@
         "consola": "^3.4.2",
         "dayjs": "^1.11.18",
         "mantine-react-table": "^2.0.0-beta.9",
-        "motion": "^12.23.24",
+        "motion": "^12.24.10",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-error-boundary": "^6.0.0",
