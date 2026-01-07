@@ -19,7 +19,7 @@
         "@gfazioli/mantine-spinner": "^2.3.9",
         "@gfazioli/mantine-split-pane": "^2.5.1",
         "@localzet/data-connector": "^1.0.1",
-        "@mantine/charts": "^8.3.6",
+        "@mantine/charts": "^8.3.11",
         "@mantine/core": "^8.3.6",
         "@mantine/dates": "^8.3.6",
         "@mantine/form": "^8.3.6",
