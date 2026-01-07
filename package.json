@@ -22,7 +22,7 @@
         "@mantine/charts": "^8.3.6",
         "@mantine/core": "^8.3.6",
         "@mantine/dates": "^8.3.6",
-        "@mantine/form": "^8.3.6",
+        "@mantine/form": "^8.3.11",
         "@mantine/hooks": "^8.3.6",
         "@mantine/modals": "^8.3.8",
         "@mantine/notifications": "^8.3.6",
