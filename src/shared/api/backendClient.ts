@@ -22,7 +22,7 @@ export function createBackendClient(baseUrl: string) {
   return {
     async login(email: string, password: string) {
       try {
-        const r = await api.post("/api/auth/login", { email, password });
+        const r = await api.post("/api/v1/auth/login", { email, password });
         return r.data;
       } catch (e) {
         throw new Error(handleError(e));
@@ -31,7 +31,7 @@ export function createBackendClient(baseUrl: string) {
 
     async register(email: string, password: string) {
       try {
-        const r = await api.post("/api/auth/register", { email, password });
+        const r = await api.post("/api/v1/auth/register", { email, password });
         return r.data;
       } catch (e) {
         throw new Error(handleError(e));
@@ -40,7 +40,7 @@ export function createBackendClient(baseUrl: string) {
 
     async refreshSession(refreshToken: string) {
       try {
-        const r = await api.post("/api/auth/refresh", {
+        const r = await api.post("/api/v1/auth/refresh", {
           refresh_token: refreshToken,
         });
         return r.data;
@@ -51,7 +51,7 @@ export function createBackendClient(baseUrl: string) {
 
     async logout() {
       try {
-        const r = await api.post("/api/auth/logout");
+        const r = await api.post("/api/v1/auth/logout");
         return r.data;
       } catch (e) {
         throw new Error(handleError(e));
@@ -60,7 +60,7 @@ export function createBackendClient(baseUrl: string) {
 
     async getSettings() {
       try {
-        const r = await api.get("/api/settings");
+        const r = await api.get("/api/v1/settings");
         return r.data;
       } catch (e) {
         throw new Error(handleError(e));
@@ -69,7 +69,7 @@ export function createBackendClient(baseUrl: string) {
 
     async updateSettings(settings: unknown) {
       try {
-        const r = await api.put("/api/settings", settings);
+        const r = await api.put("/api/v1/settings", settings);
         return r.data;
       } catch (e) {
         throw new Error(handleError(e));
@@ -77,12 +77,12 @@ export function createBackendClient(baseUrl: string) {
     },
 
     async triggerSync() {
-      const r = await api.post("/api/sync/trigger");
+      const r = await api.post("/api/v1/sync/trigger");
       return r.data;
     },
 
     async getSyncStatus() {
-      const r = await api.post("/api/sync/status");
+      const r = await api.post("/api/v1/sync/status");
       return r.data;
     },
 
@@ -97,8 +97,26 @@ export function createBackendClient(baseUrl: string) {
       if (endDate) params.end_date = endDate;
       if (limit) params.limit = limit;
       if (offset) params.offset = offset;
-      const r = await api.get("/api/timesheets", { params });
+      const r = await api.get("/api/v1/timesheets", { params });
       return r.data;
+    },
+
+    async getDashboardWeeks() {
+      try {
+        const r = await api.get("/api/v1/dashboard/weeks");
+        return r.data;
+      } catch (e) {
+        throw new Error(handleError(e));
+      }
+    },
+
+    async getDashboardMetrics() {
+      try {
+        const r = await api.get("/api/v1/dashboard/metrics");
+        return r.data;
+      } catch (e) {
+        throw new Error(handleError(e));
+      }
     },
   };
 }

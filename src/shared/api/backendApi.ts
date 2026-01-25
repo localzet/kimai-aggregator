@@ -13,11 +13,6 @@ export class BackendApi {
     // token is managed by session store and axios interceptors
   }
 
-  // Legacy mix-id login (kept for compatibility)
-  login(mixIdToken: string) {
-    return this.client.login(mixIdToken as any);
-  }
-
   // Local login/register (new endpoints)
   loginLocal(email: string, password: string) {
     return this.client.login(email, password);

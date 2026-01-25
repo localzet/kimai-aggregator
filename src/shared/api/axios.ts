@@ -2,7 +2,7 @@ import consola from "consola/browser";
 import axios, { AxiosInstance } from "axios";
 
 import { logoutEvents } from "../emitters/emit-logout";
-import { useSessionStore } from "@entities/session-store";
+import { useSessionStore, setToken } from "@entities/session-store";
 
 let authorizationToken = "";
 
@@ -45,7 +45,7 @@ useSessionStore.subscribe((state) => {
 function applyInterceptors(inst: AxiosInstance) {
   // request
   inst.interceptors.request.use((config) => {
-    if (!config.headers) config.headers = {};
+    if (!config.headers) config.headers = {} as any;
     if (authorizationToken) {
       config.headers["Authorization"] = `Bearer ${authorizationToken}`;
     }
@@ -80,12 +80,13 @@ function applyInterceptors(inst: AxiosInstance) {
           if (!isRefreshing) {
             isRefreshing = true;
             refreshPromise = inst
-              .post("/api/auth/refresh", { refresh_token: refreshToken })
+              .post("/api/v1/auth/refresh", { refresh_token: refreshToken })
               .then((res) => {
                 const data = res.data;
-                const newAccess = data.token || data.access_token;
-                const newRefresh =
-                  data.refresh_token || data.refreshToken || data.refreshToken;
+                // support normalized response: { success: true, data: { accessToken, refreshToken } }
+                const payload = data && data.success && data.data ? data.data : data;
+                const newAccess = payload.accessToken || payload.token || payload.access_token;
+                const newRefresh = payload.refreshToken || payload.refresh_token;
                 if (newAccess) {
                   // update module token and session store
                   setAuthorizationToken(newAccess);
@@ -96,7 +97,7 @@ function applyInterceptors(inst: AxiosInstance) {
                     });
                   } catch (e) {}
                 }
-                return data;
+                return payload;
               })
               .finally(() => {
                 isRefreshing = false;

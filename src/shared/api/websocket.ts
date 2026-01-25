@@ -73,13 +73,13 @@ export class WebSocketClient {
           this.ws.onclose = null;
         };
 
-        this.ws.onopen = () => {
+        (this.ws as WebSocket).onopen = () => {
           this.reconnectAttempts = 0;
           settled = true;
           resolve();
         };
 
-        this.ws.onmessage = (event) => {
+        (this.ws as WebSocket).onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
@@ -88,7 +88,7 @@ export class WebSocketClient {
           }
         };
 
-        this.ws.onerror = (error) => {
+        (this.ws as WebSocket).onerror = (error) => {
           if (!settled) {
             settled = true;
             cleanup();
@@ -98,7 +98,7 @@ export class WebSocketClient {
           }
         };
 
-        this.ws.onclose = (ev) => {
+        (this.ws as WebSocket).onclose = (ev) => {
           console.log("WebSocket closed", ev?.code, ev?.reason);
           this.ws = null;
           if (!settled) {

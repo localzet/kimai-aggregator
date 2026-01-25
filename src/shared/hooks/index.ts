@@ -1,5 +1,6 @@
 export { useSettings, type Settings } from "./useSettings";
 export { useDashboardData } from "./useDashboardData";
+export { useDashboardMetrics } from "./useDashboardMetrics";
 export {
   useSyncStatus,
   type SyncStatus,
@@ -11,9 +12,4 @@ export {
   type SyncStage,
   type SyncProgress,
 } from "./useUnifiedSync";
-export {
-  useMixIdStatus,
-  type MixIdSyncStatus,
-  type UseMixIdStatusReturn,
-} from "@/shared/useMixIdStub";
 export { useDataFreshness, type DataFreshnessInfo } from "./useDataFreshness";

@@ -8,7 +8,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/shared/hooks/useSettings";
-import { useMixIdStatus } from "@localzet/data-connector/hooks";
 
 interface SetupGuardProps {
   children: React.ReactNode;
@@ -17,7 +16,6 @@ interface SetupGuardProps {
 export function SetupGuard({ children }: SetupGuardProps) {
   const { settings } = useSettings();
   const navigate = useNavigate();
-  const mixIdStatus = useMixIdStatus();
 
   useEffect(() => {
     const appMode = settings.appMode ?? "normal";

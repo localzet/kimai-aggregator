@@ -29,7 +29,6 @@ export default function AuthForm() {
         color: "green",
       });
 
-      // After registration force setup of keys/settings
       navigate("/setup", { replace: true });
     } catch (e) {
       notifications.show({
@@ -44,7 +43,7 @@ export default function AuthForm() {
 
   return (
     <Stack>
-      <Title order={2}>{mode === "register" ? "Регистрация" : "Вход"} </Title>
+      <Title mx={'auto'} order={2}>{mode === "register" ? "Регистрация" : "Вход"} </Title>
       <TextInput
         label="Email"
         value={email}

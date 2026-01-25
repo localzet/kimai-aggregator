@@ -100,11 +100,14 @@ function ReportGenerator({ weeks, settings }: ReportGeneratorProps) {
             padding: 0;
             box-sizing: border-box;
         }
+        /* Load Nunito inside generated PDF HTML to ensure consistent font */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;600;700;800;900&display=swap');
+
         body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #fff;
+          font-family: 'Nunito', sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #fff;
         }
         .document {
             max-width: 210mm;

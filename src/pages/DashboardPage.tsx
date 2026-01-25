@@ -1,6 +1,6 @@
 import WeekProgress from "@/components/WeekProgress";
 import DashboardMetrics from "@/components/DashboardMetrics";
-import { useSettings, useDashboardData, useSyncStatus } from "@/shared/hooks";
+import { useSettings, useDashboardData, useDashboardMetrics, useSyncStatus } from "@/shared/hooks";
 import { Container, Loader, Alert, Stack, Button, Group } from "@mantine/core";
 import { motion } from "motion/react";
 import dayjs from "dayjs";
@@ -19,6 +19,7 @@ function DashboardPage() {
     settings,
     syncStatus,
   );
+  const { metrics, loading: metricsLoading, error: metricsError } = useDashboardMetrics(settings);
 
   const currentStatus = syncing ? "updating" : syncStatus.status;
 
@@ -76,6 +77,7 @@ function DashboardPage() {
           <>
             <DashboardMetrics
               weeks={weeks}
+              metrics={metrics}
               ratePerMinute={settings.ratePerMinute}
             />
 

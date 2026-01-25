@@ -1,12 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useSettings } from "./useSettings";
-import { useMixIdSync } from "./useMixIdSync";
-import { syncCalendar } from "@/shared/api/calendarSync";
-import { db } from "@/shared/api/db";
-import { Timesheet } from "@/shared/api/kimaiApi";
-import dayjs from "dayjs";
+import { createBackendClient } from "@/shared/api/backendClient";
 
-export type SyncStage = "idle" | "mixid" | "notion" | "complete" | "error";
+export type SyncStage = "idle" | "syncing" | "complete" | "error";
 
 export interface SyncProgress {
   stage: SyncStage;
@@ -24,7 +20,6 @@ const MIN_SYNC_INTERVALS = {
 
 export function useUnifiedSync() {
   const { settings } = useSettings();
-  const { performSync: performMixIdSync } = useMixIdSync();
   const [syncing, setSyncing] = useState(false);
   const [progress, setProgress] = useState<SyncProgress>({
     stage: "idle",
@@ -33,150 +28,63 @@ export function useUnifiedSync() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
 
-  const syncNotion = useCallback(
-    async (
-      entries: Timesheet[],
-    ): Promise<{ created: number; updated: number; errors: number } | null> => {
-      if (
-        !settings.calendarSync?.enabled ||
-        settings.calendarSync?.syncType !== "notion"
-      ) {
-        return null;
-      }
-
-      if (
-        !settings.calendarSync.notionApiKey ||
-        !settings.calendarSync.notionDatabaseId
-      ) {
-        return null;
-      }
-
-      try {
-        setProgress({
-          stage: "notion",
-          message: "Синхронизация с Notion...",
-        });
-
-        const now = dayjs();
-        const pastDays = settings.calendarSync.syncPastDays || 30;
-        const futureDays = settings.calendarSync.syncFutureDays || 7;
-        const startDate = now.subtract(pastDays, "day");
-        const endDate = now.add(futureDays, "day");
-
-        const filteredEntries = entries.filter((entry) => {
-          if (!entry.begin) return false;
-          const entryDate = dayjs(entry.begin);
-          return entryDate.isAfter(startDate) && entryDate.isBefore(endDate);
-        });
-
-        const result = await syncCalendar(
-          filteredEntries,
-          settings.calendarSync,
-        );
-        return result;
-      } catch (error) {
-        console.error("Notion sync error:", error);
-        throw error;
-      }
-    },
-    [settings.calendarSync],
-  );
-
   const performSync = useCallback(
-    async (triggerSource: "manual" | "page-change" | "periodic" = "manual") => {
-      if (syncing) {
-        return;
-      }
-
+    async (trigger: "manual" | "page-change" | "periodic" = "manual") => {
       // Проверяем минимальный интервал между синхронизациями
       const now = Date.now();
-      const minInterval = MIN_SYNC_INTERVALS[triggerSource];
-      const timeSinceLastSync = now - lastSyncTimeRef.current;
-
-      if (minInterval > 0 && timeSinceLastSync < minInterval) {
-        // Слишком рано для синхронизации, пропускаем
+      const minInterval = MIN_SYNC_INTERVALS[trigger];
+      if (now - lastSyncTimeRef.current < minInterval) {
+        console.log(`Sync skipped: too soon since last sync (${trigger})`);
         return;
       }
 
+      if (!settings.backendUrl || !settings.backendToken) {
+        console.warn("Backend not configured, skipping sync");
+        return;
+      }
+
+      if (syncing) {
+        console.log("Sync already in progress, skipping");
+        return;
+      }
+
+      setSyncing(true);
+      setProgress({
+        stage: "syncing",
+        message: "Запуск синхронизации...",
+      });
+
       try {
-        setSyncing(true);
-        setProgress({
-          stage: "mixid",
-          message: "Синхронизация с Mix ID...",
-        });
-
-        // Этап 1: Синхронизация с Mix ID
-        await performMixIdSync();
-
-        // Этап 2: Синхронизация с Notion (если настроена)
-        if (
-          settings.calendarSync?.enabled &&
-          settings.calendarSync?.syncType === "notion"
-        ) {
-          await db.init();
-          const timesheets = await db.getTimesheets();
-          await syncNotion(timesheets);
-        }
+        const backendApi = createBackendClient(settings.backendUrl);
+        await backendApi.triggerSync();
 
         setProgress({
           stage: "complete",
           message: "Синхронизация завершена",
         });
 
-        // Обновляем время последней синхронизации
-        lastSyncTimeRef.current = Date.now();
-
-        // Сбрасываем прогресс через 2 секунды
-        setTimeout(() => {
-          setProgress({
-            stage: "idle",
-            message: "",
-          });
-        }, 2000);
+        lastSyncTimeRef.current = now;
       } catch (error) {
-        console.error("Sync error:", error);
+        console.error("Sync failed:", error);
         setProgress({
           stage: "error",
           message: "Ошибка синхронизации",
-          error: error instanceof Error ? error.message : "Неизвестная ошибка",
+          error: error instanceof Error ? error.message : "Unknown error",
         });
+      } finally {
+        setSyncing(false);
 
-        // Сбрасываем ошибку через 5 секунд
+        // Сбрасываем статус через 3 секунды
         setTimeout(() => {
           setProgress({
             stage: "idle",
             message: "",
           });
-        }, 5000);
-      } finally {
-        setSyncing(false);
+        }, 3000);
       }
     },
-    [syncing, performMixIdSync, settings.calendarSync, syncNotion],
+    [settings.backendUrl, settings.backendToken, syncing]
   );
-
-  // Периодическая синхронизация (раз в полчаса)
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    // Запускаем периодическую синхронизацию только если включена автоматическая синхронизация
-    if (settings.calendarSync?.autoSync) {
-      intervalRef.current = setInterval(
-        () => {
-          performSync("periodic");
-        },
-        30 * 60 * 1000,
-      ); // 30 минут
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [settings.calendarSync?.autoSync, performSync]);
 
   return {
     performSync,

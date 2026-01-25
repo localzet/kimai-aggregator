@@ -29,7 +29,6 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import RouterLink from "@/shared/ui/RouterLink";
 import { PiArrowRight } from "react-icons/pi";
 import { useSettings } from "@/shared/hooks/useSettings";
-import { useMixIdStatus } from "@/shared/useMixIdStub";
 import { useUnifiedSync } from "@/shared/hooks/useUnifiedSync";
 import clsx from "clsx";
 import {
@@ -69,7 +68,6 @@ export function MainLayout() {
 
   const { settings, loading } = useSettings();
   const { pathname } = useLocation();
-  const mixIdStatus = useMixIdStatus();
   const { performSync } = useUnifiedSync();
   const prevPathnameRef = useRef<string>(pathname);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);

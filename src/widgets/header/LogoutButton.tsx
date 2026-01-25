@@ -10,14 +10,12 @@ import { TbLogout } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { removeToken } from "@entities/session-store";
-import { useMixIdStatus } from "@/shared/useMixIdStub";
 import { notifications } from "@mantine/notifications";
 import { createBackendClient } from "@/shared/api/backendClient";
 
 export function LogoutButton() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettings();
-  const mixIdStatus = useMixIdStatus();
 
   const handleLogout = () => {
     // Call backend logout to invalidate sessions server-side if possible
@@ -42,8 +40,6 @@ export function LogoutButton() {
     updateSettings(clearedSettings);
 
     try {
-      localStorage.removeItem("mixid_access_token");
-      localStorage.removeItem("mixid_token");
       // clear tokens stored in session store
       removeToken();
       const saved = localStorage.getItem("kimai-settings");
@@ -70,7 +66,7 @@ export function LogoutButton() {
     navigate("/auth", { replace: true });
   };
 
-  if (!mixIdStatus.isConnected) {
+  if (!settings.backendToken) {
     return null;
   }
 

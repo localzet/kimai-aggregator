@@ -29,7 +29,6 @@ const PaymentHistoryPage = lazy(() => import("@/pages/PaymentHistoryPage"));
 const StatisticsPage = lazy(() => import("@/pages/StatisticsPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const TimeAnalysisPage = lazy(() => import("@/pages/TimeAnalysisPage"));
-const MLInsightsPage = lazy(() => import("@/pages/MLInsightsPage"));
 const MainLayout = lazy(() =>
   import("@/widgets/layout").then((module) => ({ default: module.MainLayout })),
 );
@@ -53,7 +52,6 @@ const router = createBrowserRouter(
             <Route element={<StatisticsPage />} path="/statistics" />
             <Route element={<CalendarPage />} path="/calendar" />
             <Route element={<TimeAnalysisPage />} path="/time-analysis" />
-            <Route element={<MLInsightsPage />} path="/ml-insights" />
           </Route>
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />

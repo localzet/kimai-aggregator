@@ -19,9 +19,13 @@ export function useAuth() {
     async (email: string, password: string) => {
       const api = createBackendClient(backendUrl);
       const resp = await api.login(email, password);
-      setToken({ accessToken: resp.token, refreshToken: resp.refresh_token });
+      // Support new standardized response: { success: true, data: { accessToken, refreshToken } }
+      const data = resp && resp.success && resp.data ? resp.data : resp;
+      const accessToken = data.accessToken || data.token || data.access_token || data.token;
+      const refreshToken = data.refreshToken || data.refresh_token || data.refreshToken;
+      setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
-        updateSettings({ ...settings, backendUrl, backendToken: resp.token });
+        updateSettings({ ...settings, backendUrl, backendToken: accessToken });
       } catch {}
       // notify provider that we're authenticated
       try {
@@ -36,9 +40,12 @@ export function useAuth() {
     async (email: string, password: string) => {
       const api = createBackendClient(backendUrl);
       const resp = await api.register(email, password);
-      setToken({ accessToken: resp.token, refreshToken: resp.refresh_token });
+      const data = resp && resp.success && resp.data ? resp.data : resp;
+      const accessToken = data.accessToken || data.token || data.access_token;
+      const refreshToken = data.refreshToken || data.refresh_token || data.refreshToken;
+      setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
-        updateSettings({ ...settings, backendUrl, backendToken: resp.token });
+        updateSettings({ ...settings, backendUrl, backendToken: accessToken });
       } catch {}
       try {
         ctx.setIsAuthenticated(true);

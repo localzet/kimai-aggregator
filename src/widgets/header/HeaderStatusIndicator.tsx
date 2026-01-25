@@ -1,8 +1,8 @@
 /**
  * HeaderStatusIndicator
  *
- * Виджет для отображения статуса синхронизации данных и MIX ID в хедере.
- * Показывает индикаторы состояния данных, актуальности и статуса MIX ID.
+ * Виджет для отображения статуса синхронизации данных в хедере.
+ * Показывает индикаторы состояния данных и актуальности.
  */
 
 import { Group, Badge, Tooltip } from "@mantine/core";
@@ -19,7 +19,6 @@ import {
 import { motion } from "motion/react";
 import { useMemo, useCallback } from "react";
 import { useSettings, useSyncStatus } from "@/shared/hooks";
-import { useMixIdStatus } from "@/shared/useMixIdStub";
 import { useDataFreshness } from "@/shared/hooks/useDataFreshness";
 import { useDashboardData } from "@/shared/hooks/useDashboardData";
 import { createBackendClient } from "@/shared/api/backendClient";
@@ -27,7 +26,6 @@ import { createBackendClient } from "@/shared/api/backendClient";
 export function HeaderStatusIndicator() {
   const { settings } = useSettings();
   const syncStatus = useSyncStatus(settings);
-  const mixIdStatus = useMixIdStatus();
   const { syncing, reload } = useDashboardData(settings, syncStatus);
   const dataFreshness = useDataFreshness(settings);
 
@@ -90,45 +88,6 @@ export function HeaderStatusIndicator() {
         };
     }
   }, [currentDataStatus, syncStatus.lastUpdate]);
-
-  const mixIdConfig = useMemo(() => {
-    if (!mixIdStatus.hasConfig) {
-      return null;
-    }
-
-    switch (mixIdStatus.syncStatus) {
-      case "connected-ws":
-        return {
-          color: "green" as const,
-          icon: <IconPlugConnected size="1rem" />,
-          label: "MIX ID (WebSocket)",
-          description: "Синхронизация через WebSocket активна",
-        };
-      case "connected-rest":
-        return {
-          color: "blue" as const,
-          icon: <IconCloud size="1rem" />,
-          label: "MIX ID (REST)",
-          description: "Синхронизация через REST API (WebSocket недоступен)",
-        };
-      case "disconnected":
-        return {
-          color: "orange" as const,
-          icon: <IconPlugConnectedX size="1rem" />,
-          label: "MIX ID отключен",
-          description: "MIX ID настроен, но соединение недоступно",
-        };
-      case "checking":
-        return {
-          color: "gray" as const,
-          icon: <IconCloudOff size="1rem" />,
-          label: "Проверка MIX ID",
-          description: "Проверка состояния подключения...",
-        };
-      default:
-        return null;
-    }
-  }, [mixIdStatus.hasConfig, mixIdStatus.syncStatus]);
 
   const isDataClickable = !!reload && currentDataStatus !== "updating";
 
@@ -219,27 +178,6 @@ export function HeaderStatusIndicator() {
           />
         </Tooltip>
       </motion.div>
-
-      {/* MIX ID sync status indicator */}
-      {mixIdConfig && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Tooltip label={mixIdConfig.description}>
-            <Badge
-              color={mixIdConfig.color}
-              variant="light"
-              leftSection={mixIdConfig.icon}
-              size="lg"
-              style={{
-                userSelect: "none",
-              }}
-            />
-          </Tooltip>
-        </motion.div>
-      )}
     </Group>
   );
 }

@@ -72,12 +72,6 @@ export function useNavigationMenu(): MenuItem[] {
             name: "Анализ времени",
             icon: TbClockHour4,
           },
-          {
-            id: "ml-insights",
-            href: "/ml-insights",
-            name: "AI Инсайты",
-            icon: TbBrain,
-          },
         ],
       });
     }

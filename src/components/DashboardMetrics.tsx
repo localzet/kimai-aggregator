@@ -29,11 +29,13 @@ dayjs.extend(isoWeek);
 
 interface DashboardMetricsProps {
   weeks: WeekData[];
+  metrics: any; // From backend
   ratePerMinute: number;
 }
 
 const DashboardMetrics = memo(function DashboardMetrics({
   weeks,
+  metrics,
   ratePerMinute,
 }: DashboardMetricsProps) {
   // Общая статистика
@@ -142,11 +144,21 @@ const DashboardMetrics = memo(function DashboardMetrics({
               </ThemeIcon>
             </Group>
             <Text fw={700} size="lg">
-              {stats.currentWeekHours.toFixed(1)} ч
+              {(metrics?.currentWeek?.duration / 3600 || 0).toFixed(1)} ч
             </Text>
             <Text size="sm" c="dimmed">
-              {formatCurrency(stats.currentWeekAmount)}
+              {formatCurrency(metrics?.currentWeek?.earnings || 0)}
             </Text>
+            {metrics?.changes?.durationPercent !== undefined && (
+              <Badge
+                color={metrics.changes.durationPercent >= 0 ? "green" : "red"}
+                size="sm"
+                mt="xs"
+              >
+                {metrics.changes.durationPercent >= 0 ? "+" : ""}
+                {metrics.changes.durationPercent.toFixed(1)}% к прошлой неделе
+              </Badge>
+            )}
           </Card>
         </Grid.Col>
 
