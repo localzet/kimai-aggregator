@@ -41,23 +41,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Check formatting
-        run: |
-          npm run format || npx prettier --write "src/**/*.{ts,tsx,css,js,jsx,json,md}"
-          npm run lint -- --fix || true
-
-      - name: Commit and push if changed
-        run: |
-          BRANCH="$GITHUB_HEAD_REF"
-          if [ -z "$BRANCH" ]; then BRANCH=${GITHUB_REF#refs/heads/}; fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if ! git diff --staged --quiet; then
-            git commit -m "Format and lint"
-            git push origin HEAD:$BRANCH
-          else
-            echo "No formatting changes"
-          fi
+        run: npm run format
 
       - name: Lint
         run: npm run lint
@@ -68,11 +52,7 @@ jobs:
       - name: Build web
         run: npm run build
         env:
-          VITE_ML_API_URL: ${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
-          VITE_MIX_ID_API_BASE: ${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
-          VITE_MIX_ID_CLIENT_ID: ${{ secrets.VITE_MIX_ID_CLIENT_ID }}
-          VITE_MIX_ID_CLIENT_SECRET: ${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
@@ -134,11 +114,7 @@ jobs:
         with:
           context: .
           build-args: |
-            VITE_ML_API_URL=${{ secrets.VITE_ML_API_URL || 'https://kimai-ml.zorin.cloud' }}
             VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL || 'https://kimai-api.zorin.cloud' }}
-            VITE_MIX_ID_API_BASE=${{ secrets.VITE_MIX_ID_API_BASE || 'https://data-center.zorin.cloud/api' }}
-            VITE_MIX_ID_CLIENT_ID=${{ secrets.VITE_MIX_ID_CLIENT_ID }}
-            VITE_MIX_ID_CLIENT_SECRET=${{ secrets.VITE_MIX_ID_CLIENT_SECRET }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
