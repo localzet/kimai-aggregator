@@ -24,7 +24,9 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const [apiUrl, setApiUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"idle" | "success" | "error">("idle");
+  const [connectionStatus, setConnectionStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const testConnection = async () => {
@@ -120,9 +122,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
           <Title order={2} mb="xs">
             Настройка Kimai
           </Title>
-          <Text c="dimmed">
-            Введите URL вашего Kimai сервера и API ключ
-          </Text>
+          <Text c="dimmed">Введите URL вашего Kimai сервера и API ключ</Text>
         </div>
 
         <Stack gap="md">

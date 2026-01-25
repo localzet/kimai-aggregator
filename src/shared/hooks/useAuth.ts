@@ -21,8 +21,10 @@ export function useAuth() {
       const resp = await api.login(email, password);
       // Support new standardized response: { success: true, data: { accessToken, refreshToken } }
       const data = resp && resp.success && resp.data ? resp.data : resp;
-      const accessToken = data.accessToken || data.token || data.access_token || data.token;
-      const refreshToken = data.refreshToken || data.refresh_token || data.refreshToken;
+      const accessToken =
+        data.accessToken || data.token || data.access_token || data.token;
+      const refreshToken =
+        data.refreshToken || data.refresh_token || data.refreshToken;
       setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
         updateSettings({ ...settings, backendUrl, backendToken: accessToken });
@@ -42,7 +44,8 @@ export function useAuth() {
       const resp = await api.register(email, password);
       const data = resp && resp.success && resp.data ? resp.data : resp;
       const accessToken = data.accessToken || data.token || data.access_token;
-      const refreshToken = data.refreshToken || data.refresh_token || data.refreshToken;
+      const refreshToken =
+        data.refreshToken || data.refresh_token || data.refreshToken;
       setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
         updateSettings({ ...settings, backendUrl, backendToken: accessToken });

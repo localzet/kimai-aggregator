@@ -84,9 +84,12 @@ function applyInterceptors(inst: AxiosInstance) {
               .then((res) => {
                 const data = res.data;
                 // support normalized response: { success: true, data: { accessToken, refreshToken } }
-                const payload = data && data.success && data.data ? data.data : data;
-                const newAccess = payload.accessToken || payload.token || payload.access_token;
-                const newRefresh = payload.refreshToken || payload.refresh_token;
+                const payload =
+                  data && data.success && data.data ? data.data : data;
+                const newAccess =
+                  payload.accessToken || payload.token || payload.access_token;
+                const newRefresh =
+                  payload.refreshToken || payload.refresh_token;
                 if (newAccess) {
                   // update module token and session store
                   setAuthorizationToken(newAccess);

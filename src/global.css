@@ -3,7 +3,16 @@
 html,
 body {
   min-height: 100vh;
-  font-family: 'Nunito', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-family:
+    "Nunito",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif;
   background-color: #161b23;
   background-image:
     linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),

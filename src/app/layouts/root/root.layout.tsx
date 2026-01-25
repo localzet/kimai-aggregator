@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import classes from "./root.module.css";
 
 export function RootLayout() {
-
   // return (
   //     <div className={classes.root}>
   //         <div className="animated-background"></div>
