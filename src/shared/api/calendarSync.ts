@@ -151,7 +151,7 @@ export class GoogleCalendarSync {
     const accessToken = await this.getValidAccessToken();
 
     let created = 0;
-    let updated = 0;
+    const updated = 0;
     let errors = 0;
 
     for (const entry of entries) {
