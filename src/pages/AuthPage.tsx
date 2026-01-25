@@ -47,7 +47,12 @@ function AuthPage() {
                   </Text>
                 </Title>
               </Group>
-              <Box maw={480} px={30} pt={10} w={{ base: 440, sm: 440, md: 440 }}>
+              <Box
+                maw={480}
+                px={30}
+                pt={10}
+                w={{ base: 440, sm: 440, md: 440 }}
+              >
                 <Stack gap="md">
                   <AuthForm />
                 </Stack>

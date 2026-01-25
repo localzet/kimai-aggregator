@@ -41,7 +41,9 @@ export function useDashboardData(
       setWeeks(transformedWeeks);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      setError(error instanceof Error ? error.message : "Ошибка загрузки данных");
+      setError(
+        error instanceof Error ? error.message : "Ошибка загрузки данных",
+      );
     } finally {
       setLoading(false);
     }

@@ -43,7 +43,9 @@ export default function AuthForm() {
 
   return (
     <Stack>
-      <Title mx={'auto'} order={2}>{mode === "register" ? "Регистрация" : "Вход"} </Title>
+      <Title mx={"auto"} order={2}>
+        {mode === "register" ? "Регистрация" : "Вход"}{" "}
+      </Title>
       <TextInput
         label="Email"
         value={email}

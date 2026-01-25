@@ -41,7 +41,9 @@ export function useDashboardMetrics(settings: Settings) {
       setMetrics(response);
     } catch (error) {
       console.error("Error loading dashboard metrics:", error);
-      setError(error instanceof Error ? error.message : "Ошибка загрузки метрик");
+      setError(
+        error instanceof Error ? error.message : "Ошибка загрузки метрик",
+      );
     } finally {
       setLoading(false);
     }

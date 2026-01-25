@@ -83,7 +83,7 @@ export function useUnifiedSync() {
         }, 3000);
       }
     },
-    [settings.backendUrl, settings.backendToken, syncing]
+    [settings.backendUrl, settings.backendToken, syncing],
   );
 
   return {
