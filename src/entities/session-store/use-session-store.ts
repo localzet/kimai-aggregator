@@ -46,12 +46,23 @@ export const useSessionStoreActions = () =>
   useSessionStore((state) => state.actions);
 
 export const setToken = (dto: ISetTokenAction) => {
-  const state = useSessionStore.getState();
-  state.actions.setToken(dto);
+  const { actions } = useSessionStore.getState();
+  console.debug('[sessionStore] setToken called with token:', {
+    hasAccessToken: !!dto.accessToken,
+    accessTokenLength: dto.accessToken?.length || 0,
+  });
+  actions.setToken(dto);
+  // Verify token was saved
+  const saved = useSessionStore.getState();
+  console.debug('[sessionStore] Token saved, current state:', {
+    hasAccessToken: !!saved.accessToken,
+    accessTokenLength: saved.accessToken?.length || 0,
+  });
 };
 export const removeToken = () => {
-  const state = useSessionStore.getState();
-  state.actions.removeToken();
+  console.debug('[sessionStore] removeToken called');
+  const { actions } = useSessionStore.getState();
+  actions.removeToken();
 };
 export const useRefreshToken = () =>
   useSessionStore((state) => state.refreshToken);
