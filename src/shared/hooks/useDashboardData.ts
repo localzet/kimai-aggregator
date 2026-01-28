@@ -50,8 +50,11 @@ export function useDashboardData(
   }, [settings.backendUrl, settings.backendToken]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    // Only load if both URL and token are present to avoid infinite polling
+    if (settings.backendUrl && settings.backendToken) {
+      loadData();
+    }
+  }, [settings.backendUrl, settings.backendToken, loadData]);
 
   const reload = useCallback(async () => {
     await loadData();

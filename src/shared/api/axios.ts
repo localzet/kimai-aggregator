@@ -11,6 +11,7 @@ export const instance = axios.create({
     typeof __DOMAIN_BACKEND__ !== "undefined"
       ? (__DOMAIN_BACKEND__ as any)
       : "",
+  timeout: 15000, // 15 second timeout to prevent hanging requests
   headers: {
     "Content-type": "application/json",
     Accept: "application/json",
@@ -136,6 +137,7 @@ applyInterceptors(instance);
 export function createInstance(baseURL?: string) {
   const inst = axios.create({
     baseURL: baseURL || instance.defaults.baseURL,
+    timeout: 15000, // 15 second timeout to prevent hanging requests
     headers: { "Content-type": "application/json", Accept: "application/json" },
   });
   // keep reference to default Authorization header

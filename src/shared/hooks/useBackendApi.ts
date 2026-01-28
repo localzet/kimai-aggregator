@@ -6,7 +6,7 @@ export function useBackendApi() {
   const { settings } = useSettings();
   const client = useMemo(() => {
     const base =
-      settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "";
+      settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "https://kimai-api.zorin.cloud";
     return createBackendClient(base);
   }, [settings.backendUrl]);
 

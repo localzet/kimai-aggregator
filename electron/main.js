@@ -158,8 +158,12 @@ function createWindow() {
 
 // IPC handler for Notion API requests (bypasses CORS)
 ipcMain.handle('notion-api-request', async (event, { url, options }) => {
+  let response
   try {
-    const response = await fetch(url, options)
+    response = await fetch(url, {
+      ...options,
+      timeout: 30000, // 30 second timeout
+    })
     const data = await response.text()
     
     let parsedData = null

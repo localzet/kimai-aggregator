@@ -6,7 +6,21 @@ try {
   contextBridge.exposeInMainWorld('electron', {
     isElectron: true,
     notionApi: {
-      request: (url, options) => ipcRenderer.invoke('notion-api-request', { url, options }),
+      request: async (url, options) => {
+        try {
+          const result = await ipcRenderer.invoke('notion-api-request', { url, options })
+          return result
+        } catch (error) {
+          console.error('IPC Error calling notion-api-request:', error)
+          return {
+            ok: false,
+            status: 0,
+            statusText: error.message || 'IPC Communication Error',
+            data: null,
+            error: error.message || 'IPC Communication Error',
+          }
+        }
+      },
     },
   })
   console.log('Electron API exposed to renderer')

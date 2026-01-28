@@ -23,7 +23,7 @@ export function LogoutButton() {
       const backendUrl =
         settings.backendUrl ||
         (import.meta.env.VITE_BACKEND_URL as string) ||
-        "";
+        "https://kimai-api.zorin.cloud";
       if (backendUrl) {
         const api = createBackendClient(backendUrl);
         api.logout().catch((e) => console.warn("Backend logout failed:", e));

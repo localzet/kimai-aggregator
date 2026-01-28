@@ -50,8 +50,11 @@ export function useDashboardMetrics(settings: Settings) {
   }, [settings.backendUrl, settings.backendToken]);
 
   useEffect(() => {
-    loadMetrics();
-  }, [loadMetrics]);
+    // Only load if both URL and token are present to avoid infinite polling
+    if (settings.backendUrl && settings.backendToken) {
+      loadMetrics();
+    }
+  }, [settings.backendUrl, settings.backendToken, loadMetrics]);
 
   const reload = useCallback(async () => {
     await loadMetrics();

@@ -41,7 +41,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       setConnectionError(null);
       setConnectionStatus("idle");
 
-      const base = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+      const base = import.meta.env.VITE_BACKEND_URL || "https://kimai-api.zorin.cloud";
       // Assuming user is logged in, token is in localStorage
       const token = localStorage.getItem("authToken");
       if (!token) {

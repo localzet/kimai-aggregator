@@ -13,7 +13,7 @@ export function useAuth() {
   const { settings, updateSettings } = useSettings();
 
   const backendUrl =
-    settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "";
+    settings.backendUrl || (import.meta.env.VITE_BACKEND_URL as string) || "https://kimai-api.zorin.cloud";
 
   const login = useCallback(
     async (email: string, password: string) => {
