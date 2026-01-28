@@ -22,9 +22,12 @@ export function useAuth() {
       // Support new standardized response: { success: true, data: { accessToken, refreshToken } }
       const data = resp && resp.success && resp.data ? resp.data : resp;
       const accessToken =
-        data.accessToken || data.token || data.access_token || data.token;
+        data.accessToken || data.token || data.access_token;
       const refreshToken =
-        data.refreshToken || data.refresh_token || data.refreshToken;
+        data.refreshToken || data.refresh_token;
+      if (!accessToken) {
+        throw new Error('No access token received from server');
+      }
       setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
         updateSettings({ ...settings, backendUrl, backendToken: accessToken });
@@ -43,9 +46,13 @@ export function useAuth() {
       const api = createBackendClient(backendUrl);
       const resp = await api.register(email, password);
       const data = resp && resp.success && resp.data ? resp.data : resp;
-      const accessToken = data.accessToken || data.token || data.access_token;
+      const accessToken =
+        data.accessToken || data.token || data.access_token;
       const refreshToken =
-        data.refreshToken || data.refresh_token || data.refreshToken;
+        data.refreshToken || data.refresh_token;
+      if (!accessToken) {
+        throw new Error('No access token received from server');
+      }
       setToken({ accessToken: accessToken, refreshToken: refreshToken });
       try {
         updateSettings({ ...settings, backendUrl, backendToken: accessToken });

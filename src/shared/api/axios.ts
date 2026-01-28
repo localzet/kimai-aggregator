@@ -47,7 +47,12 @@ function applyInterceptors(inst: AxiosInstance) {
   // request
   inst.interceptors.request.use((config) => {
     if (!config.headers) config.headers = {} as any;
-    if (authorizationToken) {
+    // Always use current token from session store, not the module-level cached one
+    const currentToken = useSessionStore.getState().accessToken;
+    if (currentToken) {
+      config.headers["Authorization"] = `Bearer ${currentToken}`;
+    } else if (authorizationToken) {
+      // Fallback to module token for backwards compatibility
       config.headers["Authorization"] = `Bearer ${authorizationToken}`;
     }
     return config;
