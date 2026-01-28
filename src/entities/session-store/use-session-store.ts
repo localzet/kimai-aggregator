@@ -45,12 +45,13 @@ export const useToken = useAccessToken;
 export const useSessionStoreActions = () =>
   useSessionStore((state) => state.actions);
 
-export const setToken = (dto: ISetTokenAction) =>
-  useSessionStore.setState({
-    accessToken: dto.accessToken,
-    refreshToken: dto.refreshToken,
-  });
-export const removeToken = () =>
-  useSessionStore.getState().actions.removeToken();
+export const setToken = (dto: ISetTokenAction) => {
+  const state = useSessionStore.getState();
+  state.actions.setToken(dto);
+};
+export const removeToken = () => {
+  const state = useSessionStore.getState();
+  state.actions.removeToken();
+};
 export const useRefreshToken = () =>
   useSessionStore((state) => state.refreshToken);

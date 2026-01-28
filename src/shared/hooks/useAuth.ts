@@ -4,6 +4,7 @@ import { setToken, removeToken } from "@entities/session-store";
 import { useSettings } from "@/shared/hooks/useSettings";
 import { AuthContext } from "@/shared/hoks/auth-context";
 import invariant from "tiny-invariant";
+import consola from "consola/browser";
 
 export function useAuth() {
   // Context provides authentication state for guards
@@ -19,16 +20,24 @@ export function useAuth() {
     async (email: string, password: string) => {
       const api = createBackendClient(backendUrl);
       const resp = await api.login(email, password);
+      consola.debug('[useAuth] Login response:', resp);
       // Support new standardized response: { success: true, data: { accessToken, refreshToken } }
       const data = resp && resp.success && resp.data ? resp.data : resp;
+      consola.debug('[useAuth] Extracted data:', data);
       const accessToken =
         data.accessToken || data.token || data.access_token;
       const refreshToken =
         data.refreshToken || data.refresh_token;
+      consola.debug('[useAuth] Tokens extracted:', {
+        hasAccessToken: !!accessToken,
+        accessTokenLength: accessToken?.length || 0,
+        hasRefreshToken: !!refreshToken,
+      });
       if (!accessToken) {
         throw new Error('No access token received from server');
       }
       setToken({ accessToken: accessToken, refreshToken: refreshToken });
+      consola.debug('[useAuth] Token saved to session store');
       try {
         updateSettings({ ...settings, backendUrl, backendToken: accessToken });
       } catch {}

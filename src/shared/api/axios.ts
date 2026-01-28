@@ -32,7 +32,12 @@ export const setAuthorizationToken = (token: string) => {
 };
 
 // apply initial token from session store
-setAuthorizationToken(useSessionStore.getState().accessToken);
+const initialToken = useSessionStore.getState().accessToken;
+consola.debug('[axios] Initial token from session store:', {
+  hasToken: !!initialToken,
+  tokenLength: initialToken?.length || 0,
+});
+setAuthorizationToken(initialToken);
 
 // keep module token in sync with session store changes
 useSessionStore.subscribe((state) => {
@@ -49,6 +54,11 @@ function applyInterceptors(inst: AxiosInstance) {
     if (!config.headers) config.headers = {} as any;
     // Always use current token from session store, not the module-level cached one
     const currentToken = useSessionStore.getState().accessToken;
+    consola.debug('[axios] Request interceptor:', {
+      url: config.url,
+      hasToken: !!currentToken,
+      tokenLength: currentToken?.length || 0,
+    });
     if (currentToken) {
       config.headers["Authorization"] = `Bearer ${currentToken}`;
     } else if (authorizationToken) {
